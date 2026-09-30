@@ -1,0 +1,324 @@
+{
+  "id": "room_sotano",
+  "name": "Escalera del Sótano",
+  "size": [
+    4.5,
+    2.7,
+    7
+  ],
+  "texture_scale": 2,
+  "wall_thickness": 0.15,
+  "textures": {
+    "wall": "Brick/Horror_Brick_12-128x128.png",
+    "floor": "Floor/Horror_Floor_12-128x128.png",
+    "ceiling": "Misc/Horror_Misc_02-128x128.png",
+    "door": "Custom/GreenMetalDoordiffuse.png",
+    "stone": "Stone/Horror_Stone_07-128x128.png",
+    "metal": "Metal/Horror_Metal_02-128x128.png",
+    "wood": "Floor/Horror_Floor_03-128x128.png"
+  },
+  "audio": {
+    "reverb": "corridor",
+    "floor_material": "stone",
+    "ambience": "basement"
+  },
+  "door_fit": true,
+  "atmosphere": {
+    "fog_start": 3,
+    "fog_end": 14,
+    "ambient": 0.2
+  },
+  "walls": [
+    {
+      "start": [
+        -2.25,
+        -3.5
+      ],
+      "end": [
+        2.25,
+        -3.5
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 1.7,
+          "width": 1.1,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_pasillo",
+          "spawn": "from_sotano",
+          "action": "up"
+        }
+      ]
+    },
+    {
+      "start": [
+        2.25,
+        -3.5
+      ],
+      "end": [
+        2.25,
+        3.5
+      ]
+    },
+    {
+      "start": [
+        2.25,
+        3.5
+      ],
+      "end": [
+        -2.25,
+        3.5
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 1.7,
+          "width": 1.1,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_lavanderia",
+          "spawn": "from_sotano"
+        }
+      ]
+    },
+    {
+      "start": [
+        -2.25,
+        3.5
+      ],
+      "end": [
+        -2.25,
+        -3.5
+      ]
+    }
+  ],
+  "props": [
+    {
+      "kind": "box",
+      "position": [
+        -1.35,
+        0.11,
+        1.9
+      ],
+      "size": [
+        1.1,
+        0.22,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.46,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.35,
+        0.22,
+        1.64
+      ],
+      "size": [
+        1.1,
+        0.44,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.46,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.35,
+        0.33,
+        1.38
+      ],
+      "size": [
+        1.1,
+        0.66,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.46,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.35,
+        0.44,
+        1.12
+      ],
+      "size": [
+        1.1,
+        0.88,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.46,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.35,
+        0.55,
+        0.86
+      ],
+      "size": [
+        1.1,
+        1.1,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.46,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.35,
+        0.66,
+        0.6
+      ],
+      "size": [
+        1.1,
+        1.32,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.46,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.35,
+        0.77,
+        0.34
+      ],
+      "size": [
+        1.1,
+        1.54,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.46,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.35,
+        0.88,
+        0.08
+      ],
+      "size": [
+        1.1,
+        1.76,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.46,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.35,
+        0.99,
+        -0.18
+      ],
+      "size": [
+        1.1,
+        1.98,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.46,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.35,
+        1.1,
+        -0.44
+      ],
+      "size": [
+        1.1,
+        2.2,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.46,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.35,
+        1.21,
+        -0.7
+      ],
+      "size": [
+        1.1,
+        2.42,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.46,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.35,
+        1.32,
+        -0.96
+      ],
+      "size": [
+        1.1,
+        2.64,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.46,
+      "collide": true
+    }
+  ],
+  "items": [
+    {
+      "id": "flashlight",
+      "position": [
+        1.5,
+        0.51,
+        0.9
+      ],
+      "yaw": 35
+    }
+  ],
+  "spawns": {
+    "from_pasillo": {
+      "position": [
+        0,
+        -2.25
+      ],
+      "yaw": 180
+    },
+    "from_lavanderia": {
+      "position": [
+        0,
+        2.25
+      ],
+      "yaw": 0
+    },
+    "start": {
+      "position": [
+        0,
+        2.2
+      ],
+      "yaw": 0
+    }
+  }
+}

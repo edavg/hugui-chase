@@ -1,0 +1,24 @@
+{
+  "nodes": [
+    {
+      "match": "Cupula",
+      "texture": "tools/prepared/Abajur.png"
+    },
+    {
+      "match": "Puxador",
+      "texture": "tools/prepared/Metal.png"
+    },
+    {
+      "match": "Abajur",
+      "texture": "tools/prepared/Metal.png"
+    },
+    {
+      "match": "Colchao",
+      "texture": "tools/prepared/Cama.png"
+    },
+    {
+      "match": "*",
+      "texture": "/Users/edavg/www/test/mondyi/public/assets/textures/horror_pack/Floor/Horror_Floor_03-128x128.png"
+    }
+  ]
+}

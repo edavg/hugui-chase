@@ -1,0 +1,12 @@
+{
+  "items": [
+    {
+      "id": "flashlight",
+      "kind": "tool",
+      "name_es": "Linterna",
+      "name_en": "Flashlight",
+      "desc_es": "Una linterna de taller, arañada y pesada. Alguien la dejó sobre una caja en la escalera del sótano. La pila está casi llena. Enciende con F.",
+      "desc_en": "A scratched, heavy workshop flashlight. Someone left it on a crate by the basement stairs. The battery is almost full. Turn it on with F."
+    }
+  ]
+}

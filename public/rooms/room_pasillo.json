@@ -1,0 +1,289 @@
+{
+  "id": "room_pasillo",
+  "name": "Pasillo",
+  "size": [
+    13,
+    2.7,
+    2.4
+  ],
+  "texture_scale": 2,
+  "wall_thickness": 0.15,
+  "textures": {
+    "wall": "Wall/Horror_Wall_09-128x128.png",
+    "floor": "Floor/Horror_Floor_09-128x128.png",
+    "ceiling": "Misc/Horror_Misc_03-128x128.png",
+    "door": "Custom/WoodenDoor3diffuse.png",
+    "metal": "Metal/Horror_Metal_05-128x128.png",
+    "stain": "Stains/Horror_Stain_06-128x128.png",
+    "window": "Custom/MetalCageWindow.png"
+  },
+  "audio": {
+    "reverb": "corridor",
+    "floor_material": "wood",
+    "ambience": "house"
+  },
+  "door_fit": true,
+  "walls": [
+    {
+      "start": [
+        -6.5,
+        -1.2
+      ],
+      "end": [
+        6.5,
+        -1.2
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 1,
+          "width": 1.2,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_bano",
+          "spawn": "from_pasillo"
+        },
+        {
+          "kind": "door",
+          "offset": 4.2,
+          "width": 1.2,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_despacho",
+          "spawn": "from_pasillo"
+        },
+        {
+          "kind": "door",
+          "offset": 7.4,
+          "width": 1.2,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_sotano",
+          "spawn": "from_pasillo",
+          "key": "key_basement"
+        },
+        {
+          "kind": "door",
+          "offset": 10.6,
+          "width": 1.2,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_escalera",
+          "spawn": "from_pasillo"
+        }
+      ]
+    },
+    {
+      "start": [
+        6.5,
+        -1.2
+      ],
+      "end": [
+        6.5,
+        1.2
+      ]
+    },
+    {
+      "start": [
+        6.5,
+        1.2
+      ],
+      "end": [
+        -6.5,
+        1.2
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 3,
+          "width": 1.2,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_cocina",
+          "spawn": "from_pasillo"
+        }
+      ]
+    },
+    {
+      "start": [
+        -6.5,
+        1.2
+      ],
+      "end": [
+        -6.5,
+        -1.2
+      ],
+      "openings": [
+        {
+          "kind": "window",
+          "offset": 0.5,
+          "width": 1.2,
+          "height": 1,
+          "sill": 1
+        }
+      ]
+    }
+  ],
+  "props": [
+    {
+      "kind": "box",
+      "position": [
+        -5.9,
+        0.4,
+        0.85
+      ],
+      "size": [
+        1.2,
+        0.8,
+        0.35
+      ],
+      "texture": "wall",
+      "tint": 0.5,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.3,
+        1.6,
+        -1.13
+      ],
+      "size": [
+        0.5,
+        0.7,
+        0.03
+      ],
+      "texture": "door",
+      "tint": 0.3,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        2.6,
+        1.65,
+        -1.13
+      ],
+      "size": [
+        0.55,
+        0.7,
+        0.03
+      ],
+      "texture": "door",
+      "tint": 0.3,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        4.9,
+        1.6,
+        1.13
+      ],
+      "size": [
+        0.5,
+        0.7,
+        0.03
+      ],
+      "texture": "door",
+      "tint": 0.3,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -6,
+        0.25,
+        -0.7
+      ],
+      "size": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "texture": "wall",
+      "tint": 0.45,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.9,
+        0.3,
+        0.8
+      ],
+      "size": [
+        0.45,
+        0.6,
+        0.45
+      ],
+      "texture": "wall",
+      "tint": 0.45,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.5,
+        0.005,
+        0
+      ],
+      "size": [
+        7,
+        0.01,
+        0.8
+      ],
+      "texture": "stain",
+      "tint": 0.4,
+      "collide": false,
+      "decal": true
+    }
+  ],
+  "spawns": {
+    "from_cocina": {
+      "position": [
+        2.9,
+        -0.05
+      ],
+      "yaw": 0
+    },
+    "from_bano": {
+      "position": [
+        -4.9,
+        0.05
+      ],
+      "yaw": 180
+    },
+    "from_despacho": {
+      "position": [
+        -1.7,
+        0.05
+      ],
+      "yaw": 180
+    },
+    "from_escalera": {
+      "position": [
+        4.7,
+        0.05
+      ],
+      "yaw": 180
+    },
+    "from_sotano": {
+      "position": [
+        1.5,
+        0.05
+      ],
+      "yaw": 180
+    },
+    "start": {
+      "position": [
+        -6,
+        0
+      ],
+      "yaw": 270
+    }
+  }
+}

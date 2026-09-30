@@ -1,0 +1,413 @@
+{
+  "id": "room_escalera",
+  "name": "Escalera",
+  "size": [
+    5,
+    2.7,
+    6.5
+  ],
+  "texture_scale": 2,
+  "wall_thickness": 0.15,
+  "textures": {
+    "wall": "Wall/Horror_Wall_03-128x128.png",
+    "floor": "Floor/Horror_Floor_07-128x128.png",
+    "ceiling": "Misc/Horror_Misc_03-128x128.png",
+    "door": "Custom/WoodenDoor2diffuse.png",
+    "stone": "Stone/Horror_Stone_05-128x128.png",
+    "stain": "Stains/Horror_Stain_07-128x128.png",
+    "window": "Custom/MetalCageWindow.png"
+  },
+  "audio": {
+    "reverb": "corridor",
+    "floor_material": "wood",
+    "ambience": "house"
+  },
+  "door_fit": true,
+  "walls": [
+    {
+      "start": [
+        -2.5,
+        -3.25
+      ],
+      "end": [
+        2.5,
+        -3.25
+      ]
+    },
+    {
+      "start": [
+        2.5,
+        -3.25
+      ],
+      "end": [
+        2.5,
+        3.25
+      ],
+      "openings": [
+        {
+          "kind": "window",
+          "offset": 2.2,
+          "width": 1.4,
+          "height": 1.4,
+          "sill": 0.6
+        }
+      ]
+    },
+    {
+      "start": [
+        2.5,
+        3.25
+      ],
+      "end": [
+        -2.5,
+        3.25
+      ]
+    },
+    {
+      "start": [
+        -2.5,
+        3.25
+      ],
+      "end": [
+        -2.5,
+        -3.25
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 1.2,
+          "width": 1.2,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_pasillo_alto",
+          "spawn": "from_escalera",
+          "action": "up"
+        },
+        {
+          "kind": "door",
+          "offset": 4.1,
+          "width": 1.2,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_pasillo",
+          "spawn": "from_escalera",
+          "action": "down"
+        }
+      ]
+    }
+  ],
+  "props": [
+    {
+      "kind": "box",
+      "position": [
+        1.6,
+        0.1,
+        2.55
+      ],
+      "size": [
+        1.2,
+        0.2,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.55,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.6,
+        0.2,
+        2.25
+      ],
+      "size": [
+        1.2,
+        0.4,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.55,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.6,
+        0.3,
+        1.95
+      ],
+      "size": [
+        1.2,
+        0.6,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.55,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.6,
+        0.4,
+        1.65
+      ],
+      "size": [
+        1.2,
+        0.8,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.55,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.6,
+        0.5,
+        1.35
+      ],
+      "size": [
+        1.2,
+        1,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.55,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.6,
+        0.6,
+        1.05
+      ],
+      "size": [
+        1.2,
+        1.2,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.55,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.6,
+        0.7,
+        0.75
+      ],
+      "size": [
+        1.2,
+        1.4,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.55,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.6,
+        0.8,
+        0.45
+      ],
+      "size": [
+        1.2,
+        1.6,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.55,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.6,
+        0.9,
+        0.15
+      ],
+      "size": [
+        1.2,
+        1.8,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.55,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.6,
+        1,
+        -0.15
+      ],
+      "size": [
+        1.2,
+        2,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.55,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.6,
+        1.1,
+        -0.45
+      ],
+      "size": [
+        1.2,
+        2.2,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.55,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.6,
+        1.2,
+        -0.75
+      ],
+      "size": [
+        1.2,
+        2.4,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.55,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.6,
+        1.3,
+        -1.05
+      ],
+      "size": [
+        1.2,
+        2.6,
+        0.3
+      ],
+      "texture": "stone",
+      "tint": 0.55,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.95,
+        0.5,
+        1.7
+      ],
+      "size": [
+        0.05,
+        1,
+        1.1
+      ],
+      "texture": "wall",
+      "tint": 0.5,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.95,
+        0.85,
+        0.6
+      ],
+      "size": [
+        0.05,
+        1.7,
+        1
+      ],
+      "texture": "wall",
+      "tint": 0.5,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.95,
+        1.2,
+        -0.5
+      ],
+      "size": [
+        0.05,
+        2.4,
+        1
+      ],
+      "texture": "wall",
+      "tint": 0.5,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.42,
+        1.5,
+        0
+      ],
+      "size": [
+        0.03,
+        1,
+        1.2
+      ],
+      "texture": "stain",
+      "tint": 0.3,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -0.5,
+        0.25,
+        2.7
+      ],
+      "size": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "texture": "wall",
+      "tint": 0.45,
+      "collide": true
+    }
+  ],
+  "spawns": {
+    "from_pasillo": {
+      "position": [
+        -1.25,
+        -1.45
+      ],
+      "yaw": 270
+    },
+    "from_pasillo_alto": {
+      "position": [
+        -1.25,
+        1.45
+      ],
+      "yaw": 270
+    },
+    "start": {
+      "position": [
+        -1.7,
+        2.4
+      ],
+      "yaw": 180
+    }
+  }
+}

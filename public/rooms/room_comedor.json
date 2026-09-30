@@ -1,0 +1,296 @@
+{
+  "id": "room_comedor",
+  "name": "Comedor",
+  "size": [
+    7,
+    2.7,
+    5.5
+  ],
+  "texture_scale": 2,
+  "wall_thickness": 0.15,
+  "textures": {
+    "wall": "Wall/Horror_Wall_01-128x128.png",
+    "floor": "Floor/Horror_Floor_10-128x128.png",
+    "ceiling": "Misc/Horror_Misc_04-128x128.png",
+    "door": "Custom/WoodenDoor2diffuse.png",
+    "wood": "Floor/Horror_Floor_03-128x128.png",
+    "stain": "Stains/Horror_Stain_01-128x128.png",
+    "window": "Custom/TiledWindowdiffuse.png"
+  },
+  "audio": {
+    "reverb": "hall",
+    "floor_material": "wood",
+    "ambience": "house"
+  },
+  "door_fit": true,
+  "walls": [
+    {
+      "start": [
+        -3.5,
+        -2.75
+      ],
+      "end": [
+        3.5,
+        -2.75
+      ],
+      "openings": [
+        {
+          "kind": "window",
+          "offset": 2.7,
+          "width": 1.6,
+          "height": 1.1,
+          "sill": 0.95
+        }
+      ]
+    },
+    {
+      "start": [
+        3.5,
+        -2.75
+      ],
+      "end": [
+        3.5,
+        2.75
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 2.15,
+          "width": 1.2,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_cocina",
+          "spawn": "from_comedor"
+        }
+      ]
+    },
+    {
+      "start": [
+        3.5,
+        2.75
+      ],
+      "end": [
+        -3.5,
+        2.75
+      ]
+    },
+    {
+      "start": [
+        -3.5,
+        2.75
+      ],
+      "end": [
+        -3.5,
+        -2.75
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 2.15,
+          "width": 1.2,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_salon",
+          "spawn": "from_comedor"
+        }
+      ]
+    }
+  ],
+  "props": [
+    {
+      "kind": "box",
+      "position": [
+        0,
+        0.38,
+        0.2
+      ],
+      "size": [
+        2.2,
+        0.75,
+        1
+      ],
+      "texture": "wood",
+      "tint": 0.5,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.5,
+        0.225,
+        -0.4
+      ],
+      "size": [
+        0.45,
+        0.45,
+        0.45
+      ],
+      "texture": "wall",
+      "tint": 0.45,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.5,
+        0.225,
+        0.8
+      ],
+      "size": [
+        0.45,
+        0.45,
+        0.45
+      ],
+      "texture": "wall",
+      "tint": 0.45,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        0.225,
+        -0.5
+      ],
+      "size": [
+        0.45,
+        0.45,
+        0.45
+      ],
+      "texture": "wall",
+      "tint": 0.45,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        0.225,
+        0.9
+      ],
+      "size": [
+        0.45,
+        0.45,
+        0.45
+      ],
+      "texture": "wall",
+      "tint": 0.45,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.5,
+        0.225,
+        -0.4
+      ],
+      "size": [
+        0.45,
+        0.45,
+        0.45
+      ],
+      "texture": "wall",
+      "tint": 0.45,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.5,
+        0.225,
+        0.8
+      ],
+      "size": [
+        0.45,
+        0.45,
+        0.45
+      ],
+      "texture": "wall",
+      "tint": 0.45,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2,
+        0.45,
+        2.4
+      ],
+      "size": [
+        1.8,
+        0.9,
+        0.45
+      ],
+      "texture": "wall",
+      "tint": 0.5,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        2.4,
+        0.5,
+        2.4
+      ],
+      "size": [
+        0.9,
+        1,
+        0.45
+      ],
+      "texture": "wood",
+      "tint": 0.5,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        0.005,
+        0.2
+      ],
+      "size": [
+        3,
+        0.01,
+        2
+      ],
+      "texture": "stain",
+      "tint": 0.45,
+      "collide": false,
+      "decal": true
+    }
+  ],
+  "models": [
+    {
+      "file": "living_room/book_brown_1.glb",
+      "position": [
+        0.4,
+        0.76,
+        0.2
+      ],
+      "yaw": 25
+    }
+  ],
+  "spawns": {
+    "from_salon": {
+      "position": [
+        -2.25,
+        0
+      ],
+      "yaw": 270
+    },
+    "from_cocina": {
+      "position": [
+        2.25,
+        0
+      ],
+      "yaw": 90
+    },
+    "start": {
+      "position": [
+        -3,
+        0
+      ],
+      "yaw": 270
+    }
+  }
+}

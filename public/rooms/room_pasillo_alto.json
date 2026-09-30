@@ -1,0 +1,337 @@
+{
+  "id": "room_pasillo_alto",
+  "name": "Pasillo Alto",
+  "size": [
+    13.5,
+    2.7,
+    2.4
+  ],
+  "texture_scale": 2,
+  "wall_thickness": 0.15,
+  "textures": {
+    "wall": "Wall/Horror_Wall_09-128x128.png",
+    "floor": "Floor/Horror_Floor_04-128x128.png",
+    "ceiling": "Misc/Horror_Misc_03-128x128.png",
+    "door": "Custom/WoodenDoor1diffuse.png",
+    "stain": "Stains/Horror_Stain_04-128x128.png",
+    "window": "Custom/TiledWindowdiffuse.png"
+  },
+  "audio": {
+    "reverb": "corridor",
+    "floor_material": "wood",
+    "ambience": "house"
+  },
+  "door_fit": true,
+  "walls": [
+    {
+      "start": [
+        -6.75,
+        -1.2
+      ],
+      "end": [
+        6.75,
+        -1.2
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 1.2,
+          "width": 1.1,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_dormitorio",
+          "spawn": "from_pasillo_alto"
+        },
+        {
+          "kind": "door",
+          "offset": 4.6,
+          "width": 1.1,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_cuarto",
+          "spawn": "from_pasillo_alto"
+        },
+        {
+          "kind": "door",
+          "offset": 8.4,
+          "width": 1.1,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_invitados",
+          "spawn": "from_pasillo_alto"
+        }
+      ]
+    },
+    {
+      "start": [
+        6.75,
+        -1.2
+      ],
+      "end": [
+        6.75,
+        1.2
+      ]
+    },
+    {
+      "start": [
+        6.75,
+        1.2
+      ],
+      "end": [
+        -6.75,
+        1.2
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 1.4,
+          "width": 1,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_bano_alto",
+          "spawn": "from_pasillo_alto"
+        },
+        {
+          "kind": "door",
+          "offset": 5.2,
+          "width": 1,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_trastero",
+          "spawn": "from_pasillo_alto"
+        },
+        {
+          "kind": "window",
+          "offset": 8,
+          "width": 1.6,
+          "height": 1.1,
+          "sill": 0.9
+        }
+      ]
+    },
+    {
+      "start": [
+        -6.75,
+        1.2
+      ],
+      "end": [
+        -6.75,
+        -1.2
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 0.6,
+          "width": 1.2,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_escalera",
+          "spawn": "from_pasillo_alto",
+          "action": "down"
+        }
+      ]
+    }
+  ],
+  "props": [
+    {
+      "kind": "box",
+      "position": [
+        -2,
+        0.005,
+        0
+      ],
+      "size": [
+        7.5,
+        0.01,
+        0.8
+      ],
+      "texture": "stain",
+      "tint": 0.4,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -5.7,
+        0.3,
+        0.6
+      ],
+      "size": [
+        0.7,
+        0.6,
+        0.4
+      ],
+      "texture": "wall",
+      "tint": 0.5,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -5.7,
+        0.72,
+        0.6
+      ],
+      "size": [
+        0.16,
+        0.24,
+        0.16
+      ],
+      "texture": "door",
+      "tint": 0.55,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.2,
+        1.5,
+        -1.13
+      ],
+      "size": [
+        0.5,
+        0.7,
+        0.05
+      ],
+      "texture": "door",
+      "tint": 0.5,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.4,
+        1.5,
+        -1.13
+      ],
+      "size": [
+        0.45,
+        0.6,
+        0.05
+      ],
+      "texture": "door",
+      "tint": 0.45,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.4,
+        1.45,
+        1.13
+      ],
+      "size": [
+        0.6,
+        0.5,
+        0.05
+      ],
+      "texture": "door",
+      "tint": 0.4,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.6,
+        1.8,
+        -1.13
+      ],
+      "size": [
+        0.9,
+        0.6,
+        0.05
+      ],
+      "texture": "stain",
+      "tint": 0.25,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        4.6,
+        0.22,
+        0.55
+      ],
+      "size": [
+        0.9,
+        0.44,
+        0.35
+      ],
+      "texture": "wall",
+      "tint": 0.45,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        5.9,
+        0.2,
+        0.5
+      ],
+      "size": [
+        0.3,
+        0.4,
+        0.3
+      ],
+      "texture": "wall",
+      "tint": 0.4,
+      "collide": true
+    }
+  ],
+  "spawns": {
+    "from_escalera": {
+      "position": [
+        -5.5,
+        0
+      ],
+      "yaw": 270
+    },
+    "from_dormitorio": {
+      "position": [
+        -5,
+        0.05
+      ],
+      "yaw": 180
+    },
+    "from_cuarto": {
+      "position": [
+        -1.6,
+        0.05
+      ],
+      "yaw": 180
+    },
+    "from_bano_alto": {
+      "position": [
+        4.85,
+        -0.05
+      ],
+      "yaw": 0
+    },
+    "from_invitados": {
+      "position": [
+        2.2,
+        0.05
+      ],
+      "yaw": 180
+    },
+    "from_trastero": {
+      "position": [
+        1.05,
+        -0.05
+      ],
+      "yaw": 0
+    },
+    "start": {
+      "position": [
+        -6.2,
+        0
+      ],
+      "yaw": 270
+    }
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "items": [
+    {
+      "id": "note_1",
+      "kind": "note",
+      "name_es": "Nota I — Lo que vive abajo",
+      "name_en": "Note I — What lives below",
+      "title_es": "NOTA I",
+      "title_en": "NOTE I",
+      "desc_es": "Una hoja arrancada de un cuaderno. Letra temblorosa.",
+      "desc_en": "A page torn from a notebook. Trembling handwriting.",
+      "text_es": "Es la tercera noche que Aurelio baja al sótano y no sube hasta el amanecer. Cuando vuelve, huele a hierro y a ceniza, y se acuesta sin mirarme.\n\nHoy le oí hablar solo detrás de la puerta. No era su voz. Era una voz que aprendía a usar la suya.\n\nHe escondido la llave del sótano en el cajón de mi mesita. Que nadie baje. Tomás pregunta por su padre y yo le digo que duerme. No quiero que baje a buscarle.\n\nSi alguien encuentra esta nota: no le deis de comer a lo que vive abajo. Por favor. No le deis de comer.",
+      "text_en": "Tonight is the third night Aurelio goes down to the basement and does not come up until dawn. When he returns he smells of iron and ash, and lies down without looking at me.\n\nYesterday I heard him talking alone behind the door. It was not his voice. It was a voice learning to use his.\n\nI have hidden the basement key in my nightstand drawer. No one must go down there. Tomás asks for his father and I tell him he is sleeping. I don't want him going down to look for him.\n\nIf anyone finds this note: do not feed what lives below. Please. Do not feed it."
+    },
+    {
+      "id": "note_2",
+      "kind": "note",
+      "name_es": "Nota II — Mi amigo Hugui",
+      "name_en": "Note II — My friend Hugui",
+      "title_es": "NOTA II",
+      "title_en": "NOTE II",
+      "desc_es": "Una hoja doblada en cuatro. Letra torcida de niño.",
+      "desc_en": "A page folded in four. A child's crooked handwriting.",
+      "text_es": "Papá dice que no hable de Hugui con mamá. Pero Hugui me habla por las noches. Vive detrás de la caldera y tiene frío. Dejo la luz encendida para que sepa que estoy aquí.\n\nPapá le lleva comida cuando cree que duermo. Yo lo veo desde la escalera. Hugui siempre tiene hambre. Siempre.\n\nHugui dice que la casa es suya. Dice que nosotros solo vivimos aquí. Yo le dije que no, y se rió. Sonó como papá. Luego me pidió que guardara un secreto.\n\nLe prometí que no abriré la puerta a nadie. Ni a él. Sobre todo a él.",
+      "text_en": "Dad says I should not talk about Hugui with mom. But Hugui talks to me at night. He lives behind the boiler and he is cold. I leave the light on so he knows I am here.\n\nDad brings him food when he thinks I am asleep. I watch from the stairs. Hugui is always hungry. Always.\n\nHugui says the house is his. He says we only live here. I told him no, and he laughed. It sounded like dad. Then he asked me to keep a secret.\n\nI promised him I will not open the door to anyone. Not even to him. Especially to him."
+    },
+    {
+      "id": "note_3",
+      "kind": "note",
+      "name_es": "Nota III — La confesión",
+      "name_en": "Note III — The confession",
+      "title_es": "NOTA III",
+      "title_en": "NOTE III",
+      "desc_es": "Papel manchado de hollín. Letra apretada y firme.",
+      "desc_en": "Paper stained with soot. Tight, steady handwriting.",
+      "text_es": "Yo apagué la caldera hace años. O eso creía. El invierno que perdí el trabajo volví a bajar y estaba tibia. Algo había crecido dentro, en el hueco donde antes solo había hollín.\n\nHugui Farías no es imaginario. No es un amigo de Tomás. Es lo que la casa guarda. Lo alimenté para que no suba. Carne, primero. Luego lo que encontré.\n\nElena escondió la llave. Cree que me protege. No entiende que soy yo quien lo mantiene tranquilo.\n\nLa puerta principal no se abre por fuerza. Se abre cuando las tres verdades se juntan. Tres recuerdos. El de ella, el del niño y el mío. Si están leyendo esto, ya falta menos.",
+      "text_en": "I turned the boiler off years ago. Or so I believed. The winter I lost my job I went down again and it was warm. Something had grown inside, in the space where there had only been soot.\n\nHugui Farías is not imaginary. He is not Tomás's friend. He is what the house keeps. I fed him so he would not come up. Meat, at first. Later, whatever I found.\n\nElena hid the key. She thinks she is protecting me. She does not understand that I am the one keeping him calm.\n\nThe front door does not open by force. It opens when the three truths come together. Three memories. Hers, the boy's, and mine. If you are reading this, then there is not much left."
+    },
+    {
+      "id": "key_kids",
+      "kind": "key",
+      "name_es": "Llave pequeña",
+      "name_en": "Small key",
+      "desc_es": "Una llave diminuta con una cinta azul; abre el cuarto de Tomás. Estaba en la cocina.",
+      "desc_en": "A tiny key on a blue ribbon; it opens Tomás's room. It was in the kitchen."
+    },
+    {
+      "id": "key_basement",
+      "kind": "key",
+      "name_es": "Llave del sótano",
+      "name_en": "Basement key",
+      "desc_es": "La llave que Elena escondió en el dormitorio. Sigue fría, como si viniera del sótano.",
+      "desc_en": "The key Elena hid in the bedroom. It is still cold, as if it came from the basement."
+    }
+  ]
+}

@@ -1,0 +1,251 @@
+{
+  "id": "room_bodega",
+  "name": "Bodega",
+  "size": [
+    6,
+    2.7,
+    5
+  ],
+  "texture_scale": 2,
+  "wall_thickness": 0.15,
+  "textures": {
+    "wall": "Brick/Horror_Brick_14-128x128.png",
+    "floor": "Floor/Horror_Floor_11-128x128.png",
+    "ceiling": "Misc/Horror_Misc_09-128x128.png",
+    "door": "Custom/GreenMetalDoordiffuse.png",
+    "stone": "Stone/Horror_Stone_06-128x128.png",
+    "wood": "Floor/Horror_Floor_03-128x128.png",
+    "rust": "Metal/Horror_Metal_07-128x128.png",
+    "stain": "Stains/Horror_Stain_14-128x128.png"
+  },
+  "audio": {
+    "reverb": "cave",
+    "floor_material": "stone",
+    "ambience": "basement"
+  },
+  "door_fit": true,
+  "atmosphere": {
+    "fog_start": 2,
+    "fog_end": 10,
+    "ambient": 0.14
+  },
+  "walls": [
+    {
+      "start": [
+        -3,
+        -2.5
+      ],
+      "end": [
+        3,
+        -2.5
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 2.45,
+          "width": 1.1,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_lavanderia",
+          "spawn": "from_bodega"
+        }
+      ]
+    },
+    {
+      "start": [
+        3,
+        -2.5
+      ],
+      "end": [
+        3,
+        2.5
+      ]
+    },
+    {
+      "start": [
+        3,
+        2.5
+      ],
+      "end": [
+        -3,
+        2.5
+      ]
+    },
+    {
+      "start": [
+        -3,
+        2.5
+      ],
+      "end": [
+        -3,
+        -2.5
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 1.95,
+          "width": 1.1,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_calderas",
+          "spawn": "from_bodega"
+        }
+      ]
+    }
+  ],
+  "props": [
+    {
+      "kind": "box",
+      "position": [
+        -1.4,
+        1,
+        -1.9
+      ],
+      "size": [
+        0.5,
+        2,
+        0.9
+      ],
+      "texture": "wood",
+      "tint": 0.4,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.4,
+        1,
+        -1.9
+      ],
+      "size": [
+        0.5,
+        2,
+        0.9
+      ],
+      "texture": "wood",
+      "tint": 0.4,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.9,
+        0.43,
+        -0.6
+      ],
+      "size": [
+        0.6,
+        0.86,
+        0.6
+      ],
+      "texture": "rust",
+      "tint": 0.32,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        2,
+        0.43,
+        0.6
+      ],
+      "size": [
+        0.6,
+        0.86,
+        0.6
+      ],
+      "texture": "rust",
+      "tint": 0.3,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.4,
+        1.5,
+        2.2
+      ],
+      "size": [
+        2.2,
+        0.08,
+        0.4
+      ],
+      "texture": "wood",
+      "tint": 0.4,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.4,
+        1,
+        2.2
+      ],
+      "size": [
+        2.2,
+        0.08,
+        0.4
+      ],
+      "texture": "wood",
+      "tint": 0.38,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.3,
+        0.005,
+        -1.9
+      ],
+      "size": [
+        1.4,
+        0.01,
+        1
+      ],
+      "texture": "stain",
+      "tint": 0.25,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.98,
+        2.1,
+        1.2
+      ],
+      "size": [
+        0.06,
+        1,
+        0.8
+      ],
+      "texture": "stain",
+      "tint": 0.22,
+      "collide": false,
+      "decal": true
+    }
+  ],
+  "spawns": {
+    "from_lavanderia": {
+      "position": [
+        0,
+        -1.25
+      ],
+      "yaw": 180
+    },
+    "from_calderas": {
+      "position": [
+        -1.75,
+        0
+      ],
+      "yaw": 270
+    },
+    "start": {
+      "position": [
+        -2.6,
+        0
+      ],
+      "yaw": 270
+    }
+  }
+}

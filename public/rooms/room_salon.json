@@ -1,0 +1,282 @@
+{
+  "id": "room_salon",
+  "name": "Salón",
+  "size": [
+    9.5,
+    2.7,
+    7
+  ],
+  "texture_scale": 2,
+  "wall_thickness": 0.15,
+  "textures": {
+    "wall": "Wall/Horror_Wall_02-128x128.png",
+    "floor": "Floor/Horror_Floor_06-128x128.png",
+    "ceiling": "Misc/Horror_Misc_03-128x128.png",
+    "door": "Custom/WoodenDoor1diffuse.png",
+    "wood": "Floor/Horror_Floor_03-128x128.png",
+    "metal": "Metal/Horror_Metal_10-128x128.png",
+    "stain": "Stains/Horror_Stain_12-128x128.png",
+    "window": "Custom/TiledWindowdiffuse.png"
+  },
+  "audio": {
+    "reverb": "hall",
+    "floor_material": "wood",
+    "ambience": "house"
+  },
+  "door_fit": true,
+  "walls": [
+    {
+      "start": [
+        -4.75,
+        -3.5
+      ],
+      "end": [
+        4.75,
+        -3.5
+      ],
+      "openings": [
+        {
+          "kind": "window",
+          "offset": 0.9,
+          "width": 1.6,
+          "height": 1.1,
+          "sill": 0.95
+        },
+        {
+          "kind": "window",
+          "offset": 6,
+          "width": 1.6,
+          "height": 1.1,
+          "sill": 0.95
+        }
+      ]
+    },
+    {
+      "start": [
+        4.75,
+        -3.5
+      ],
+      "end": [
+        4.75,
+        3.5
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 2.7,
+          "width": 1.2,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_comedor",
+          "spawn": "from_salon"
+        }
+      ]
+    },
+    {
+      "start": [
+        4.75,
+        3.5
+      ],
+      "end": [
+        -4.75,
+        3.5
+      ]
+    },
+    {
+      "start": [
+        -4.75,
+        3.5
+      ],
+      "end": [
+        -4.75,
+        -3.5
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 2.8,
+          "width": 1.2,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_vestibulo",
+          "spawn": "from_salon"
+        }
+      ]
+    }
+  ],
+  "props": [
+    {
+      "kind": "box",
+      "position": [
+        -2.7,
+        0.6,
+        -3.05
+      ],
+      "size": [
+        1.8,
+        1.2,
+        0.5
+      ],
+      "texture": "wall",
+      "tint": 0.4,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.7,
+        1.85,
+        -3.15
+      ],
+      "size": [
+        1,
+        1.3,
+        0.35
+      ],
+      "texture": "wall",
+      "tint": 0.35,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.7,
+        0.05,
+        -2.45
+      ],
+      "size": [
+        2,
+        0.1,
+        0.7
+      ],
+      "texture": "wall",
+      "tint": 0.5,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.3,
+        1.6,
+        -3.42
+      ],
+      "size": [
+        0.5,
+        0.7,
+        0.03
+      ],
+      "texture": "door",
+      "tint": 0.45,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.3,
+        1.6,
+        -3.42
+      ],
+      "size": [
+        0.5,
+        0.7,
+        0.03
+      ],
+      "texture": "door",
+      "tint": 0.45,
+      "collide": false,
+      "decal": true
+    }
+  ],
+  "models": [
+    {
+      "file": "living_room/rug.glb",
+      "position": [
+        0.6,
+        0,
+        0.4
+      ],
+      "yaw": 0,
+      "subdivision": 0
+    },
+    {
+      "file": "living_room/sofa.glb",
+      "position": [
+        0.6,
+        0,
+        2.2
+      ],
+      "yaw": 180,
+      "collide": true,
+      "size": [
+        1.8,
+        0.85,
+        0.95
+      ]
+    },
+    {
+      "file": "living_room/coffe_table.glb",
+      "position": [
+        0.6,
+        0,
+        0.2
+      ],
+      "yaw": 0,
+      "collide": true,
+      "size": [
+        1.1,
+        0.45,
+        0.6
+      ]
+    },
+    {
+      "file": "living_room/tv.glb",
+      "position": [
+        -0.5,
+        0.68,
+        -3.18
+      ],
+      "yaw": 270,
+      "subdivision": 0,
+      "collide": false
+    },
+    {
+      "file": "living_room/rack.glb",
+      "position": [
+        -0.5,
+        0,
+        -3.18
+      ],
+      "yaw": 0,
+      "collide": true,
+      "size": [
+        1.8,
+        0.7,
+        0.5
+      ]
+    }
+  ],
+  "spawns": {
+    "from_vestibulo": {
+      "position": [
+        -3.5,
+        0.1
+      ],
+      "yaw": 270
+    },
+    "from_comedor": {
+      "position": [
+        3.5,
+        -0.2
+      ],
+      "yaw": 90
+    },
+    "start": {
+      "position": [
+        -4,
+        0.1
+      ],
+      "yaw": 270
+    }
+  }
+}

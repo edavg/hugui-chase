@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mondyi — Stalker Lab</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230b0b0e'/%3E%3Crect x='3' y='6' width='10' height='2' fill='%23a33a2e'/%3E%3Crect x='6' y='4' width='4' height='2' fill='%23cfc7ae'/%3E%3C/svg%3E"
+    />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+      }
+      #stage {
+        position: fixed;
+        inset: 0;
+      }
+      #game {
+        display: block;
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated;
+      }
+      #flash {
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(circle, rgba(163, 58, 46, 0) 35%, rgba(163, 58, 46, 0.55) 100%);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.08s ease-out;
+      }
+      #flash.on {
+        opacity: 1;
+        transition: none;
+      }
+      #panel {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        bottom: 10px;
+        width: 320px;
+        overflow-y: auto;
+        background: rgba(10, 10, 13, 0.88);
+        border: 1px solid #2c2c33;
+        color: #cfc7ae;
+        font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace;
+        padding: 10px 12px;
+        box-sizing: border-box;
+        z-index: 10;
+      }
+      #panel h1 {
+        font-size: 14px;
+        margin: 0 0 8px;
+        letter-spacing: 0.08em;
+        color: #e6dcc4;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      #panel h1 a {
+        font-size: 11px;
+        color: #8fb3a0;
+        text-decoration: none;
+        font-weight: normal;
+      }
+      #panel section {
+        border-top: 1px solid #2c2c33;
+        padding: 8px 0;
+      }
+      #panel h2 {
+        font-size: 11px;
+        margin: 0 0 6px;
+        color: #a33a2e;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      #panel label {
+        display: block;
+        margin: 4px 0;
+      }
+      #panel label.row,
+      #panel label.check {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      #panel label.row span {
+        flex: 0 0 108px;
+        color: #9a937f;
+      }
+      #panel label.row input[type='range'] {
+        flex: 1;
+        min-width: 0;
+      }
+      #panel label.row b {
+        flex: 0 0 66px;
+        text-align: right;
+        color: #e6dcc4;
+        font-weight: normal;
+      }
+      #panel label.check {
+        color: #cfc7ae;
+      }
+      #panel select,
+      #panel input[type='number'] {
+        background: #14141a;
+        color: #e6dcc4;
+        border: 1px solid #34343d;
+        padding: 2px 4px;
+        font: inherit;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      #panel input[type='number'] {
+        width: 70px;
+      }
+      .btns {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 6px 0;
+      }
+      #panel button {
+        background: #1c1c23;
+        color: #cfc7ae;
+        border: 1px solid #3a3a44;
+        padding: 3px 8px;
+        font: inherit;
+        cursor: pointer;
+      }
+      #panel button:hover {
+        background: #26262f;
+        color: #fff;
+      }
+      .hint {
+        margin: 6px 0 0;
+        color: #7d786a;
+        font-size: 11px;
+      }
+      .readout {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 1px 8px;
+      }
+      .readout span {
+        color: #9a937f;
+      }
+      .readout b {
+        text-align: right;
+        font-weight: normal;
+        color: #e6dcc4;
+      }
+      .ok {
+        color: #8fb3a0 !important;
+      }
+      .bad {
+        color: #d06a58 !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage">
+      <canvas id="game"></canvas>
+    </div>
+    <div id="flash"></div>
+    <aside id="panel">
+      <h1>STALKER LAB <a href="./">volver al juego →</a></h1>
+
+      <section>
+        <h2>Estado</h2>
+        <div class="readout">
+          <span>modo</span><b id="out-mode">persecución</b>
+          <span>clip</span><b id="out-clip">—</b>
+          <span>clip t</span><b id="out-time">0.00 / 0.00 s</b>
+          <span>timeScale</span><b id="out-timescale">1.00×</b>
+          <span>velocidad real</span><b id="out-speed">0.00 m/s</b>
+          <span>pie (medido)</span><b id="out-foot">—</b>
+          <span>vel. natural clip</span><b id="out-natural">—</b>
+          <span>patinaje</span><b id="out-slip">—</b>
+          <span>posición</span><b id="out-pos">0.0, 0.0</b>
+        </div>
+      </section>
+
+      <section>
+        <h2>Clip</h2>
+        <label>Clip <select id="clip-select"></select></label>
+        <label class="row"><span>timeScale</span><input id="clip-timescale" type="range" min="0.1" max="3" step="0.05" value="1" /><b id="clip-timescale-out">1.00×</b></label>
+        <label class="row"><span>crossfade</span><input id="clip-fade" type="range" min="0" max="0.8" step="0.01" value="0.25" /><b id="clip-fade-out">0.25 s</b></label>
+        <label class="row"><span>pose (scrub)</span><input id="clip-scrub" type="range" min="0" max="1" step="0.002" value="0" /><b id="clip-scrub-out">0%</b></label>
+        <div class="btns">
+          <button id="btn-play">Pausar</button>
+          <button id="btn-restart">Reiniciar clip</button>
+        </div>
+        <p class="hint">Espacio play/pausa · 1–6 clips · el clip elegido a mano desactiva el automático.</p>
+      </section>
+
+      <section>
+        <h2>Movilidad</h2>
+        <label>
+          Modo
+          <select id="move-mode">
+            <option value="pursue">Persecución + ataque</option>
+            <option value="line">Andar en línea (ida y vuelta)</option>
+            <option value="circle">Círculo</option>
+            <option value="idle">Quieto</option>
+          </select>
+        </label>
+        <label class="row"><span>velocidad</span><input id="move-speed" type="range" min="0" max="5" step="0.05" value="3.6" /><b id="move-speed-out">3.60 m/s</b></label>
+        <div class="btns">
+          <button data-speed="1.5">patrulla 1.5</button>
+          <button data-speed="2.3">búsqueda 2.3</button>
+          <button data-speed="3.6">caza 3.6</button>
+        </div>
+        <label class="check"><input id="move-auto" type="checkbox" checked /> Clip automático según velocidad (idle/walk/run)</label>
+        <label class="check"><input id="move-sync" type="checkbox" checked /> Sincronizar timeScale con la velocidad (quita el patinaje)</label>
+        <label class="row"><span>natural andar</span><input id="natural-walk" type="number" min="0.05" step="0.05" value="0.35" /><b>m/s</b></label>
+        <label class="row"><span>natural correr</span><input id="natural-run" type="number" min="0.05" step="0.05" value="2" /><b>m/s</b></label>
+        <div class="btns"><button id="btn-calibrate">Medir clip activo y calibrar naturales</button></div>
+        <p class="hint" id="move-status"></p>
+        <p class="hint">
+          El pie plantado retrocede a la velocidad natural del clip. Si la velocidad real no coincide, los pies
+          patinan: pulsa medir (reproduce un ciclo a 120 Hz) o ajusta los naturales a mano hasta que el
+          patinaje quede en 0 %.
+        </p>
+      </section>
+
+      <section>
+        <h2>Ataque</h2>
+        <div class="btns"><button id="btn-attack">Atacar ya</button></div>
+        <label class="row"><span>distancia</span><input id="attack-distance" type="range" min="2" max="10" step="0.5" value="6" /><b id="attack-distance-out">6.0 m</b></label>
+        <label class="check"><input id="attack-loop" type="checkbox" checked /> Repetir persecución en bucle</label>
+        <p class="hint" id="attack-status">
+          Attack_Lunge dura 1.21 s; el impacto (mano y cabeza al frente) llega hacia 0.63 s.
+        </p>
+      </section>
+
+      <section>
+        <h2>Cámara</h2>
+        <label class="check"><input id="cam-orbit" type="checkbox" /> Órbita automática</label>
+        <label class="check"><input id="cam-follow" type="checkbox" checked /> Seguir al stalker</label>
+        <div class="btns"><button id="btn-cam-reset">Reiniciar cámara</button></div>
+        <p class="hint">Arrastra el ratón para orbitar · rueda para acercar.</p>
+      </section>
+      <footer>
+        <p class="hint">Bucle fijo a 30 fps, igual que el juego.</p>
+      </footer>
+    </aside>
+    <script type="module" src="/src/dev/stalkerLab.ts"></script>
+  </body>
+</html>

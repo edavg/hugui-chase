@@ -1,0 +1,250 @@
+{
+  "id": "room_dormitorio",
+  "name": "Dormitorio Principal",
+  "size": [
+    7.5,
+    2.7,
+    6
+  ],
+  "texture_scale": 2,
+  "wall_thickness": 0.15,
+  "textures": {
+    "wall": "Wall/Horror_Wall_12-128x128.png",
+    "floor": "Floor/Horror_Floor_09-128x128.png",
+    "ceiling": "Misc/Horror_Misc_03-128x128.png",
+    "door": "Custom/WoodenDoor2diffuse.png",
+    "metal": "Metal/Horror_Metal_12-128x128.png",
+    "stain": "Stains/Horror_Stain_08-128x128.png",
+    "window": "Custom/TiledWindowdiffuse.png"
+  },
+  "audio": {
+    "reverb": "small",
+    "floor_material": "wood",
+    "ambience": "house"
+  },
+  "door_fit": true,
+  "walls": [
+    {
+      "start": [
+        -3.75,
+        -3
+      ],
+      "end": [
+        3.75,
+        -3
+      ],
+      "openings": [
+        {
+          "kind": "window",
+          "offset": 2.8,
+          "width": 1.6,
+          "height": 1.2,
+          "sill": 0.9
+        }
+      ]
+    },
+    {
+      "start": [
+        3.75,
+        -3
+      ],
+      "end": [
+        3.75,
+        3
+      ]
+    },
+    {
+      "start": [
+        3.75,
+        3
+      ],
+      "end": [
+        -3.75,
+        3
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 3.4,
+          "width": 1.1,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_pasillo_alto",
+          "spawn": "from_dormitorio"
+        }
+      ]
+    },
+    {
+      "start": [
+        -3.75,
+        3
+      ],
+      "end": [
+        -3.75,
+        -3
+      ]
+    }
+  ],
+  "props": [
+    {
+      "kind": "box",
+      "position": [
+        1.2,
+        0.3,
+        0.9
+      ],
+      "size": [
+        0.45,
+        0.6,
+        0.45
+      ],
+      "texture": "wall",
+      "tint": 0.5,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.6,
+        1.5,
+        -2.92
+      ],
+      "size": [
+        0.6,
+        0.8,
+        0.03
+      ],
+      "texture": "door",
+      "tint": 0.45,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.3,
+        0.005,
+        0.2
+      ],
+      "size": [
+        2.4,
+        0.01,
+        2
+      ],
+      "texture": "stain",
+      "tint": 0.45,
+      "collide": false,
+      "decal": true
+    }
+  ],
+  "models": [
+    {
+      "file": "bedroom/room_furniture.glb",
+      "node": [
+        "Base_Cama_01",
+        "Cabeceira_Cama_01",
+        "Colchao_Cama_01"
+      ],
+      "position": [
+        -2.2,
+        0,
+        -0.6
+      ],
+      "yaw": 0,
+      "tint": 0.7,
+      "collide": true,
+      "size": [
+        2,
+        0.8,
+        1.4
+      ]
+    },
+    {
+      "file": "bedroom/room_furniture.glb",
+      "node": "Mesa_Cabeceira_*",
+      "position": [
+        -3.4,
+        0,
+        -1.8
+      ],
+      "yaw": 180,
+      "tint": 1.4,
+      "collide": true,
+      "size": [
+        0.45,
+        0.45,
+        0.5
+      ]
+    },
+    {
+      "file": "bedroom/room_furniture.glb",
+      "node": "Guarda_Roupa_*",
+      "position": [
+        2.7,
+        0,
+        -1.9
+      ],
+      "yaw": 270,
+      "tint": 1.4,
+      "collide": true,
+      "size": [
+        1.7,
+        2,
+        0.7
+      ]
+    },
+    {
+      "file": "bedroom/room_furniture.glb",
+      "node": "Abajur_*",
+      "position": [
+        -3.3,
+        0,
+        2.3
+      ],
+      "yaw": 0,
+      "tint": 1.5,
+      "collide": true,
+      "size": [
+        0.45,
+        1.6,
+        0.45
+      ]
+    }
+  ],
+  "items": [
+    {
+      "id": "note_1",
+      "position": [
+        -3.4,
+        0.48,
+        -1.8
+      ],
+      "yaw": 12
+    },
+    {
+      "id": "key_basement",
+      "position": [
+        -1.7,
+        0.6,
+        -0.6
+      ],
+      "yaw": 40
+    }
+  ],
+  "spawns": {
+    "from_pasillo_alto": {
+      "position": [
+        -0.2,
+        1.75
+      ],
+      "yaw": 0
+    },
+    "start": {
+      "position": [
+        -0.2,
+        2.2
+      ],
+      "yaw": 0
+    }
+  }
+}
