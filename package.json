@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
+    "deploy": "npm run build && wrangler deploy",
     "typecheck": "tsc --noEmit",
     "model:convert": "node_modules/fbx2gltf/bin/Darwin/FBX2glTF --binary --output public/assets/models/stalker/monster.glb",
     "rooms:gen": "node tools/gen_rooms.mjs",
@@ -20,6 +21,7 @@
     "@types/three": "^0.186.0",
     "fbx2gltf": "^0.9.7-p1",
     "typescript": "^7.0.2",
-    "vite": "^8.3.1"
+    "vite": "^8.3.1",
+    "wrangler": "^4.144.0"
   }
 }
