@@ -91,7 +91,7 @@ export class Player {
     const pitchSign = config.player.invert_look ? 1 : -1;
     this.pitch = THREE.MathUtils.clamp(this.pitch + pitchSign * lookY * sensitivity, -1.5, 1.5);
 
-    const stick = input.padAxis();
+    const stick = input.moveAxis();
     let forward = stick.y;
     let strafe = stick.x;
     if (input.isDown('KeyW') || input.isDown('ArrowUp')) forward += 1;

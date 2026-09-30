@@ -4,6 +4,17 @@ export type ControlRow = readonly [action: string, keys: string];
 
 export interface UiTexts {
   clickToPlay: string;
+  touchToPlay: string;
+  touchUse: string;
+  touchBag: string;
+  touchLight: string;
+  touchRun: string;
+  touchPause: string;
+  inventoryHintsNoteTouch: string;
+  inventoryHintsKeyTouch: string;
+  inventoryHintsEmptyTouch: string;
+  examineHintTouch: string;
+  readHintTouch: string;
   promptOpen: string;
   promptClosed: string;
   promptKeyLocked: string;
@@ -12,6 +23,7 @@ export interface UiTexts {
   promptPickNote: string;
   promptPickKey: string;
   promptPickTool: (name: string) => string;
+  promptBurnPoster: string;
   promptEndingReady: string;
   promptEndingLocked: (have: number, total: number) => string;
   inventoryTitle: string;
@@ -27,8 +39,10 @@ export interface UiTexts {
   endingText: string;
   endingHint: string;
   toastNote: (have: number, total: number) => string;
+  toastPoster: (have: number, total: number) => string;
   toastKey: (name: string) => string;
   toastFlashlight: string;
+  toastFlashlightTouch: string;
   toastStalker: string;
   toastStalkerSeen: string;
   toastHit: (hearts: number) => string;
@@ -58,6 +72,7 @@ export interface UiTexts {
   optionSubtitles: string;
   optionGamepad: string;
   optionLanguage: string;
+  optionTouchControls: string;
   optionsRestore: string;
   controlsTitle: string;
   controlsNote: string;
@@ -81,11 +96,25 @@ export interface UiTexts {
   menuHintArrows: string;
   menuHintAccept: string;
   menuHintBack: string;
+  menuHintArrowsTouch: string;
+  menuHintAcceptTouch: string;
+  menuHintBackTouch: string;
 }
 
 export const TEXTS: Record<Language, UiTexts> = {
   es: {
     clickToPlay: 'CLICK PARA JUGAR — WASD MOVER · SHIFT CORRER · E INTERACTUAR · I INVENTARIO',
+    touchToPlay: 'JOYSTICK IZQ MOVER · ARRASTRA DER MIRAR',
+    touchUse: 'USAR',
+    touchBag: 'BOLSA',
+    touchLight: 'LUZ',
+    touchRun: 'CORRER',
+    touchPause: 'PAUSA',
+    inventoryHintsNoteTouch: 'JOYSTICK ELEGIR · USAR LEER · BOLSA',
+    inventoryHintsKeyTouch: 'JOYSTICK ELEGIR · USAR EXAMINAR · BOLSA',
+    inventoryHintsEmptyTouch: 'JOYSTICK ELEGIR · BOLSA CERRAR',
+    examineHintTouch: 'JOYSTICK GIRAR · PAUSA VOLVER',
+    readHintTouch: 'USAR CONTINUAR · PAUSA CERRAR',
     promptOpen: 'E — ABRIR',
     promptClosed: 'E — CERRADA',
     promptKeyLocked: 'E — CERRADA CON LLAVE',
@@ -94,8 +123,9 @@ export const TEXTS: Record<Language, UiTexts> = {
     promptPickNote: 'E — COGER NOTA',
     promptPickKey: 'E — COGER LLAVE',
     promptPickTool: (name) => `E — COGER ${name.toUpperCase()}`,
+    promptBurnPoster: 'E — QUEMAR AFICHE',
     promptEndingReady: 'E — SALIR DE LA CASA',
-    promptEndingLocked: (have, total) => `E — CERRADA (${have}/${total} NOTAS)`,
+    promptEndingLocked: (have, total) => `E — CERRADA (${have}/${total} AFICHES)`,
     inventoryTitle: 'INVENTARIO',
     inventoryEmpty: 'VACÍO',
     inventoryHintsNote: 'FLECHAS ELEGIR · E LEER · C COMBINAR · I CERRAR',
@@ -107,11 +137,13 @@ export const TEXTS: Record<Language, UiTexts> = {
     readHint: 'E CONTINUAR · ESC CERRAR',
     endingTitle: 'HAS ESCAPADO',
     endingText:
-      'La puerta principal se cierra a tu espalda. La casa se queda atrás, con Hugui en su sótano.\n\nLeíste las tres notas. Quizá por eso te ha dejado salir.',
+      'La puerta principal se cierra a tu espalda. La casa se queda atrás, vacía.\n\nQuemaste los ocho afiches de Hugui Farías. Sin su propaganda, sin su presencia. Por eso la puerta se abrió.',
     endingHint: 'E — VOLVER A JUGAR',
     toastNote: (have, total) => `NOTA CONSEGUIDA (${have}/${total})`,
+    toastPoster: (have, total) => `AFICHE QUEMADO (${have}/${total})`,
     toastKey: (name) => `LLAVE CONSEGUIDA — ${name}`,
     toastFlashlight: 'LINTERNA CONSEGUIDA — PULSA F PARA ENCENDERLA',
+    toastFlashlightTouch: 'LINTERNA CONSEGUIDA — BOTÓN LUZ PARA ENCENDERLA',
     toastStalker: 'ALGO SE HA DESPERTADO EN LA CASA…',
     toastStalkerSeen: 'TE HA VISTO',
     toastHit: (hearts) =>
@@ -142,6 +174,7 @@ export const TEXTS: Record<Language, UiTexts> = {
     optionSubtitles: 'TEXTOS EN PANTALLA',
     optionGamepad: 'MANDO',
     optionLanguage: 'IDIOMA',
+    optionTouchControls: 'CONTROLES TÁCTILES',
     optionsRestore: 'RESTAURAR VALORES',
     controlsTitle: 'CONTROLES',
     controlsNote: 'CON MANDO: CRUZ PARA MOVER, A INTERACTUAR, X INVENTARIO, START PAUSA.',
@@ -166,9 +199,23 @@ export const TEXTS: Record<Language, UiTexts> = {
     menuHintArrows: 'FLECHAS ELEGIR',
     menuHintAccept: 'E ACEPTAR',
     menuHintBack: 'ESC VOLVER',
+    menuHintArrowsTouch: 'JOYSTICK',
+    menuHintAcceptTouch: 'USAR',
+    menuHintBackTouch: 'PAUSA',
   },
   en: {
     clickToPlay: 'CLICK TO PLAY — WASD MOVE · SHIFT RUN · E INTERACT · I INVENTORY',
+    touchToPlay: 'LEFT JOYSTICK MOVE · DRAG RIGHT TO LOOK',
+    touchUse: 'USE',
+    touchBag: 'BAG',
+    touchLight: 'LIGHT',
+    touchRun: 'RUN',
+    touchPause: 'PAUSE',
+    inventoryHintsNoteTouch: 'JOYSTICK SELECT · USE READ · BAG',
+    inventoryHintsKeyTouch: 'JOYSTICK SELECT · USE EXAMINE · BAG',
+    inventoryHintsEmptyTouch: 'JOYSTICK SELECT · BAG CLOSE',
+    examineHintTouch: 'JOYSTICK ROTATE · PAUSE BACK',
+    readHintTouch: 'USE CONTINUE · PAUSE CLOSE',
     promptOpen: 'E — OPEN',
     promptClosed: 'E — LOCKED',
     promptKeyLocked: 'E — LOCKED WITH A KEY',
@@ -177,8 +224,9 @@ export const TEXTS: Record<Language, UiTexts> = {
     promptPickNote: 'E — TAKE NOTE',
     promptPickKey: 'E — TAKE KEY',
     promptPickTool: (name) => `E — TAKE ${name.toUpperCase()}`,
+    promptBurnPoster: 'E — BURN POSTER',
     promptEndingReady: 'E — LEAVE THE HOUSE',
-    promptEndingLocked: (have, total) => `E — LOCKED (${have}/${total} NOTES)`,
+    promptEndingLocked: (have, total) => `E — LOCKED (${have}/${total} POSTERS)`,
     inventoryTitle: 'INVENTORY',
     inventoryEmpty: 'EMPTY',
     inventoryHintsNote: 'ARROWS SELECT · E READ · C COMBINE · I CLOSE',
@@ -190,11 +238,13 @@ export const TEXTS: Record<Language, UiTexts> = {
     readHint: 'E CONTINUE · ESC CLOSE',
     endingTitle: 'YOU ESCAPED',
     endingText:
-      'The front door closes behind your back. The house stays behind, with Hugui in its basement.\n\nYou read all three notes. Perhaps that is why he let you leave.',
+      'The front door closes behind your back. The house stays behind, empty.\n\nYou burned all eight of Hugui Farías\'s posters. No more propaganda, no more presence. That is why the door opened.',
     endingHint: 'E — PLAY AGAIN',
     toastNote: (have, total) => `NOTE COLLECTED (${have}/${total})`,
+    toastPoster: (have, total) => `POSTER BURNED (${have}/${total})`,
     toastKey: (name) => `KEY COLLECTED — ${name}`,
     toastFlashlight: 'FLASHLIGHT COLLECTED — PRESS F TO TURN IT ON',
+    toastFlashlightTouch: 'FLASHLIGHT COLLECTED — LIGHT BUTTON TO TURN IT ON',
     toastStalker: 'SOMETHING HAS AWOKEN IN THE HOUSE…',
     toastStalkerSeen: 'IT HAS SEEN YOU',
     toastHit: (hearts) =>
@@ -225,6 +275,7 @@ export const TEXTS: Record<Language, UiTexts> = {
     optionSubtitles: 'ON-SCREEN TEXT',
     optionGamepad: 'GAMEPAD',
     optionLanguage: 'LANGUAGE',
+    optionTouchControls: 'TOUCH CONTROLS',
     optionsRestore: 'RESTORE DEFAULTS',
     controlsTitle: 'CONTROLS',
     controlsNote: 'WITH A GAMEPAD: STICK TO MOVE, A TO INTERACT, X FOR INVENTORY, START TO PAUSE.',
@@ -249,6 +300,9 @@ export const TEXTS: Record<Language, UiTexts> = {
     menuHintArrows: 'ARROWS SELECT',
     menuHintAccept: 'E ACCEPT',
     menuHintBack: 'ESC BACK',
+    menuHintArrowsTouch: 'JOYSTICK',
+    menuHintAcceptTouch: 'USE',
+    menuHintBackTouch: 'PAUSE',
   },
 };
 

@@ -40,9 +40,14 @@
           "height": 2.1,
           "door": "closed",
           "requires": [
-            "note_1",
-            "note_2",
-            "note_3"
+            "poster_1",
+            "poster_2",
+            "poster_3",
+            "poster_4",
+            "poster_5",
+            "poster_6",
+            "poster_7",
+            "poster_8"
           ],
           "ending": true
         }
@@ -214,6 +219,17 @@
       "tint": 0.3,
       "collide": false,
       "decal": true
+    }
+  ],
+  "items": [
+    {
+      "id": "poster_1",
+      "position": [
+        -3.905,
+        1.5,
+        -1.6
+      ],
+      "yaw": 90
     }
   ],
   "spawns": {

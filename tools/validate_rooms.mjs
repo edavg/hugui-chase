@@ -268,10 +268,13 @@ for (const room of rooms.values()) {
     }
   }
 
+  // Los ítems pueden ir pegados al muro (afiches): margen mínimo, solo para
+  // detectar ítems fuera de la sala o incrustados en el muro.
+  const itemMargin = Math.max(0.05, room.wall_thickness / 2 - 0.01);
   for (const item of room.items ?? []) {
     if (!catalog.has(item.id)) fail(`${room.id}: ítem ${item.id} no está en el catálogo`);
     const [x, y, z] = item.position;
-    if (Math.abs(x) > halfW - 0.25 || Math.abs(z) > halfD - 0.25) fail(`${room.id}: ítem ${item.id} fuera de la sala`);
+    if (Math.abs(x) > halfW - itemMargin || Math.abs(z) > halfD - itemMargin) fail(`${room.id}: ítem ${item.id} fuera de la sala`);
     if (y <= 0.02 || y > h) fail(`${room.id}: ítem ${item.id} con altura sospechosa (${y})`);
   }
 

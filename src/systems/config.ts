@@ -21,6 +21,10 @@ export interface PsxConfig {
   resolution: [number, number];
   fps: number;
   fov: number;
+  // FOV vertical en pantallas en vertical (móvil). El render vertical usa una
+  // resolución más alta que ancha, así que un FOV mayor evita un encuadre
+  // demasiado estrecho. Opcional (por defecto 95).
+  fov_portrait?: number;
   near: number;
   far: number;
   color_bits: number;
@@ -95,6 +99,10 @@ export interface PsxConfig {
     patrol_rooms: string[];
     forbidden_rooms: string[];
     forbidden_seconds: number;
+    // Cada afiche quemado acelera al stalker un paso (fracción de su velocidad
+    // base) hasta un tope acumulado. Opcionales (0.05 por afiche, tope 1.35).
+    poster_speed_step?: number;
+    poster_speed_max?: number;
   };
   loading: {
     authentic: boolean;

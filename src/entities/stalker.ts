@@ -68,6 +68,8 @@ const DEFAULT_ATTACK_RANGE = 1.35;
 const DEFAULT_ATTACK_WINDUP = 1.2;
 const DEFAULT_ATTACK_RECOVER = 1.6;
 const DEFAULT_ATTACK_COOLDOWN = 4.0;
+const DEFAULT_POSTER_SPEED_STEP = 0.05;
+const DEFAULT_POSTER_SPEED_MAX = 1.35;
 
 export class Stalker {
   readonly object = new THREE.Group();
@@ -120,6 +122,7 @@ export class Stalker {
   private attackPhase: 'windup' | 'recover' = 'windup';
   private attackTimer = 0;
   private attackReadyAt = 0;
+  private speedScale = 1;
 
   private constructor(
     config: PsxConfig,
@@ -246,6 +249,16 @@ export class Stalker {
     console.info(
       `[M5] Stalker despierto en ${this.roomId} | patrulla: ${this.config.patrol_rooms.join(', ')} | prohibido: ${this.config.forbidden_rooms.join(', ')} (${this.config.forbidden_seconds}s)`,
     );
+  }
+
+  /**
+   * Cada afiche quemado acelera al stalker un poco, con un tope acumulado
+   * para que la escalada siga siendo jugable.
+   */
+  setBurnedPosters(count: number): void {
+    const step = this.config.poster_speed_step ?? DEFAULT_POSTER_SPEED_STEP;
+    const max = this.config.poster_speed_max ?? DEFAULT_POSTER_SPEED_MAX;
+    this.speedScale = Math.min(max, 1 + Math.max(0, count) * step);
   }
 
   teleportTo(room: string, x: number, z: number, yaw: number): void {
@@ -698,13 +711,15 @@ export class Stalker {
   }
 
   private currentSpeed(): number {
+    let base: number;
     if (this.state === 'chase') {
-      return this.config.chase_speed;
+      base = this.config.chase_speed;
+    } else if (this.state === 'search' || this.state === 'suspect') {
+      base = this.config.search_speed;
+    } else {
+      base = this.config.patrol_speed;
     }
-    if (this.state === 'search' || this.state === 'suspect') {
-      return this.config.search_speed;
-    }
-    return this.config.patrol_speed;
+    return base * this.speedScale;
   }
 
   private advance(dirX: number, dirZ: number, distance: number, dt: number): number {

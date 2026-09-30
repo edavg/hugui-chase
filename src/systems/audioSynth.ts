@@ -7,6 +7,7 @@ export type OneShotId =
   | 'pickup_note'
   | 'pickup_key'
   | 'paper_turn'
+  | 'burn'
   | 'flash_click'
   | 'stinger'
   | 'attack_warn'
@@ -337,6 +338,49 @@ async function renderPaper(sampleRate: number, duration: number, gain: number): 
   source.start(0);
   source.stop(duration + 0.05);
   return normalize(await ctx.startRendering(), 0.8);
+}
+
+async function renderBurn(sampleRate: number): Promise<AudioBuffer> {
+  const duration = 1.1;
+  const ctx = createOffline(sampleRate, duration + 0.15);
+  const noise = noiseBuffer(ctx, 1.2);
+
+  // Whoosh de llama
+  noiseBurst(ctx, noise, {
+    duration: 0.35,
+    gain: 0.7,
+    type: 'bandpass',
+    frequency: 600,
+    endFrequency: 2200,
+    q: 1.2,
+    attack: 0.01,
+    rate: 0.8,
+  });
+
+  // Crepitar continuo
+  noiseBurst(ctx, noise, {
+    at: 0.05,
+    duration: duration - 0.05,
+    gain: 0.3,
+    type: 'bandpass',
+    frequency: 3200,
+    endFrequency: 1200,
+    q: 2.5,
+    attack: 0.02,
+  });
+
+  // Chispas irregulares
+  for (let i = 0; i < 8; i += 1) {
+    noiseBurst(ctx, noise, {
+      at: 0.1 + Math.random() * (duration - 0.3),
+      duration: 0.03 + Math.random() * 0.04,
+      gain: 0.25 + Math.random() * 0.2,
+      type: 'highpass',
+      frequency: 4000 + Math.random() * 2000,
+    });
+  }
+
+  return normalize(await ctx.startRendering(), 0.85);
 }
 
 async function renderKeyPickup(sampleRate: number): Promise<AudioBuffer> {
@@ -683,6 +727,8 @@ export async function renderOneShot(sampleRate: number, id: OneShotId): Promise<
       return renderPaper(sampleRate, 0.5, 0.45);
     case 'paper_turn':
       return renderPaper(sampleRate, 0.34, 0.3);
+    case 'burn':
+      return renderBurn(sampleRate);
     case 'flash_click':
       return renderFlashClick(sampleRate);
     case 'pickup_key':

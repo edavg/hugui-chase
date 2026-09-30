@@ -1,7 +1,7 @@
 import { fetchJson } from './fetchJson';
 import type { Language } from './i18n';
 
-export type ItemKind = 'note' | 'key' | 'tool';
+export type ItemKind = 'note' | 'key' | 'tool' | 'poster';
 
 export interface ItemDef {
   id: string;
@@ -16,7 +16,18 @@ export interface ItemDef {
   text_en?: string;
 }
 
-export const NOTE_IDS = ['note_1', 'note_2', 'note_3'];
+export const POSTER_IDS = [
+  'poster_1',
+  'poster_2',
+  'poster_3',
+  'poster_4',
+  'poster_5',
+  'poster_6',
+  'poster_7',
+  'poster_8',
+] as const;
+
+export type PosterId = (typeof POSTER_IDS)[number];
 
 export async function loadItemCatalog(): Promise<Map<string, ItemDef>> {
   const url = `${import.meta.env.BASE_URL}config/items.json`;

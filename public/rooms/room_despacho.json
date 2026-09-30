@@ -259,6 +259,17 @@
       "yaw": 15
     }
   ],
+  "items": [
+    {
+      "id": "poster_5",
+      "position": [
+        2.655,
+        1.5,
+        0
+      ],
+      "yaw": -90
+    }
+  ],
   "spawns": {
     "from_pasillo": {
       "position": [

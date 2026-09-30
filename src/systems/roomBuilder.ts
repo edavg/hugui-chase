@@ -7,7 +7,7 @@ import type { PsxConfig } from './config';
 import { fetchJson } from './fetchJson';
 import type { ItemDef, ItemKind } from './items';
 import { createPsxMaterial, type Atmosphere, type PsxMaterialHandle } from './psxMaterial';
-import { createNoteTexture } from './proceduralTextures';
+import { loadPosterTexture } from './proceduralTextures';
 import { loadPixelTexture } from './textures';
 import { addVertexColors } from './vertexColors';
 
@@ -350,7 +350,7 @@ export async function buildRoom(
     textureKeys.map((key, index) => [key, createPsxMaterial(config, textures[index], atmosphere)]),
   ) as Record<string, PsxMaterialHandle>;
 
-  const paperMaterial = createPsxMaterial(config, createNoteTexture(), atmosphere);
+  const posterMaterial = createPsxMaterial(config, loadPosterTexture(), atmosphere);
 
   const scene = new THREE.Scene();
   const colliders = computeColliders(data);
@@ -668,7 +668,7 @@ export async function buildRoom(
     if (!def) {
       throw new Error(`La sala ${data.id} referencia un ítem desconocido: ${item.id}`);
     }
-    const material = def.kind === 'note' ? paperMaterial.material : materials.door.material;
+    const material = def.kind === 'poster' ? posterMaterial.material : materials.door.material;
     const object = buildItemModel(def.kind, material);
     object.position.set(item.position[0], item.position[1], item.position[2]);
     object.rotation.y = THREE.MathUtils.degToRad(item.yaw ?? 0);
@@ -726,7 +726,7 @@ export async function buildRoom(
     audio: { ...FALLBACK_ROOM_AUDIO, ...ROOM_AUDIO_DEFAULTS[data.id], ...data.audio },
     sync: (next) => {
       textureKeys.forEach((key) => materials[key].sync(next, atmosphere));
-      paperMaterial.sync(next, atmosphere);
+      posterMaterial.sync(next, atmosphere);
       extraMaterials.forEach((handle) => handle.sync(next, atmosphere));
     },
     triangleCount: countTriangles(scene),
@@ -919,6 +919,13 @@ function decalGeometry(
 
 function buildItemModel(kind: ItemKind, material: THREE.Material): THREE.Object3D {
   const group = new THREE.Group();
+
+  if (kind === 'poster') {
+    const plane = new THREE.PlaneGeometry(0.55, 0.85);
+    paintVertexColors(plane, () => 1.1);
+    group.add(new THREE.Mesh(plane, material));
+    return group;
+  }
 
   if (kind === 'note') {
     const paper = new THREE.BoxGeometry(0.21, 0.006, 0.3);

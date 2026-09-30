@@ -145,11 +145,12 @@ const rooms = [
     },
     audio: { reverb: 'hall', floor_material: 'wood', ambience: 'house' },
     doors: [
-      { side: 'N', offset: 3.4, width: 1.2, requires: ['note_1', 'note_2', 'note_3'], ending: true },
+      { side: 'N', offset: 3.4, width: 1.2, requires: ['poster_1', 'poster_2', 'poster_3', 'poster_4', 'poster_5', 'poster_6', 'poster_7', 'poster_8'], ending: true },
       { side: 'E', offset: 2.6, width: 1.2, to: 'room_salon' },
     ],
     windows: [{ side: 'S', offset: 1.6, width: 1.6 }],
     start: { position: [0.0, 1.6], yaw: 0 },
+    items: [{ id: 'poster_1', position: [-3.905, 1.5, -1.6], yaw: 90 }],
     props: [
       { position: [2.0, 0.3, -2.35], size: [1.4, 0.6, 0.5], texture: 'wall', tint: 0.6, collide: true },
       { position: [-3.2, 0.4, 0.2], size: [0.9, 0.8, 0.4], texture: 'wall', tint: 0.65, collide: true },
@@ -184,6 +185,7 @@ const rooms = [
       { side: 'N', offset: 6.0, width: 1.6 },
     ],
     start: { position: [-4.0, 0.1], yaw: 270 },
+    items: [{ id: 'poster_2', position: [-2.8, 1.5, 3.405], yaw: 180 }],
     models: [
       { file: 'living_room/rug.glb', position: [0.6, 0.0, 0.4], yaw: 0, subdivision: 0 },
       { file: 'living_room/sofa.glb', position: [0.6, 0.0, 2.2], yaw: 180, collide: true, size: [1.8, 0.85, 0.95] },
@@ -219,6 +221,7 @@ const rooms = [
     ],
     windows: [{ side: 'N', offset: 2.7, width: 1.6 }],
     start: { position: [-3.0, 0.0], yaw: 270 },
+    items: [{ id: 'poster_3', position: [2.0, 1.5, 2.655], yaw: 180 }],
     models: [
       { file: 'living_room/book_brown_1.glb', position: [0.4, 0.76, 0.2], yaw: 25 },
     ],
@@ -256,7 +259,10 @@ const rooms = [
     ],
     windows: [{ side: 'N', offset: 3.4, width: 1.4, height: 1.1, sill: 1.0 }],
     start: { position: [-2.5, 0.0], yaw: 270 },
-    items: [{ id: 'key_kids', position: [-0.9, 1.05, -1.95], yaw: 12 }],
+    items: [
+      { id: 'key_kids', position: [-0.9, 1.05, -1.95], yaw: 12 },
+      { id: 'poster_4', position: [3.0, 1.5, 2.405], yaw: 180 },
+    ],
     models: [
       { file: 'kitchen/kitchen_pack.glb', node: 'Cabinet', position: [-1.1, 0.0, -2.0], yaw: 0, collide: true, size: [2.0, 1.0, 1.05] },
       { file: 'kitchen/kitchen_pack.glb', node: 'Kitchen_Sink', position: [1.1, 0.0, -2.0], yaw: 0, collide: true, size: [2.0, 1.3, 1.1] },
@@ -348,6 +354,7 @@ const rooms = [
     doors: [{ side: 'S', offset: 2.2, width: 1.1, to: 'room_pasillo' }],
     windows: [{ side: 'N', offset: 2.05, width: 1.4 }],
     start: { position: [0.0, 1.2], yaw: 0 },
+    items: [{ id: 'poster_5', position: [2.655, 1.5, 0.0], yaw: -90 }],
     models: [
       { file: 'living_room/bookcase.glb', position: [-2.5, 0.0, 0.4], yaw: 90, tint: 1.1, collide: true, size: [0.25, 1.8, 0.8] },
       { file: 'living_room/armchair.glb', position: [1.6, 0.0, -2.0], yaw: 0, collide: true, size: [1.05, 0.9, 0.9] },
@@ -446,7 +453,7 @@ const rooms = [
     windows: [{ side: 'N', offset: 2.8, width: 1.6, height: 1.2, sill: 0.9 }],
     start: { position: [-0.2, 2.2], yaw: 0 },
     items: [
-      { id: 'note_1', position: [-3.4, 0.48, -1.8], yaw: 12 },
+      { id: 'poster_6', position: [3.655, 1.5, 1.2], yaw: -90 },
       { id: 'key_basement', position: [-1.7, 0.6, -0.6], yaw: 40 },
     ],
     models: [
@@ -478,7 +485,7 @@ const rooms = [
     doors: [{ side: 'S', offset: 2.45, width: 1.1, to: 'room_pasillo_alto' }],
     windows: [{ side: 'N', offset: 2.2, width: 1.4 }],
     start: { position: [0.0, 1.6], yaw: 0 },
-    items: [{ id: 'note_2', position: [-0.9, 0.78, -2.05], yaw: 20 }],
+    items: [{ id: 'poster_7', position: [2.905, 1.5, 1.0], yaw: -90 }],
     models: [
       { file: 'bedroom/room_furniture.glb', node: 'Escrivaninha_*', position: [-0.9, 0.0, -2.05], yaw: 90, tint: 1.45, collide: true, size: [1.3, 0.8, 0.6] },
       { file: 'living_room/book_blue_1.glb', position: [-1.25, 0.75, -2.0], yaw: -15 },
@@ -665,7 +672,7 @@ const rooms = [
       { side: 'E', offset: 2.7, width: 1.1, to: 'room_bodega' },
     ],
     start: { position: [0.0, -2.4], yaw: 180 },
-    items: [{ id: 'note_3', position: [1.15, 0.63, 1.0], yaw: -20 }],
+    items: [{ id: 'poster_8', position: [-3.905, 1.5, 0.0], yaw: 90 }],
     props: [
       { position: [0.0, 1.0, 0.2], size: [1.7, 2.0, 1.3], texture: 'metal', tint: 0.3, collide: true },
       { position: [0.0, 2.35, 0.2], size: [0.5, 0.6, 0.5], texture: 'metal', tint: 0.28, collide: false },

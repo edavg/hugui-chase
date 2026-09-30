@@ -256,6 +256,17 @@
       ]
     }
   ],
+  "items": [
+    {
+      "id": "poster_2",
+      "position": [
+        -2.8,
+        1.5,
+        3.405
+      ],
+      "yaw": 180
+    }
+  ],
   "spawns": {
     "from_vestibulo": {
       "position": [

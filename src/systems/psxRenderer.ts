@@ -13,17 +13,32 @@ const IMAGE_MODE_IDS: Readonly<Record<ImageMode, number>> = {
 const BRIGHTNESS_RANGE = { min: 0, max: 4 };
 const GAMMA_RANGE = { min: 0.1, max: 4 };
 
+// En vertical el render cubre toda la pantalla con un ancho lógico fijo y la
+// altura derivada del aspecto del dispositivo (los móviles son muy altos).
+const PORTRAIT_WIDTH = 360;
+const PORTRAIT_MIN_HEIGHT = 320;
+
 function imageModeId(mode: ImageMode): number {
   const id = IMAGE_MODE_IDS[mode];
   return typeof id === 'number' ? id : IMAGE_MODE_IDS.psx;
 }
 
+function isPortraitWindow(): boolean {
+  return window.innerHeight > window.innerWidth;
+}
+
 export class PsxRenderer {
   readonly renderer: THREE.WebGLRenderer;
-  readonly renderTarget: THREE.WebGLRenderTarget;
   readonly viewport = new THREE.Vector4();
+  onResolutionChange: ((width: number, height: number) => void) | null = null;
 
+  private renderTarget: THREE.WebGLRenderTarget;
   private readonly config: PsxConfig;
+  // En iOS el cambio de orientación llega antes que el nuevo tamaño de ventana;
+  // el par "base" queda fijo para poder volver a horizontal sin releer config.
+  private readonly baseResolution: [number, number];
+  private resolution: [number, number];
+  private readonly portraitEnabled: boolean;
   private readonly blitScene = new THREE.Scene();
   private readonly blitCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   private readonly blitMaterial: THREE.ShaderMaterial;
@@ -32,9 +47,12 @@ export class PsxRenderer {
   private surfaceHeight = 1;
   private imageMode: ImageMode = 'psx';
 
-  constructor(canvas: HTMLCanvasElement, config: PsxConfig) {
+  constructor(canvas: HTMLCanvasElement, config: PsxConfig, portraitEnabled = false) {
     this.config = config;
-    const [resWidth, resHeight] = config.resolution;
+    this.portraitEnabled = portraitEnabled;
+    this.baseResolution = [config.resolution[0], config.resolution[1]];
+    this.resolution = [config.resolution[0], config.resolution[1]];
+    const [resWidth, resHeight] = this.resolution;
 
     this.renderer = new THREE.WebGLRenderer({
       canvas,
@@ -45,18 +63,7 @@ export class PsxRenderer {
     this.renderer.autoClear = false;
     this.renderer.shadowMap.enabled = false;
 
-    this.renderTarget = new THREE.WebGLRenderTarget(resWidth, resHeight, {
-      minFilter: THREE.NearestFilter,
-      magFilter: THREE.NearestFilter,
-      generateMipmaps: false,
-      depthBuffer: true,
-    });
-    const target = this.renderTarget.texture;
-    target.generateMipmaps = false;
-    target.minFilter = THREE.NearestFilter;
-    target.magFilter = THREE.NearestFilter;
-    target.wrapS = THREE.ClampToEdgeWrapping;
-    target.wrapT = THREE.ClampToEdgeWrapping;
+    this.renderTarget = this.createRenderTarget(resWidth, resHeight);
 
     this.clearColor.setRGB(config.clear_color[0], config.clear_color[1], config.clear_color[2]);
 
@@ -64,7 +71,7 @@ export class PsxRenderer {
       vertexShader: blitVert,
       fragmentShader: blitFrag,
       uniforms: {
-        u_source: { value: target },
+        u_source: { value: this.renderTarget.texture },
         u_fade: { value: 0 },
         u_brightness: { value: 1 },
         u_gamma: { value: 1 },
@@ -83,7 +90,17 @@ export class PsxRenderer {
     this.syncEffects(config);
     this.refresh();
     window.addEventListener('resize', this.refresh);
+    // Móvil: la barra del navegador y el giro del dispositivo no siempre
+    // emiten "resize" a tiempo; estos eventos cubren esos cambios de pantalla.
+    window.visualViewport?.addEventListener('resize', this.refresh);
+    window.addEventListener('orientationchange', this.handleOrientationChange);
+    document.addEventListener('fullscreenchange', this.refresh);
   }
+
+  private readonly handleOrientationChange = (): void => {
+    this.refresh();
+    window.setTimeout(this.refresh, 250);
+  };
 
   get canvasWidth(): number {
     return this.surfaceWidth;
@@ -97,6 +114,11 @@ export class PsxRenderer {
     return this.imageMode;
   }
 
+  // Par de resolución activo (horizontal 4:3 u vertical dinámico de móvil).
+  get activeResolution(): readonly [number, number] {
+    return this.resolution;
+  }
+
   refresh = (): void => {
     const dpr = window.devicePixelRatio || 1;
     const width = Math.max(1, Math.round(window.innerWidth * dpr));
@@ -105,11 +127,21 @@ export class PsxRenderer {
     this.surfaceHeight = height;
     this.renderer.setSize(width, height, false);
 
-    const [resWidth, resHeight] = this.config.resolution;
+    const next = this.desiredResolution();
+    const changed = next[0] !== this.resolution[0] || next[1] !== this.resolution[1];
+    if (changed) {
+      this.setResolution(next[0], next[1]);
+    }
+
+    const [resWidth, resHeight] = this.resolution;
     (this.blitMaterial.uniforms.u_texel.value as THREE.Vector2).set(1 / resWidth, 1 / resHeight);
 
     const fit = Math.min(width / resWidth, height / resHeight);
-    const scale = this.config.effects.integer_scaling && fit >= 1 ? Math.floor(fit) : fit;
+    // En vertical se prioriza llenar la pantalla: el escalado entero dejaría
+    // franjas negras aunque la resolución ya coincide con el aspecto real.
+    const portraitActive = this.portraitEnabled && isPortraitWindow();
+    const scale =
+      this.config.effects.integer_scaling && !portraitActive && fit >= 1 ? Math.floor(fit) : fit;
     const viewWidth = Math.min(width, Math.max(1, Math.round(resWidth * scale)));
     const viewHeight = Math.min(height, Math.max(1, Math.round(resHeight * scale)));
     this.viewport.set(
@@ -120,7 +152,43 @@ export class PsxRenderer {
     );
 
     this.syncEffects(this.config);
+    if (changed) {
+      this.onResolutionChange?.(resWidth, resHeight);
+    }
   };
+
+  private desiredResolution(): [number, number] {
+    if (!this.portraitEnabled || !isPortraitWindow()) {
+      return this.baseResolution;
+    }
+    const aspect = window.innerHeight / Math.max(1, window.innerWidth);
+    const height = Math.max(PORTRAIT_MIN_HEIGHT, Math.round(PORTRAIT_WIDTH * aspect));
+    return [PORTRAIT_WIDTH, height];
+  }
+
+  private setResolution(width: number, height: number): void {
+    const previous = this.renderTarget;
+    this.resolution = [width, height];
+    this.renderTarget = this.createRenderTarget(width, height);
+    this.blitMaterial.uniforms.u_source.value = this.renderTarget.texture;
+    previous.dispose();
+  }
+
+  private createRenderTarget(width: number, height: number): THREE.WebGLRenderTarget {
+    const target = new THREE.WebGLRenderTarget(width, height, {
+      minFilter: THREE.NearestFilter,
+      magFilter: THREE.NearestFilter,
+      generateMipmaps: false,
+      depthBuffer: true,
+    });
+    const texture = target.texture;
+    texture.generateMipmaps = false;
+    texture.minFilter = THREE.NearestFilter;
+    texture.magFilter = THREE.NearestFilter;
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+    return target;
+  }
 
   syncEffects(config: PsxConfig): void {
     const effects = config.effects;
@@ -170,7 +238,7 @@ export class PsxRenderer {
 
   render(scene: THREE.Scene, camera: THREE.Camera): void {
     const renderer = this.renderer;
-    const [resWidth, resHeight] = this.config.resolution;
+    const [resWidth, resHeight] = this.resolution;
 
     this.blitMaterial.uniforms.u_time.value = performance.now() / 1000;
     renderer.setRenderTarget(this.renderTarget);

@@ -6,6 +6,7 @@
   ],
   "fps": 30,
   "fov": 75,
+  "fov_portrait": 95,
   "near": 0.1,
   "far": 30,
   "color_bits": 5,
@@ -76,6 +77,8 @@
     "height": 2.05,
     "walk_clip_speed": 0.35,
     "run_clip_speed": 2.0,
+    "poster_speed_step": 0.05,
+    "poster_speed_max": 1.35,
     "spawn_room": "room_sotano",
     "patrol_rooms": [
       "room_pasillo",

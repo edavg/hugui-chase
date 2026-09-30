@@ -213,13 +213,13 @@
   ],
   "items": [
     {
-      "id": "note_1",
+      "id": "poster_6",
       "position": [
-        -3.4,
-        0.48,
-        -1.8
+        3.655,
+        1.5,
+        1.2
       ],
-      "yaw": 12
+      "yaw": -90
     },
     {
       "id": "key_basement",

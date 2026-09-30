@@ -13,8 +13,8 @@ async function boot(): Promise<void> {
     throw new Error('No se encontró el canvas #game');
   }
 
-  const psx = new PsxRenderer(canvas, config);
   const input = new Input(canvas);
+  const psx = new PsxRenderer(canvas, config, input.touchCapable);
   const settings = new Settings();
   const gamepad = new Gamepad();
   const game = new Game(config, psx, input, settings, gamepad);

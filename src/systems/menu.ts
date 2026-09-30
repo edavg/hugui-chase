@@ -61,7 +61,7 @@ interface Poll {
   pageDown: boolean;
 }
 
-type ToggleKey = 'invertLook' | 'authenticLoading' | 'subtitles' | 'gamepad';
+type ToggleKey = 'invertLook' | 'authenticLoading' | 'subtitles' | 'gamepad' | 'touchControls';
 
 const AXES: readonly Axis[] = ['up', 'down', 'left', 'right'];
 
@@ -112,8 +112,6 @@ const OPTION_TABS_Y = 96;
 const OPTION_TAB_WIDTH = 126;
 const OPTION_TAB_HEIGHT = 20;
 const OPTION_TAB_GAP = 8;
-const OPTION_TABS_WIDTH =
-  OPTION_TAB_WIDTH * 4 + OPTION_TAB_GAP * 3;
 const OPTION_ROW_TOP = 132;
 const OPTION_ROW_HEIGHT = 44;
 const OPTION_LABEL_X = 72;
@@ -143,6 +141,46 @@ const ENDING_LIST_REGION: Rect = GAMEOVER_LIST_REGION;
 const VEL_PAUSE = 0.78;
 const VEL_GAMEOVER = 0.82;
 const VEL_ENDING = 0.85;
+
+interface OptionsLayout {
+  panelX: number;
+  panelY: number;
+  panelWidth: number;
+  tabsX: number;
+  tabsY: number;
+  tabWidth: number;
+  tabGap: number;
+  rowTop: number;
+  rowHeight: number;
+  labelX: number;
+  valueX: number;
+  barX: number;
+  barWidth: number;
+  barBelow: boolean;
+  highlightX: number;
+  highlightWidth: number;
+}
+
+interface MenuLayout {
+  portrait: boolean;
+  hintY: number;
+  pauseTitleY: number;
+  pauseRuleY: number;
+  pauseList: Rect;
+  outcomeTitleY: number;
+  outcomeRuleY: number;
+  outcomeTextY: number;
+  outcomeTextWidth: number;
+  outcomeList: Rect;
+  endingTitleY: number;
+  endingRuleY: number;
+  endingTextY: number;
+  endingTextWidth: number;
+  endingList: Rect;
+  options: OptionsLayout;
+  controls: { panel: Rect; actionX: number; keysX: number; rowTop: number; rowBottom: number; noteY: number };
+  credits: { panel: Rect; textWidth: number; backY: number };
+}
 
 type ControlScheme = 'modern' | 'tank';
 
@@ -406,6 +444,158 @@ export class Menu {
     return TEXTS[this.lang()];
   }
 
+  // Layout adaptable: en 640×480 reproduce el diseño original; en vertical los
+  // paneles usan el ancho disponible y el alto extra de la pantalla.
+  private layout(): MenuLayout {
+    const width = this.ui.width;
+    const height = this.ui.height;
+    const portrait = height > width;
+    if (!portrait) {
+      return {
+        portrait,
+        hintY: HINT_Y,
+        pauseTitleY: PAUSE_TITLE_Y,
+        pauseRuleY: PAUSE_RULE_Y,
+        pauseList: PAUSE_LIST_REGION,
+        outcomeTitleY: 112,
+        outcomeRuleY: 148,
+        outcomeTextY: 172,
+        outcomeTextWidth: 400,
+        outcomeList: GAMEOVER_LIST_REGION,
+        endingTitleY: 92,
+        endingRuleY: 124,
+        endingTextY: 148,
+        endingTextWidth: 440,
+        endingList: ENDING_LIST_REGION,
+        options: {
+          panelX: OPTION_PANEL_X,
+          panelY: OPTION_PANEL_Y,
+          panelWidth: OPTION_PANEL_WIDTH,
+          tabsX: OPTION_TABS_X,
+          tabsY: OPTION_TABS_Y,
+          tabWidth: OPTION_TAB_WIDTH,
+          tabGap: OPTION_TAB_GAP,
+          rowTop: OPTION_ROW_TOP,
+          rowHeight: OPTION_ROW_HEIGHT,
+          labelX: OPTION_LABEL_X,
+          valueX: OPTION_VALUE_X,
+          barX: OPTION_BAR_X,
+          barWidth: OPTION_BAR_WIDTH,
+          barBelow: false,
+          highlightX: OPTION_HIGHLIGHT_X,
+          highlightWidth: OPTION_HIGHLIGHT_WIDTH,
+        },
+        controls: {
+          panel: CONTROLS_PANEL,
+          actionX: CONTROLS_ACTION_X,
+          keysX: CONTROLS_KEYS_X,
+          rowTop: CONTROLS_ROW_TOP,
+          rowBottom: CONTROLS_ROW_BOTTOM,
+          noteY: 414,
+        },
+        credits: {
+          panel: CREDITS_PANEL,
+          textWidth: CREDITS_TEXT_WIDTH,
+          backY: CREDITS_BACK_Y,
+        },
+      };
+    }
+
+    const margin = 12;
+    const panelWidth = width - margin * 2;
+    const pauseTitleY = Math.round(height * 0.15);
+    const pauseRuleY = pauseTitleY + 36;
+    const pauseListY = pauseRuleY + 28;
+    const outcomeTitleY = Math.round(height * 0.16);
+    const outcomeRuleY = outcomeTitleY + 36;
+    const outcomeTextY = outcomeRuleY + 24;
+    const outcomeListY = outcomeTextY + 96;
+    const endingTitleY = Math.round(height * 0.12);
+    const endingRuleY = endingTitleY + 32;
+    const endingTextY = endingRuleY + 24;
+    const endingListY = endingTextY + 112;
+    const tabGap = 6;
+    const tabsX = margin + 8;
+    const tabsY = 88;
+    const controlsPanel: Rect = {
+      x: margin,
+      y: 64,
+      width: panelWidth,
+      height: Math.max(260, Math.min(height - 230, 430)),
+    };
+    const creditsPanel: Rect = {
+      x: margin,
+      y: 64,
+      width: panelWidth,
+      height: Math.max(240, Math.min(height - 230, 430)),
+    };
+    return {
+      portrait,
+      hintY: height - 28,
+      pauseTitleY,
+      pauseRuleY,
+      pauseList: {
+        x: margin + 16,
+        y: pauseListY,
+        width: width - (margin + 16) * 2,
+        height: Math.max(150, height - pauseListY - 110),
+      },
+      outcomeTitleY,
+      outcomeRuleY,
+      outcomeTextY,
+      outcomeTextWidth: panelWidth - 24,
+      outcomeList: {
+        x: margin + 16,
+        y: outcomeListY,
+        width: width - (margin + 16) * 2,
+        height: Math.max(130, height - outcomeListY - 110),
+      },
+      endingTitleY,
+      endingRuleY,
+      endingTextY,
+      endingTextWidth: panelWidth - 24,
+      endingList: {
+        x: margin + 16,
+        y: endingListY,
+        width: width - (margin + 16) * 2,
+        height: Math.max(130, height - endingListY - 110),
+      },
+      options: {
+        panelX: margin,
+        panelY: 64,
+        panelWidth,
+        tabsX,
+        tabsY,
+        tabWidth: Math.floor((panelWidth - 16 - tabGap * 3) / 4),
+        tabGap,
+        rowTop: tabsY + 42,
+        rowHeight: 44,
+        labelX: margin + 20,
+        valueX: margin + panelWidth - 16,
+        // En vertical la barra va bajo la etiqueta: en pantallas estrechas no
+        // cabe en la misma línea sin pisar el texto.
+        barX: margin + 20,
+        barWidth: panelWidth - 36,
+        barBelow: true,
+        highlightX: margin + 6,
+        highlightWidth: panelWidth - 12,
+      },
+      controls: {
+        panel: controlsPanel,
+        actionX: controlsPanel.x + 16,
+        keysX: controlsPanel.x + controlsPanel.width - 16,
+        rowTop: controlsPanel.y + 28,
+        rowBottom: controlsPanel.y + controlsPanel.height - 16,
+        noteY: controlsPanel.y + controlsPanel.height + 18,
+      },
+      credits: {
+        panel: creditsPanel,
+        textWidth: creditsPanel.width - 32,
+        backY: creditsPanel.y + creditsPanel.height + 18,
+      },
+    };
+  }
+
   private updateDismissable(): void {
     const nav = this.poll();
     if (nav.confirm || nav.cancel) {
@@ -544,6 +734,7 @@ export class Menu {
           this.enumRow(texts.optionControlScheme, 'controlScheme', [texts.valueModern, texts.valueTank]),
         );
         rows.push(this.toggleRow(texts.optionGamepad, 'gamepad'));
+        rows.push(this.toggleRow(texts.optionTouchControls, 'touchControls'));
         break;
       default:
         rows.push(this.toggleRow(texts.optionAuthenticLoading, 'authenticLoading'));
@@ -799,8 +990,14 @@ export class Menu {
 
   private drawHint(): void {
     const texts = this.texts();
-    const hint = `${texts.menuHintArrows}${HINT_SEPARATOR}${texts.menuHintAccept}${HINT_SEPARATOR}${texts.menuHintBack}`;
-    this.ui.textCentered(hint, HINT_Y, { color: PALETTE.textDark, shadow: PALETTE.shadow });
+    const hint = this.touchHints()
+      ? `${texts.menuHintArrowsTouch}${HINT_SEPARATOR}${texts.menuHintAcceptTouch}${HINT_SEPARATOR}${texts.menuHintBackTouch}`
+      : `${texts.menuHintArrows}${HINT_SEPARATOR}${texts.menuHintAccept}${HINT_SEPARATOR}${texts.menuHintBack}`;
+    this.ui.textCentered(hint, this.layout().hintY, { color: PALETTE.textDark, shadow: PALETTE.shadow });
+  }
+
+  private touchHints(): boolean {
+    return this.input.touchCapable && this.settings.get('touchControls');
   }
 
   private drawList(entries: readonly ListEntry[], region: Rect): void {
@@ -855,55 +1052,92 @@ export class Menu {
 
   private drawPause(): void {
     const texts = this.texts();
-    this.ui.textCentered(texts.pauseTitle, PAUSE_TITLE_Y, {
+    const layout = this.layout();
+    this.ui.textCentered(texts.pauseTitle, layout.pauseTitleY, {
       scale: 3,
       color: PALETTE.textBright,
       shadow: PALETTE.shadow,
     });
-    this.ui.rect(Math.round(this.ui.width / 2 - 80), PAUSE_RULE_Y, 160, 2, PALETTE.accent, 0.9);
-    this.drawList(this.pauseEntries(), PAUSE_LIST_REGION);
+    this.ui.rect(
+      Math.round(this.ui.width / 2 - 80),
+      layout.pauseRuleY,
+      160,
+      2,
+      PALETTE.accent,
+      0.9,
+    );
+    this.drawList(this.pauseEntries(), layout.pauseList);
   }
 
   private drawGameOver(): void {
     const texts = this.texts();
-    this.ui.textCentered(texts.gameOverTitle, 112, {
+    const layout = this.layout();
+    this.ui.textCentered(texts.gameOverTitle, layout.outcomeTitleY, {
       scale: 3,
       color: PALETTE.accent,
       shadow: PALETTE.shadow,
     });
-    this.ui.rect(Math.round(this.ui.width / 2 - 80), 148, 160, 2, PALETTE.accentDim, 0.8);
-    this.ui.wrapCentered(texts.gameOverText, this.ui.width / 2, 172, 400, {
-      color: PALETTE.text,
-      shadow: PALETTE.shadow,
-      lineSpacing: PARAGRAPH_LINE_SPACING,
-    });
-    this.drawList(this.gameOverEntries(), GAMEOVER_LIST_REGION);
+    this.ui.rect(
+      Math.round(this.ui.width / 2 - 80),
+      layout.outcomeRuleY,
+      160,
+      2,
+      PALETTE.accentDim,
+      0.8,
+    );
+    this.ui.wrapCentered(
+      texts.gameOverText,
+      this.ui.width / 2,
+      layout.outcomeTextY,
+      layout.outcomeTextWidth,
+      {
+        color: PALETTE.text,
+        shadow: PALETTE.shadow,
+        lineSpacing: PARAGRAPH_LINE_SPACING,
+      },
+    );
+    this.drawList(this.gameOverEntries(), layout.outcomeList);
   }
 
   private drawEnding(): void {
     const texts = this.texts();
-    this.ui.textCentered(texts.endingTitle, 92, {
+    const layout = this.layout();
+    this.ui.textCentered(texts.endingTitle, layout.endingTitleY, {
       scale: 3,
       color: PALETTE.textBright,
       shadow: PALETTE.shadow,
     });
-    this.ui.rect(Math.round(this.ui.width / 2 - 80), 124, 160, 2, PALETTE.accent, 0.9);
-    this.ui.wrapCentered(texts.endingText, this.ui.width / 2, 148, 440, {
-      color: PALETTE.text,
-      shadow: PALETTE.shadow,
-      lineSpacing: PARAGRAPH_LINE_SPACING,
-    });
-    this.drawList(this.endingEntries(), ENDING_LIST_REGION);
+    this.ui.rect(
+      Math.round(this.ui.width / 2 - 80),
+      layout.endingRuleY,
+      160,
+      2,
+      PALETTE.accent,
+      0.9,
+    );
+    this.ui.wrapCentered(
+      texts.endingText,
+      this.ui.width / 2,
+      layout.endingTextY,
+      layout.endingTextWidth,
+      {
+        color: PALETTE.text,
+        shadow: PALETTE.shadow,
+        lineSpacing: PARAGRAPH_LINE_SPACING,
+      },
+    );
+    this.drawList(this.endingEntries(), layout.endingList);
   }
 
   private drawOptions(): void {
     const texts = this.texts();
     const rows = this.optionRows();
-    const panelHeight = OPTION_PANEL_TOP_PAD + rows.length * OPTION_ROW_HEIGHT + OPTION_PANEL_BOTTOM_PAD;
+    const layout = this.layout().options;
+    const panelHeight = OPTION_PANEL_TOP_PAD + rows.length * layout.rowHeight + OPTION_PANEL_BOTTOM_PAD;
     this.ui.panel(
-      OPTION_PANEL_X,
-      OPTION_PANEL_Y,
-      OPTION_PANEL_WIDTH,
+      layout.panelX,
+      layout.panelY,
+      layout.panelWidth,
       panelHeight,
       {
         title: texts.optionsTitle,
@@ -917,66 +1151,80 @@ export class Menu {
       texts.optionsPageControls,
       texts.optionsPageGame,
     ];
+    const tabsWidth = tabLabels.length * layout.tabWidth + (tabLabels.length - 1) * layout.tabGap;
     for (let index = 0; index < tabLabels.length; index += 1) {
-      const x = OPTION_TABS_X + index * (OPTION_TAB_WIDTH + OPTION_TAB_GAP);
+      const x = layout.tabsX + index * (layout.tabWidth + layout.tabGap);
       const active = index === this.pageIndex;
       this.ui.rect(
         x,
-        OPTION_TABS_Y,
-        OPTION_TAB_WIDTH,
+        layout.tabsY,
+        layout.tabWidth,
         OPTION_TAB_HEIGHT,
         PALETTE.panelLight,
         active ? 0.9 : 0.4,
       );
       this.ui.frame(
         x,
-        OPTION_TABS_Y,
-        OPTION_TAB_WIDTH,
+        layout.tabsY,
+        layout.tabWidth,
         OPTION_TAB_HEIGHT,
         active ? PALETTE.accent : PALETTE.border,
         1,
         active ? 1 : 0.5,
       );
       if (active && this.onTabs) {
-        this.ui.cursor(x - 14, OPTION_TABS_Y + 6, PALETTE.accent, 1);
+        this.ui.cursor(x - 14, layout.tabsY + 6, PALETTE.accent, 1);
       }
-      this.ui.textCenteredIn(tabLabels[index] ?? '', x + OPTION_TAB_WIDTH / 2, OPTION_TABS_Y + 6, {
-        color: active ? PALETTE.textBright : PALETTE.textDim,
-        shadow: PALETTE.shadow,
-      });
+      this.ui.textCenteredIn(
+        tabLabels[index] ?? '',
+        x + layout.tabWidth / 2,
+        layout.tabsY + 6,
+        {
+          color: active ? PALETTE.textBright : PALETTE.textDim,
+          shadow: PALETTE.shadow,
+        },
+      );
     }
     this.ui.rect(
-      OPTION_TABS_X,
-      OPTION_TABS_Y + OPTION_TAB_HEIGHT + 6,
-      OPTION_TABS_WIDTH,
+      layout.tabsX,
+      layout.tabsY + OPTION_TAB_HEIGHT + 6,
+      tabsWidth,
       1,
       PALETTE.border,
       0.5,
     );
 
-    const startY = OPTION_ROW_TOP;
+    const startY = layout.rowTop;
     for (let index = 0; index < rows.length; index += 1) {
       const row = rows[index];
       if (!row) {
         continue;
       }
-      const y = Math.round(startY + index * OPTION_ROW_HEIGHT);
+      const y = Math.round(startY + index * layout.rowHeight);
       const selected = !this.onTabs && index === this.rowIndex;
       if (selected) {
-        this.ui.rect(OPTION_HIGHLIGHT_X, y - 5, OPTION_HIGHLIGHT_WIDTH, 18, PALETTE.accentDim, 0.3);
-        this.ui.cursor(OPTION_HIGHLIGHT_X + 8, y, PALETTE.accent, 1);
+        this.ui.rect(
+          layout.highlightX,
+          y - 5,
+          layout.highlightWidth,
+          layout.barBelow ? 26 : 18,
+          PALETTE.accentDim,
+          0.3,
+        );
+        this.ui.cursor(layout.highlightX + 8, y, PALETTE.accent, 1);
       }
-      this.ui.text(row.label, OPTION_LABEL_X, y, {
+      this.ui.text(row.label, layout.labelX, y, {
         color: selected ? PALETTE.textBright : PALETTE.text,
         shadow: PALETTE.shadow,
       });
       if (row.ratio !== null) {
-        this.ui.bar(OPTION_BAR_X, y - 1, OPTION_BAR_WIDTH, OPTION_BAR_HEIGHT, row.ratio, {
+        const barY = layout.barBelow ? y + 13 : y - 1;
+        this.ui.bar(layout.barX, barY, layout.barWidth, OPTION_BAR_HEIGHT, row.ratio, {
           color: selected ? PALETTE.accent : PALETTE.text,
           segments: 18,
         });
       }
-      this.ui.textRight(row.value, OPTION_VALUE_X, y, {
+      this.ui.textRight(row.value, layout.valueX, y, {
         color: selected ? PALETTE.textBright : PALETTE.textDim,
         shadow: PALETTE.shadow,
       });
@@ -988,13 +1236,15 @@ export class Menu {
     const lang = this.lang();
     const texts = TEXTS[lang];
     const rows = CONTROLS[lang] ?? [];
-    this.ui.panel(CONTROLS_PANEL.x, CONTROLS_PANEL.y, CONTROLS_PANEL.width, CONTROLS_PANEL.height, {
+    const layout = this.layout().controls;
+    const panel = layout.panel;
+    this.ui.panel(panel.x, panel.y, panel.width, panel.height, {
       title: texts.controlsTitle,
       titleScale: 2,
     });
-    const available = CONTROLS_ROW_BOTTOM - CONTROLS_ROW_TOP;
+    const available = layout.rowBottom - layout.rowTop;
     const step = Math.min(26, Math.floor(available / Math.max(1, rows.length)));
-    const startY = Math.round(CONTROLS_ROW_TOP + Math.max(0, available - rows.length * step) / 2);
+    const startY = Math.round(layout.rowTop + Math.max(0, available - rows.length * step) / 2);
     for (let index = 0; index < rows.length; index += 1) {
       const row = rows[index];
       if (!row) {
@@ -1002,18 +1252,18 @@ export class Menu {
       }
       const y = Math.round(startY + index * step);
       if (index % 2 === 0) {
-        this.ui.rect(CONTROLS_PANEL.x + 12, y - 4, CONTROLS_PANEL.width - 24, step - 2, PALETTE.panelLight, 0.35);
+        this.ui.rect(panel.x + 12, y - 4, panel.width - 24, step - 2, PALETTE.panelLight, 0.35);
       }
-      this.ui.text(row[0], CONTROLS_ACTION_X, y, {
+      this.ui.text(row[0], layout.actionX, y, {
         color: PALETTE.text,
         shadow: PALETTE.shadow,
       });
-      this.ui.textRight(row[1], CONTROLS_KEYS_X, y, {
+      this.ui.textRight(row[1], layout.keysX, y, {
         color: PALETTE.textBright,
         shadow: PALETTE.shadow,
       });
     }
-    this.ui.wrapCentered(texts.controlsNote, this.ui.width / 2, 414, 600, {
+    this.ui.wrapCentered(texts.controlsNote, this.ui.width / 2, layout.noteY, panel.width - 24, {
       color: PALETTE.textDim,
       shadow: PALETTE.shadow,
       lineSpacing: 2,
@@ -1023,21 +1273,23 @@ export class Menu {
 
   private drawCredits(): void {
     const texts = this.texts();
-    this.ui.panel(CREDITS_PANEL.x, CREDITS_PANEL.y, CREDITS_PANEL.width, CREDITS_PANEL.height, {
+    const layout = this.layout().credits;
+    const panel = layout.panel;
+    this.ui.panel(panel.x, panel.y, panel.width, panel.height, {
       title: texts.creditsTitle,
       titleScale: 2,
     });
     const body = texts.creditsBody;
-    const height = this.measureWrap(body, CREDITS_TEXT_WIDTH);
+    const height = this.measureWrap(body, layout.textWidth);
     const startY = Math.round(
-      CREDITS_PANEL.y + 24 + Math.max(0, CREDITS_PANEL.height - 48 - height) / 2,
+      panel.y + 24 + Math.max(0, panel.height - 48 - height) / 2,
     );
-    this.ui.wrapCentered(body, this.ui.width / 2, startY, CREDITS_TEXT_WIDTH, {
+    this.ui.wrapCentered(body, this.ui.width / 2, startY, layout.textWidth, {
       color: PALETTE.text,
       shadow: PALETTE.shadow,
       lineSpacing: PARAGRAPH_LINE_SPACING,
     });
-    this.ui.textCentered(texts.creditsBack, CREDITS_BACK_Y, {
+    this.ui.textCentered(texts.creditsBack, layout.backY, {
       color: PALETTE.textDim,
       shadow: PALETTE.shadow,
     });

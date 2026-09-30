@@ -270,6 +270,17 @@
       "yaw": 25
     }
   ],
+  "items": [
+    {
+      "id": "poster_3",
+      "position": [
+        2,
+        1.5,
+        2.655
+      ],
+      "yaw": 180
+    }
+  ],
   "spawns": {
     "from_salon": {
       "position": [

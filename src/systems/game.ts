@@ -8,20 +8,20 @@ import { Flags } from './flags';
 import { INVENTORY_SLOT_COUNT, Inventory } from './inventory';
 import { TEXTS } from './i18n';
 import {
-  NOTE_IDS,
+  POSTER_IDS,
   itemDesc,
   itemName,
-  itemText,
-  itemTitle,
   loadItemCatalog,
   type ItemDef,
 } from './items';
 import { Ui } from './ui';
 import { UiCanvas } from './uiCanvas';
+import { createBurnMaterial, createFireParticleTexture, loadPosterTexture } from './proceduralTextures';
 import { createBitmapFont } from './font';
 import { Menu, type MenuScreen } from './menu';
 import { Settings, type SettingsData } from './settings';
 import { Gamepad, type PadAction } from './gamepad';
+import { TouchControls } from './touch';
 import { AudioSystem } from './audio';
 import { Flashlight } from './flashlight';
 import { RoomGraph } from './roomGraph';
@@ -29,6 +29,10 @@ import { Stalker, type StalkerHooks, type StalkerSense } from '../entities/stalk
 import { Player } from '../entities/player';
 
 const GRID_COLUMNS = 4;
+const PORTRAIT_GRID_COLUMNS = 2;
+const PORTRAIT_FOV_FALLBACK = 95;
+const NAV_REPEAT_DELAY = 0.35;
+const NAV_REPEAT_INTERVAL = 0.22;
 const DEFAULT_HEARTS = 3;
 const DEFAULT_HIT_INVULN = 2.5;
 const HIT_KNOCKBACK = 1.0;
@@ -40,7 +44,9 @@ const AIM_ITEM_LIFT = 0.12;
 const AIM_FLAT_VIEW_EPS = 0.08;
 const AIM_FOV_FALLBACK = 32;
 
-type State = 'playing' | 'transition' | 'reading' | 'inventory' | 'examine' | 'ending';
+type State = 'playing' | 'transition' | 'inventory' | 'examine' | 'ending';
+
+type Axis = 'up' | 'down' | 'left' | 'right';
 
 interface Waiter {
   remaining: number;
@@ -70,13 +76,20 @@ export class Game {
   private readonly settings: Settings;
   private readonly gamepad: Gamepad;
   private readonly menu: Menu;
+  private readonly touch: TouchControls;
+  private invColumns = GRID_COLUMNS;
+  private readonly invAxes: Record<Axis, { held: boolean; timer: number }> = {
+    up: { held: false, timer: 0 },
+    down: { held: false, timer: 0 },
+    left: { held: false, timer: 0 },
+    right: { held: false, timer: 0 },
+  };
   private readonly introRoom: string;
   private readonly introSpawn: string;
   readonly audio: AudioSystem;
   private catalog = new Map<string, ItemDef>();
   private transitionStart = 0;
   private inventorySelection = 0;
-  private readReturn: State = 'playing';
   private examineObject: THREE.Object3D | null = null;
   private readonly examineScene = new THREE.Scene();
   private readonly examineYawGroup = new THREE.Group();
@@ -130,13 +143,25 @@ export class Game {
       canvasHeight: this.psx.canvasHeight,
     }));
     this.ui = new Ui(this.uiCanvas, () => this.config.language);
-    this.ui.setOptions({ showSubtitles: this.settings.get('subtitles') });
+    this.ui.setOptions({
+      showSubtitles: this.settings.get('subtitles'),
+      touchControls: this.touchActive,
+    });
     this.menu = new Menu(this.uiCanvas, this.input, this.settings, this.config, {
       resumeGame: () => this.resumeGame(),
       restartGame: () => {
         void this.restartRun();
       },
     });
+    this.touch = new TouchControls(this.input, {
+      getLanguage: () => this.config.language,
+      // La interfaz espera navegación fuera del juego activo: menús, inventario,
+      // lectura y examen. Ahí el joystick emite flechas en lugar de movimiento.
+      isNavMode: () => this.menu.active || this.state !== 'playing',
+      isMenuActive: () => this.menu.active,
+      isFlashlightOwned: () => this.flashlight.owned,
+    });
+    this.touch.setEnabled(this.touchActive);
     this.settings.onChange((event) => {
       this.applySettings(event.key);
     });
@@ -155,6 +180,46 @@ export class Game {
     this.examineCamera.lookAt(0, 0, 0);
     this.examineYawGroup.add(this.examinePitchGroup);
     this.examineScene.add(this.examineYawGroup);
+
+    this.psx.onResolutionChange = (width, height) => this.handleResolutionChange(width, height);
+    const [activeWidth, activeHeight] = this.psx.activeResolution;
+    if (activeWidth !== resWidth || activeHeight !== resHeight) {
+      this.handleResolutionChange(activeWidth, activeHeight);
+    }
+  }
+
+  // Resolución activa del render (4:3 en horizontal, vertical dinámico en
+  // móvil): propaga el nuevo tamaño a cámaras, materiales (snap de vértices),
+  // canvas de interfaz y rejilla del inventario.
+  private handleResolutionChange(width: number, height: number): void {
+    this.config.resolution = [width, height];
+    const portrait = height > width;
+    this.invColumns = portrait ? PORTRAIT_GRID_COLUMNS : GRID_COLUMNS;
+    this.ui.setOptions({
+      inventoryColumns: this.invColumns,
+      inventoryRows: INVENTORY_SLOT_COUNT / this.invColumns,
+    });
+    this.room?.sync(this.config);
+    this.stalker?.syncConfig(this.config);
+    if (this.player) {
+      this.player.camera.aspect = width / height;
+      this.player.camera.fov = this.fovFor(portrait);
+      this.player.camera.updateProjectionMatrix();
+    }
+    this.examineCamera.aspect = width / height;
+    this.examineCamera.fov = portrait ? this.fovFor(true) : 40;
+    this.examineCamera.updateProjectionMatrix();
+    this.uiCanvas.setLogicalSize(width, height);
+    if (this.state === 'inventory') {
+      this.refreshInventory();
+    }
+  }
+
+  private fovFor(portrait: boolean): number {
+    if (!portrait) {
+      return this.config.fov;
+    }
+    return this.config.fov_portrait ?? PORTRAIT_FOV_FALLBACK;
   }
 
   async start(): Promise<void> {
@@ -164,10 +229,13 @@ export class Game {
     this.applyRoomState(this.room);
     this.audio.setRoom(this.room.audio);
     this.resetHearts();
+    this.updatePosterHud();
     this.loop.start();
     this.lastPlayerX = this.player.position.x;
     this.lastPlayerZ = this.player.position.z;
     this.openMenu(null);
+    this.flags.set('stalker_active');
+    void this.activateStalker();
     const params = new URLSearchParams(window.location.search);
     const qaX = params.get('x');
     const qaZ = params.get('z');
@@ -223,6 +291,7 @@ export class Game {
     try {
       const graph = await this.ensureGraph();
       const stalker = await Stalker.create(this.config, graph);
+      stalker.setBurnedPosters(this.burnedPosters());
       stalker.activate();
       const target = room && graph.hasRoom(room) ? room : this.config.enemy.spawn_room;
       if (target !== stalker.roomId) {
@@ -350,7 +419,7 @@ export class Game {
   }
 
   private takeHit(stalkerX: number, stalkerZ: number): void {
-    if (this.state !== 'playing' && this.state !== 'reading') {
+    if (this.state !== 'playing') {
       return;
     }
     if (this.clock < this.invulnUntil) {
@@ -374,7 +443,7 @@ export class Game {
   }
 
   private async runCaught(): Promise<void> {
-    if (this.state !== 'playing' && this.state !== 'reading') {
+    if (this.state !== 'playing') {
       return;
     }
     this.state = 'transition';
@@ -653,15 +722,26 @@ export class Game {
   }
 
 
+  // Los controles táctiles solo se muestran en dispositivos táctiles y si el
+  // ajuste está activo (se puede desactivar desde OPCIONES > CONTROLES).
+  private get touchActive(): boolean {
+    return this.input.touchCapable && this.settings.get('touchControls');
+  }
+
   applySettings(changed?: keyof SettingsData | null): void {
     this.settings.applyTo(this.config);
     this.gamepad.setEnabled(this.settings.get('gamepad'));
     this.psx.syncEffects(this.config);
     this.room?.sync(this.config);
     this.audio.setVolumes(this.config.audio);
-    this.ui.setOptions({ showSubtitles: this.settings.get('subtitles') });
+    this.ui.setOptions({
+      showSubtitles: this.settings.get('subtitles'),
+      touchControls: this.touchActive,
+    });
+    this.touch.setEnabled(this.touchActive);
     if (changed === 'language') {
       this.menu.onLanguageChanged();
+      this.touch.refreshLabels();
       if (this.state === 'inventory') {
         this.refreshInventory();
       }
@@ -675,6 +755,7 @@ export class Game {
   syncConfig(): void {
     this.room.sync(this.config);
     this.stalker?.syncConfig(this.config);
+    this.stalker?.setBurnedPosters(this.burnedPosters());
     this.psx.syncEffects(this.config);
     this.audio.setVolumes(this.config.audio);
     this.audio.setMuted(!this.config.audio.enabled);
@@ -726,6 +807,9 @@ export class Game {
     this.applyRoomState(this.room);
     this.audio.setRoom(this.room.audio);
     this.resetHearts();
+    this.updatePosterHud();
+    this.flags.set('stalker_active');
+    void this.activateStalker();
   }
 
   private showGameOver(): void {
@@ -751,6 +835,7 @@ export class Game {
   private update(dt: number): void {
     this.clock += dt;
     this.gamepad.poll(dt);
+    this.touch.sync();
     this.handleMenuInput(dt);
     this.flashlight.update(dt, this.player.camera, this.state !== 'examine');
     if (this.menu.active) {
@@ -783,12 +868,8 @@ export class Game {
       case 'transition':
         this.input.consumeMouseDelta();
         break;
-      case 'reading':
-        this.handleReading();
-        this.updateStalker(dt);
-        break;
       case 'inventory':
-        this.handleInventory();
+        this.handleInventory(dt);
         break;
       case 'examine':
         this.handleExamine(dt);
@@ -811,49 +892,33 @@ export class Game {
     this.uiCanvas.end();
   }
 
-  private handleReading(): void {
-    if (this.input.consumePress('Escape') || this.input.consumePress('KeyI')) {
-      this.closeNote();
-      return;
-    }
-    if (
-      this.input.consumePress('KeyE') ||
-      this.input.consumePress('Enter') ||
-      this.input.consumePress('Space')
-    ) {
-      if (this.ui.noteComplete) {
-        this.closeNote();
-      } else {
-        this.ui.revealNote();
-      }
-    }
-  }
-
-  private handleInventory(): void {
-    const column = this.inventorySelection % GRID_COLUMNS;
-    const row = Math.floor(this.inventorySelection / GRID_COLUMNS);
+  private handleInventory(dt: number): void {
+    const columns = this.invColumns;
+    const rows = INVENTORY_SLOT_COUNT / columns;
+    const column = this.inventorySelection % columns;
+    const row = Math.floor(this.inventorySelection / columns);
     let nextColumn = column;
     let nextRow = row;
     let moved = false;
 
-    if (this.press('ArrowLeft', 'left') || this.press('KeyA', 'left')) {
-      nextColumn = (column + GRID_COLUMNS - 1) % GRID_COLUMNS;
+    if (this.inventoryStep('left', dt, this.press('ArrowLeft', 'left') || this.press('KeyA', 'left'))) {
+      nextColumn = (column + columns - 1) % columns;
       moved = true;
     }
-    if (this.press('ArrowRight', 'right') || this.press('KeyD', 'right')) {
-      nextColumn = (column + 1) % GRID_COLUMNS;
+    if (this.inventoryStep('right', dt, this.press('ArrowRight', 'right') || this.press('KeyD', 'right'))) {
+      nextColumn = (column + 1) % columns;
       moved = true;
     }
-    if (this.press('ArrowUp', 'up') || this.press('KeyW', 'up')) {
-      nextRow = (row + 1) % (INVENTORY_SLOT_COUNT / GRID_COLUMNS);
+    if (this.inventoryStep('up', dt, this.press('ArrowUp', 'up') || this.press('KeyW', 'up'))) {
+      nextRow = (row + rows - 1) % rows;
       moved = true;
     }
-    if (this.press('ArrowDown', 'down') || this.press('KeyS', 'down')) {
-      nextRow = (row + 1) % (INVENTORY_SLOT_COUNT / GRID_COLUMNS);
+    if (this.inventoryStep('down', dt, this.press('ArrowDown', 'down') || this.press('KeyS', 'down'))) {
+      nextRow = (row + 1) % rows;
       moved = true;
     }
     if (moved) {
-      this.inventorySelection = nextRow * GRID_COLUMNS + nextColumn;
+      this.inventorySelection = nextRow * columns + nextColumn;
       this.refreshInventory();
     }
 
@@ -867,6 +932,42 @@ export class Game {
     if (this.press('KeyI', 'inventory') || this.press('Escape', 'cancel')) {
       this.closeInventory();
     }
+  }
+
+  // Repetición al mantener la dirección (teclado o joystick táctil), igual que
+  // en los menús: primer paso inmediato, luego un paso cada NAV_REPEAT_INTERVAL.
+  private inventoryStep(axis: Axis, dt: number, pressed: boolean): boolean {
+    const state = this.invAxes[axis];
+    if (pressed) {
+      state.held = true;
+      state.timer = NAV_REPEAT_DELAY;
+      return true;
+    }
+    const codes =
+      axis === 'up'
+        ? ['ArrowUp', 'KeyW']
+        : axis === 'down'
+          ? ['ArrowDown', 'KeyS']
+          : axis === 'left'
+            ? ['ArrowLeft', 'KeyA']
+            : ['ArrowRight', 'KeyD'];
+    const down = codes.some((code) => this.input.isDown(code)) || this.input.padDown(axis);
+    if (!down) {
+      state.held = false;
+      state.timer = 0;
+      return false;
+    }
+    if (!state.held) {
+      state.held = true;
+      state.timer = NAV_REPEAT_DELAY;
+      return true;
+    }
+    state.timer -= dt;
+    if (state.timer > 0) {
+      return false;
+    }
+    state.timer = NAV_REPEAT_INTERVAL;
+    return true;
   }
 
   private press(code: string, action: PadAction): boolean {
@@ -902,6 +1003,7 @@ export class Game {
   private openInventory(): void {
     this.state = 'inventory';
     this.input.clearPending();
+    this.resetInventoryAxes();
     this.ui.setPrompt('');
     this.refreshInventory();
   }
@@ -910,6 +1012,14 @@ export class Game {
     this.ui.hideInventory();
     this.state = 'playing';
     this.input.clearPending();
+    this.resetInventoryAxes();
+  }
+
+  private resetInventoryAxes(): void {
+    for (const axis of Object.keys(this.invAxes) as Axis[]) {
+      this.invAxes[axis].held = false;
+      this.invAxes[axis].timer = 0;
+    }
   }
 
   private refreshInventory(): void {
@@ -919,23 +1029,21 @@ export class Game {
         return null;
       }
       const def = this.catalog.get(id);
-      if (!def) {
-        return id;
-      }
-      return def.kind === 'note'
-        ? itemTitle(def, this.config.language)
-        : itemName(def, this.config.language);
+      return def ? itemName(def, this.config.language) : id;
     });
 
     const selectedId = this.inventory.slots[this.inventorySelection];
     const def = selectedId ? this.catalog.get(selectedId) : undefined;
     const name = def ? itemName(def, this.config.language) : texts.inventoryEmpty;
     const desc = def ? itemDesc(def, this.config.language) : '';
+    const touch = this.touchActive;
     const hint = def
-      ? def.kind === 'note'
-        ? texts.inventoryHintsNote
+      ? touch
+        ? texts.inventoryHintsKeyTouch
         : texts.inventoryHintsKey
-      : texts.inventoryHintsEmpty;
+      : touch
+        ? texts.inventoryHintsEmptyTouch
+        : texts.inventoryHintsEmpty;
     this.ui.showInventory(slots, this.inventorySelection, name, desc, hint);
   }
 
@@ -948,33 +1056,7 @@ export class Game {
     if (!def) {
       return;
     }
-    if (def.kind === 'note') {
-      this.ui.hideInventory();
-      this.openNote(def, 'inventory');
-      return;
-    }
     this.openExamine(def);
-  }
-
-  private openNote(def: ItemDef, returnState: State): void {
-    this.state = 'reading';
-    this.readReturn = returnState;
-    this.input.clearPending();
-    this.ui.setPrompt('');
-    this.audio.play('paper_turn', 0.6);
-    this.ui.showNote(itemTitle(def, this.config.language), itemText(def, this.config.language));
-  }
-
-  private closeNote(): void {
-    this.audio.play('paper_turn', 0.4);
-    this.ui.hideNote();
-    this.input.clearPending();
-    if (this.readReturn === 'inventory') {
-      this.state = 'inventory';
-      this.refreshInventory();
-      return;
-    }
-    this.state = 'playing';
   }
 
   private openExamine(def: ItemDef): void {
@@ -1004,10 +1086,11 @@ export class Game {
     this.ui.setPrompt('');
 
     this.state = 'examine';
+    const texts = TEXTS[this.config.language];
     this.ui.showExamine(
       itemName(def, this.config.language),
       itemDesc(def, this.config.language),
-      TEXTS[this.config.language].examineHint,
+      this.touchActive ? texts.examineHintTouch : texts.examineHint,
     );
   }
 
@@ -1033,6 +1116,8 @@ export class Game {
       { x: spawn.position[0], z: spawn.position[1], yaw: spawn.yaw },
       resWidth / resHeight,
     );
+    player.camera.fov = this.fovFor(resHeight > resWidth);
+    player.camera.updateProjectionMatrix();
     player.onFootstep = (running) => {
       this.audio.footstep(running);
     };
@@ -1059,7 +1144,7 @@ export class Game {
       this.closeDoor(room, door);
     }
     for (const item of room.items) {
-      if (this.flags.has(`taken:${item.id}`)) {
+      if (this.flags.has(`taken:${item.id}`) || this.flags.has(`burned:${item.id}`)) {
         item.taken = true;
         item.object.removeFromParent();
       }
@@ -1084,8 +1169,8 @@ export class Game {
       bestScore = score;
       const def = this.catalog.get(item.id);
       let label = texts.promptPickKey;
-      if (def?.kind === 'note') {
-        label = texts.promptPickNote;
+      if (def?.kind === 'poster') {
+        label = texts.promptBurnPoster;
       } else if (def?.kind === 'tool') {
         label = texts.promptPickTool(itemName(def, this.config.language));
       }
@@ -1168,7 +1253,7 @@ export class Game {
   private doorPrompt(door: DoorHandle): string {
     const texts = TEXTS[this.config.language];
     if (door.ending) {
-      const have = door.requires.filter((id) => this.inventory.has(id)).length;
+      const have = door.requires.filter((id) => this.flags.has(`burned:${id}`)).length;
       return have >= door.requires.length
         ? texts.promptEndingReady
         : texts.promptEndingLocked(have, door.requires.length);
@@ -1211,7 +1296,12 @@ export class Game {
       return;
     }
     if (target.item) {
-      this.pickUpItem(target.item);
+      const def = this.catalog.get(target.item.id);
+      if (def?.kind === 'poster') {
+        void this.burnPoster(target.item);
+      } else {
+        this.pickUpItem(target.item);
+      }
       return;
     }
     const door = target.door;
@@ -1222,7 +1312,7 @@ export class Game {
       return;
     }
     if (door.ending) {
-      if (!door.requires.every((id) => this.inventory.has(id))) {
+      if (!door.requires.every((id) => this.flags.has(`burned:${id}`))) {
         return;
       }
       void this.runEnding(door);
@@ -1232,6 +1322,103 @@ export class Game {
       return;
     }
     void this.runDoorTransition(door);
+  }
+
+  private async burnPoster(item: ItemHandle): Promise<void> {
+    const texts = TEXTS[this.config.language];
+    item.taken = true;
+    this.flags.set(`burned:${item.id}`);
+    this.audio.play('burn');
+
+    const mesh = item.object.children[0] as THREE.Mesh;
+    const burnMat = createBurnMaterial(loadPosterTexture());
+    mesh.material = burnMat;
+
+    const fireTex = createFireParticleTexture();
+    const particles: Array<{ sprite: THREE.Sprite; vx: number; vy: number; life: number }> = [];
+    const particleGroup = new THREE.Group();
+    this.room.scene.add(particleGroup);
+
+    const light = new THREE.PointLight(0xff6622, 3, 5, 2);
+    light.position.copy(item.position);
+    this.room.scene.add(light);
+
+    const yaw = item.object.rotation.y;
+    const cos = Math.cos(yaw);
+    const sin = Math.sin(yaw);
+    const duration = 1.6;
+
+    await this.wait(duration, (progress) => {
+      burnMat.uniforms.burnProgress.value = progress;
+
+      const burnLocalY = (progress * 1.3 - 0.15 - 0.5) * 0.85;
+      light.position.set(
+        item.position.x + sin * 0.05,
+        item.position.y + burnLocalY,
+        item.position.z + cos * 0.05,
+      );
+      light.intensity = 3 * (0.5 + 0.5 * Math.sin(progress * 35)) * (1 - progress * 0.5);
+
+      for (let i = 0; i < 3; i++) {
+        const mat = new THREE.SpriteMaterial({
+          map: fireTex,
+          transparent: true,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        });
+        const sprite = new THREE.Sprite(mat);
+        const ox = (Math.random() - 0.5) * 0.5;
+        sprite.position.set(
+          item.position.x + cos * ox + sin * 0.06,
+          item.position.y + burnLocalY + (Math.random() - 0.5) * 0.05,
+          item.position.z - sin * ox + cos * 0.06,
+        );
+        sprite.scale.setScalar(0.03 + Math.random() * 0.05);
+        particleGroup.add(sprite);
+        particles.push({
+          sprite,
+          vx: (Math.random() - 0.5) * 0.4,
+          vy: 0.5 + Math.random() * 0.8,
+          life: 0.4 + Math.random() * 0.5,
+        });
+      }
+
+      const dt = 1 / 60;
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life -= dt;
+        if (p.life <= 0) {
+          p.sprite.removeFromParent();
+          (p.sprite.material as THREE.SpriteMaterial).dispose();
+          particles.splice(i, 1);
+          continue;
+        }
+        p.sprite.position.y += p.vy * dt;
+        p.sprite.position.x += p.vx * dt;
+        (p.sprite.material as THREE.SpriteMaterial).opacity = Math.min(1, p.life * 3);
+      }
+    });
+
+    for (const p of particles) {
+      p.sprite.removeFromParent();
+      (p.sprite.material as THREE.SpriteMaterial).dispose();
+    }
+    particleGroup.removeFromParent();
+    light.removeFromParent();
+    item.object.removeFromParent();
+
+    const have = this.burnedPosters();
+    this.stalker?.setBurnedPosters(have);
+    this.ui.toast(texts.toastPoster(have, POSTER_IDS.length));
+    this.updatePosterHud();
+  }
+
+  private updatePosterHud(): void {
+    this.ui.setPosterCount(this.burnedPosters(), POSTER_IDS.length);
+  }
+
+  private burnedPosters(): number {
+    return POSTER_IDS.filter((id) => this.flags.has(`burned:${id}`)).length;
   }
 
   private pickUpItem(item: ItemHandle): void {
@@ -1249,26 +1436,13 @@ export class Game {
     this.flags.set(`taken:${item.id}`);
     item.object.removeFromParent();
     this.models.set(item.id, item.object.clone(true));
-    this.audio.play(def.kind === 'note' ? 'pickup_note' : 'pickup_key');
+    this.audio.play('pickup_key');
 
-    if (def.kind === 'note') {
-      const have = NOTE_IDS.filter((id) => this.inventory.has(id)).length;
-      this.ui.toast(texts.toastNote(have, NOTE_IDS.length));
-    } else if (def.kind === 'tool') {
+    if (def.kind === 'tool') {
       this.flashlight.give();
       this.ui.toast(texts.toastFlashlight);
     } else {
       this.ui.toast(texts.toastKey(itemName(def, this.config.language)));
-    }
-
-    if (item.id === 'note_1') {
-      this.flags.set('stalker_active');
-      this.ui.toast(texts.toastStalker);
-      void this.activateStalker();
-    }
-
-    if (def.kind === 'note') {
-      this.openNote(def, 'playing');
     }
   }
 
@@ -1459,17 +1633,33 @@ export class Game {
   }
 
   private updatePrompt(): void {
+    const texts = TEXTS[this.config.language];
     let text = '';
-    if (this.input.lastSource === 'gamepad') {
+    if (this.touchActive) {
+      if (!this.input.touchPlayed) {
+        text = texts.touchToPlay;
+      } else {
+        const target = this.nearestInteractable();
+        text = target ? this.touchPrompt(target.label) : '';
+      }
+    } else if (this.input.lastSource === 'gamepad') {
       const target = this.nearestInteractable();
       text = target ? target.label : '';
     } else if (!this.input.locked) {
-      text = TEXTS[this.config.language].clickToPlay;
+      text = texts.clickToPlay;
     } else {
       const target = this.nearestInteractable();
       text = target ? target.label : '';
     }
     this.ui.setPrompt(text);
+  }
+
+  // Los rótulos de mundo usan "E — ..."; en táctil la acción es el botón USAR.
+  private touchPrompt(label: string): string {
+    if (!label.startsWith('E — ')) {
+      return label;
+    }
+    return `${TEXTS[this.config.language].touchUse} — ${label.slice(4)}`;
   }
 }
 

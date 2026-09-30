@@ -56,8 +56,8 @@ function requireCanvas(): HTMLCanvasElement {
 }
 
 export class UiCanvas {
-  readonly width = UI_WIDTH;
-  readonly height = UI_HEIGHT;
+  width: number;
+  height: number;
   readonly ctx: CanvasRenderingContext2D;
   readonly font: BitmapFont;
 
@@ -70,8 +70,10 @@ export class UiCanvas {
     this.font = font;
     this.getViewport = getViewport;
     this.canvas = requireCanvas();
-    this.canvas.width = UI_WIDTH;
-    this.canvas.height = UI_HEIGHT;
+    this.width = UI_WIDTH;
+    this.height = UI_HEIGHT;
+    this.canvas.width = this.width;
+    this.canvas.height = this.height;
     const ctx = this.canvas.getContext('2d', { alpha: true });
     if (!ctx) {
       throw new Error('No se pudo crear el contexto 2D de la interfaz');
@@ -79,8 +81,33 @@ export class UiCanvas {
     this.ctx = ctx;
     this.ctx.imageSmoothingEnabled = false;
     window.addEventListener('resize', this.resize);
+    window.visualViewport?.addEventListener('resize', this.resize);
+    window.addEventListener('orientationchange', this.handleOrientationChange);
+    document.addEventListener('fullscreenchange', this.resize);
     this.resize();
   }
+
+  // El tamaño lógico sigue la resolución activa del render (4:3 en horizontal,
+  // más alto que ancho en vertical); así la interfaz nunca se deforma.
+  setLogicalSize(width: number, height: number): void {
+    const nextWidth = Math.max(64, Math.round(width));
+    const nextHeight = Math.max(64, Math.round(height));
+    if (nextWidth === this.width && nextHeight === this.height) {
+      return;
+    }
+    this.width = nextWidth;
+    this.height = nextHeight;
+    this.canvas.width = nextWidth;
+    this.canvas.height = nextHeight;
+    this.ctx.imageSmoothingEnabled = false;
+    this.dirty = true;
+    this.resize();
+  }
+
+  private readonly handleOrientationChange = (): void => {
+    this.resize();
+    window.setTimeout(this.resize, 250);
+  };
 
   get blinkVisible(): boolean {
     return this.blinkTime % (1 / BLINK_HZ) < 1 / BLINK_HZ / 2;
@@ -116,7 +143,7 @@ export class UiCanvas {
   begin(): void {
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.globalAlpha = 1;
-    this.ctx.clearRect(0, 0, UI_WIDTH, UI_HEIGHT);
+    this.ctx.clearRect(0, 0, this.width, this.height);
     this.dirty = true;
   }
 
@@ -127,7 +154,7 @@ export class UiCanvas {
   clear(color: string = PALETTE.void, alpha = 1): void {
     this.ctx.globalAlpha = alpha;
     this.ctx.fillStyle = color;
-    this.ctx.fillRect(0, 0, UI_WIDTH, UI_HEIGHT);
+    this.ctx.fillRect(0, 0, this.width, this.height);
     this.ctx.globalAlpha = 1;
   }
 
@@ -172,7 +199,7 @@ export class UiCanvas {
   textCentered(str: string, y: number, options: DrawTextOptions = {}): number {
     const scale = options.scale ?? 1;
     const width = this.font.measure(str, scale);
-    return this.font.draw(this.ctx, str, Math.round(UI_WIDTH / 2 - width / 2), y, options);
+    return this.font.draw(this.ctx, str, Math.round(this.width / 2 - width / 2), y, options);
   }
 
   textCenteredIn(

@@ -17,6 +17,7 @@ export interface SettingsData {
   authenticLoading: boolean;
   subtitles: boolean;
   gamepad: boolean;
+  touchControls: boolean;
   language: Language;
 }
 
@@ -88,6 +89,7 @@ const DEFAULT_VALUES: SettingsData = {
   authenticLoading: true,
   subtitles: true,
   gamepad: true,
+  touchControls: true,
   language: 'es',
 };
 
@@ -115,6 +117,7 @@ const SETTINGS_KEYS = [
   'authenticLoading',
   'subtitles',
   'gamepad',
+  'touchControls',
   'language',
 ] as const;
 
@@ -174,6 +177,7 @@ const SANITIZERS: SettingSanitizers = {
   authenticLoading: booleanSetting,
   subtitles: booleanSetting,
   gamepad: booleanSetting,
+  touchControls: booleanSetting,
   language: enumSetting(LANGUAGES),
 };
 
