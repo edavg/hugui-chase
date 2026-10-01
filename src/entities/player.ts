@@ -15,6 +15,12 @@ const LOOK_STICK_SPEED = 320;
 // puertas (0.07) para que la colisión no se pueda atravesar de un salto.
 const KNOCKBACK_STEP = 0.05;
 
+// Pose de despertar: 1 = tumbado en el suelo mirando al techo con una leve
+// inclinación de cabeza; 0 = de pie con la vista al frente.
+const WAKE_FLOOR_HEIGHT = 0.18;
+const WAKE_PITCH = 0.4;
+const WAKE_ROLL = 0.12;
+
 export class Player {
   readonly camera: THREE.PerspectiveCamera;
   readonly position = new THREE.Vector3();
@@ -25,6 +31,7 @@ export class Player {
   private bobPhase = 0;
   private moveBlend = 0;
   private lift = 0;
+  private wakeAmount = 0;
 
   constructor(
     private readonly config: PsxConfig,
@@ -50,6 +57,13 @@ export class Player {
   // 0 en el destino.
   setLift(value: number): void {
     this.lift = value;
+    this.placeCamera(this.config, 0);
+  }
+
+  // Progreso de la secuencia de despertar: 0 despierto, 1 tumbado en el suelo.
+  // Game la anima al arrancar (y al reiniciar) la partida.
+  setWakeAmount(value: number): void {
+    this.wakeAmount = THREE.MathUtils.clamp(value, 0, 1);
     this.placeCamera(this.config, 0);
   }
 
@@ -161,11 +175,14 @@ export class Player {
   }
 
   private placeCamera(config: PsxConfig, bobY: number): void {
-    this.camera.position.set(
-      this.position.x,
-      config.player.eye_height + bobY + this.lift,
-      this.position.z,
+    const wake = this.wakeAmount;
+    const eyeHeight = config.player.eye_height;
+    const height = eyeHeight - (eyeHeight - WAKE_FLOOR_HEIGHT) * wake;
+    this.camera.position.set(this.position.x, height + bobY + this.lift, this.position.z);
+    this.camera.rotation.set(
+      this.pitch + WAKE_PITCH * wake,
+      this.yaw,
+      WAKE_ROLL * Math.sin(wake * Math.PI),
     );
-    this.camera.rotation.set(this.pitch, this.yaw, 0);
   }
 }

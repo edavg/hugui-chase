@@ -3,6 +3,7 @@ export type Language = 'es' | 'en';
 export type ControlRow = readonly [action: string, keys: string];
 
 export interface UiTexts {
+  introObjective: string;
   clickToPlay: string;
   touchToPlay: string;
   touchUse: string;
@@ -103,6 +104,7 @@ export interface UiTexts {
 
 export const TEXTS: Record<Language, UiTexts> = {
   es: {
+    introObjective: 'QUEMA LOS 8 AFICHES PARA PODER SALIR',
     clickToPlay: 'CLICK PARA JUGAR — WASD MOVER · SHIFT CORRER · E INTERACTUAR · I INVENTARIO',
     touchToPlay: 'JOYSTICK IZQ MOVER · ARRASTRA DER MIRAR',
     touchUse: 'USAR',
@@ -204,6 +206,7 @@ export const TEXTS: Record<Language, UiTexts> = {
     menuHintBackTouch: 'PAUSA',
   },
   en: {
+    introObjective: 'BURN ALL 8 POSTERS TO ESCAPE',
     clickToPlay: 'CLICK TO PLAY — WASD MOVE · SHIFT RUN · E INTERACT · I INVENTORY',
     touchToPlay: 'LEFT JOYSTICK MOVE · DRAG RIGHT TO LOOK',
     touchUse: 'USE',

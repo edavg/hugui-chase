@@ -39,6 +39,7 @@
           "width": 1.2,
           "height": 2.1,
           "door": "closed",
+          "double": true,
           "requires": [
             "poster_1",
             "poster_2",

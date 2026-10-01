@@ -54,6 +54,7 @@ function buildWalls(room) {
       if (door.action) opening.action = door.action;
       if (door.requires) opening.requires = door.requires;
       if (door.ending) opening.ending = true;
+      if (door.double) opening.double = true;
       openings.push(opening);
     }
     for (const win of room.windows ?? []) {
@@ -145,7 +146,7 @@ const rooms = [
     },
     audio: { reverb: 'hall', floor_material: 'wood', ambience: 'house' },
     doors: [
-      { side: 'N', offset: 3.4, width: 1.2, requires: ['poster_1', 'poster_2', 'poster_3', 'poster_4', 'poster_5', 'poster_6', 'poster_7', 'poster_8'], ending: true },
+      { side: 'N', offset: 3.4, width: 1.2, requires: ['poster_1', 'poster_2', 'poster_3', 'poster_4', 'poster_5', 'poster_6', 'poster_7', 'poster_8'], ending: true, double: true },
       { side: 'E', offset: 2.6, width: 1.2, to: 'room_salon' },
     ],
     windows: [{ side: 'S', offset: 1.6, width: 1.6 }],

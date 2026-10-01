@@ -192,9 +192,10 @@ function estimateTris(room) {
         tris += boxTris(opening.width + 0.16, 0.08, frameDepth, texScale);
       }
       if (opening.kind === 'door') {
-        const slabWidth = opening.width - 0.02;
-        tris += boxTris(slabWidth, opening.height - 0.02, 0.07, texScale);
-        tris += 12; // picaporte
+        const leaves = opening.double ? 2 : 1;
+        const slabWidth = opening.double ? opening.width / 2 - 0.02 : opening.width - 0.02;
+        tris += leaves * boxTris(slabWidth, opening.height - 0.02, 0.07, texScale);
+        tris += leaves * 12; // picaportes
       }
       if (opening.kind === 'window') {
         tris += planeTris(opening.width, opening.height, texScale);

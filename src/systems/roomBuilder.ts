@@ -32,6 +32,8 @@ export interface RoomOpening {
   action?: 'open' | 'up' | 'down';
   requires?: string[];
   ending?: boolean;
+  // Puerta de dos hojas: cada hoja gira sobre su jamba y se abre por el centro.
+  double?: boolean;
 }
 
 export interface RoomWallRun {
@@ -122,11 +124,16 @@ export interface RoomData {
   atmosphere?: Atmosphere;
 }
 
+export interface DoorLeaf {
+  group: THREE.Group;
+  baseRotation: number;
+  openAngle: number;
+}
+
 export interface DoorHandle {
   name: string;
   group: THREE.Group | null;
-  baseRotation: number;
-  openAngle: number;
+  leaves: DoorLeaf[];
   to: string | null;
   spawn: string | null;
   key: string | null;
@@ -134,6 +141,9 @@ export interface DoorHandle {
   requires: string[];
   ending: boolean;
   center: THREE.Vector3;
+  // Punto al que apuntar para interactuar (el centro de la hoja en puertas
+  // dobles, para que la mirada no se cuele por la junta de las dos hojas).
+  aimPoint: THREE.Vector3;
   height: number;
   collider: Collider | null;
 }
@@ -406,27 +416,31 @@ export async function buildRoom(
     buckets[bucket].push(geometry);
   }
 
-  function buildDoorSlab(
+  function buildDoorLeaf(
     originX: number,
     originZ: number,
     dirX: number,
     dirZ: number,
     heading: number,
     opening: RoomOpening,
-    doorIndex: number,
+    leafWidth: number,
+    hingeAtEnd: boolean,
     faceSign: number,
+    doorIndex: number,
   ): THREE.Group {
-    const slabWidth = opening.width - 0.02;
-    const slab = boxGeometry(slabWidth, opening.height - 0.02, 0.07, texScale);
-    scaleBoxUVs(slab, slabWidth, opening.height, 0.07, texScale);
+    const slab = boxGeometry(leafWidth, opening.height - 0.02, 0.07, texScale);
+    scaleBoxUVs(slab, leafWidth, opening.height, 0.07, texScale);
     if (data.door_fit) {
-      scaleUVs(slab, texScale / slabWidth, texScale / opening.height);
+      scaleUVs(slab, texScale / leafWidth, texScale / opening.height);
     }
     paintVertexColors(slab, () => 0.9);
 
     const handle = boxGeometry(0.05, 0.14, 0.08, texScale);
     scaleBoxUVs(handle, 0.05, 0.14, 0.08, texScale);
-    handle.translate(slabWidth / 2 - 0.12, 0, faceSign * 0.06);
+    // La hoja con gozne al final va girada 180°, así que su cara interior
+    // también se invierte para que el picaporte quede del lado de la sala.
+    const handleX = opening.double ? leafWidth - 0.12 : leafWidth / 2 - 0.12;
+    handle.translate(handleX, 0, (hingeAtEnd ? -faceSign : faceSign) * 0.06);
     paintVertexColors(handle, () => 1);
 
     const merged = mergeGeometries([slab, handle], false);
@@ -434,12 +448,13 @@ export async function buildRoom(
       throw new Error(`No se pudo construir la puerta ${doorIndex} de ${data.id}`);
     }
     const mesh = new THREE.Mesh(merged, materials.door.material);
-    mesh.position.set(slabWidth / 2 + 0.01, (opening.height - 0.02) / 2 + 0.01, 0);
+    mesh.position.set(leafWidth / 2 + 0.01, (opening.height - 0.02) / 2 + 0.01, 0);
 
     const group = new THREE.Group();
-    group.name = `door_${data.id}_${doorIndex}`;
-    group.position.set(originX + dirX * opening.offset, 0, originZ + dirZ * opening.offset);
-    group.rotation.y = heading;
+    group.name = `door_${data.id}_${doorIndex}${hingeAtEnd ? 'b' : ''}`;
+    const hinge = hingeAtEnd ? opening.offset + opening.width : opening.offset;
+    group.position.set(originX + dirX * hinge, 0, originZ + dirZ * hinge);
+    group.rotation.y = hingeAtEnd ? heading + Math.PI : heading;
     group.add(mesh);
     scene.add(group);
     return group;
@@ -570,21 +585,36 @@ export async function buildRoom(
 
       if (opening.kind === 'door') {
         const towardCenter = dirZ * centerX - dirX * centerZ;
-        const group = buildDoorSlab(
-          startX,
-          startZ,
-          dirX,
-          dirZ,
-          heading,
-          opening,
-          doors.length + 1,
-          towardCenter >= 0 ? 1 : -1,
-        );
+        const faceSign = towardCenter >= 0 ? 1 : -1;
+        const openAngle = towardCenter >= 0 ? DOOR_SWING : -DOOR_SWING;
+        const doorIndex = doors.length + 1;
+        const leaves: DoorLeaf[] = [];
+        let aimX = centerX;
+        let aimZ = centerZ;
+        if (opening.double) {
+          const leafWidth = opening.width / 2 - 0.02;
+          const left = buildDoorLeaf(
+            startX, startZ, dirX, dirZ, heading, opening, leafWidth, false, faceSign, doorIndex,
+          );
+          const right = buildDoorLeaf(
+            startX, startZ, dirX, dirZ, heading, opening, leafWidth, true, faceSign, doorIndex,
+          );
+          leaves.push(
+            { group: left, baseRotation: heading, openAngle },
+            { group: right, baseRotation: heading + Math.PI, openAngle: -openAngle },
+          );
+          aimX = startX + dirX * (opening.offset + leafWidth / 2);
+          aimZ = startZ + dirZ * (opening.offset + leafWidth / 2);
+        } else {
+          const group = buildDoorLeaf(
+            startX, startZ, dirX, dirZ, heading, opening, opening.width - 0.02, false, faceSign, doorIndex,
+          );
+          leaves.push({ group, baseRotation: heading, openAngle });
+        }
         doors.push({
-          name: group.name,
-          group,
-          baseRotation: heading,
-          openAngle: towardCenter >= 0 ? DOOR_SWING : -DOOR_SWING,
+          name: leaves[0].group.name,
+          group: leaves[0].group,
+          leaves,
           to: opening.to ?? null,
           spawn: opening.spawn ?? null,
           key: opening.key ?? null,
@@ -592,6 +622,7 @@ export async function buildRoom(
           requires: opening.requires ?? [],
           ending: opening.ending ?? false,
           center: new THREE.Vector3(centerX, 0, centerZ),
+          aimPoint: new THREE.Vector3(aimX, 0, aimZ),
           height: opening.height,
           collider: findCollider(colliders, centerX, centerZ, heading, opening.width, DOOR_THICKNESS),
         });
@@ -600,8 +631,7 @@ export async function buildRoom(
           doors.push({
             name: `passage_${data.id}_${doors.length + 1}`,
             group: null,
-            baseRotation: 0,
-            openAngle: 0,
+            leaves: [],
             to: opening.to,
             spawn: opening.spawn ?? null,
             key: opening.key ?? null,
@@ -609,6 +639,7 @@ export async function buildRoom(
             requires: opening.requires ?? [],
             ending: opening.ending ?? false,
             center: new THREE.Vector3(centerX, 0, centerZ),
+            aimPoint: new THREE.Vector3(centerX, 0, centerZ),
             height: opening.height,
             collider: null,
           });

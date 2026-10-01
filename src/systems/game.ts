@@ -38,6 +38,8 @@ const DEFAULT_HIT_INVULN = 2.5;
 const HIT_KNOCKBACK = 1.0;
 const CLIMB_LIFT = 2.2;
 const CLIMB_STEPS = 6;
+const INTRO_OBJECTIVE_SECONDS = 7;
+const WAKE_SECONDS = 3.2;
 const ARRIVAL_DOOR_SECONDS = 0.9;
 const AIM_OCCLUSION_MARGIN = 0.15;
 const AIM_ITEM_LIFT = 0.12;
@@ -86,6 +88,7 @@ export class Game {
   };
   private readonly introRoom: string;
   private readonly introSpawn: string;
+  private readonly wakeEnabled: boolean;
   readonly audio: AudioSystem;
   private catalog = new Map<string, ItemDef>();
   private transitionStart = 0;
@@ -133,6 +136,7 @@ export class Game {
     const params = new URLSearchParams(window.location.search);
     this.introRoom = params.get('room') ?? 'room_vestibulo';
     this.introSpawn = params.get('spawn') ?? 'start';
+    this.wakeEnabled = params.get('wake') !== '0';
 
     this.uiCanvas = new UiCanvas(createBitmapFont(), () => ({
       x: this.psx.viewport.x,
@@ -254,6 +258,7 @@ export class Game {
       this.flashlight.on = true;
       this.flashlight.update(0, this.player.camera, true);
     }
+    this.beginIntro();
     console.info(
       `[M3] ${this.config.title} | sala "${this.room.name}" | tris: ${this.room.triangleCount} | colisiones: ${this.room.colliders.length} | puertas: ${this.room.doors.length} | ítems: ${this.room.items.length}`,
     );
@@ -810,6 +815,7 @@ export class Game {
     this.updatePosterHud();
     this.flags.set('stalker_active');
     void this.activateStalker();
+    this.beginIntro();
   }
 
   private showGameOver(): void {
@@ -1194,7 +1200,7 @@ export class Game {
   }
 
   private doorAimPoint(door: DoorHandle): THREE.Vector3 {
-    const point = this.aimDoorPoint.copy(door.center);
+    const point = this.aimDoorPoint.copy(door.aimPoint);
     point.y = Math.min(this.config.player.eye_height, Math.max(0.2, door.height - 0.15));
     return point;
   }
@@ -1417,6 +1423,42 @@ export class Game {
     this.ui.setPosterCount(this.burnedPosters(), POSTER_IDS.length);
   }
 
+  // Aviso inicial: recuerda el objetivo de la partida (quemar los 8 afiches).
+  private showIntroObjective(): void {
+    this.ui.toast(TEXTS[this.config.language].introObjective, INTRO_OBJECTIVE_SECONDS);
+  }
+
+  private beginIntro(): void {
+    if (this.wakeEnabled) {
+      void this.runWakeUp();
+    } else {
+      this.showIntroObjective();
+    }
+  }
+
+  // El jugador despierta tumbado en el suelo: la cámara sube desde la altura
+  // del suelo hasta los ojos mientras el negro y el desenfoque se disipan.
+  // Se ejecuta al arrancar y al reiniciar la partida.
+  private async runWakeUp(): Promise<void> {
+    this.state = 'transition';
+    this.ui.hideAll();
+    this.ui.setPrompt('');
+    this.input.consumeMouseDelta();
+    this.psx.setFade(1);
+    this.psx.setBlur(1);
+    this.player.setWakeAmount(1);
+    await this.wait(WAKE_SECONDS, (progress) => {
+      this.player.setWakeAmount(1 - easeInOut(progress));
+      this.psx.setBlur(Math.pow(1 - progress, 1.7));
+      this.psx.setFade(Math.max(0, 1 - progress * 3.2));
+    });
+    this.player.setWakeAmount(0);
+    this.psx.setBlur(0);
+    this.psx.setFade(0);
+    this.state = 'playing';
+    this.showIntroObjective();
+  }
+
   private burnedPosters(): number {
     return POSTER_IDS.filter((id) => this.flags.has(`burned:${id}`)).length;
   }
@@ -1471,14 +1513,13 @@ export class Game {
     const minTotal = authentic ? min_seconds : 0;
 
     const roomPromise = this.getRoom(target);
-    const group = door.group;
     const previousRoom = this.room.id;
     const climbing = door.action === 'up' || door.action === 'down';
     const climbSign = door.action === 'up' ? 1 : -1;
 
-    if (group) {
+    if (door.leaves.length > 0) {
       await this.wait(doorDuration, (progress) => {
-        group.rotation.y = door.baseRotation + door.openAngle * easeInOut(progress);
+        this.setDoorOpen(door, easeInOut(progress));
       });
     }
     await this.wait(fadeDuration, (progress) => {
@@ -1556,11 +1597,9 @@ export class Game {
     if (!chosen || !group) {
       return;
     }
-    const openRotation = chosen.baseRotation + chosen.openAngle;
-    const closedRotation = chosen.baseRotation;
-    group.rotation.y = openRotation;
+    this.setDoorOpen(chosen, 1);
     void this.wait(ARRIVAL_DOOR_SECONDS, (progress) => {
-      group.rotation.y = openRotation + (closedRotation - openRotation) * easeInOut(progress);
+      this.setDoorOpen(chosen, 1 - easeInOut(progress));
     });
     void this.wait(ARRIVAL_DOOR_SECONDS + 0.05, () => {
       this.audio.play(
@@ -1574,13 +1613,10 @@ export class Game {
     this.state = 'transition';
     this.ui.setPrompt('');
     this.removeDoorCollider(door);
-    const group = door.group;
     this.audio.play('door_open_wood');
 
     await this.wait(1.6, (progress) => {
-      if (group) {
-        group.rotation.y = door.baseRotation + door.openAngle * easeInOut(Math.min(1, progress * 1.4));
-      }
+      this.setDoorOpen(door, easeInOut(Math.min(1, progress * 1.4)));
       this.psx.setFade(progress * 0.55);
     });
     await this.wait(1.0, (progress) => this.psx.setFade(0.55 + progress * 0.45));
@@ -1600,10 +1636,16 @@ export class Game {
     }
   }
 
-  private closeDoor(room: BuiltRoom, door: DoorHandle): void {
-    if (door.group) {
-      door.group.rotation.y = door.baseRotation;
+  // Aplica el grado de apertura (0 cerrada, 1 abierta) a todas las hojas. En
+  // puertas dobles cada hoja gira sobre su jamba y el hueco se abre por el centro.
+  private setDoorOpen(door: DoorHandle, progress: number): void {
+    for (const leaf of door.leaves) {
+      leaf.group.rotation.y = leaf.baseRotation + leaf.openAngle * progress;
     }
+  }
+
+  private closeDoor(room: BuiltRoom, door: DoorHandle): void {
+    this.setDoorOpen(door, 0);
     if (door.collider && !room.colliders.includes(door.collider)) {
       room.colliders.push(door.collider);
     }

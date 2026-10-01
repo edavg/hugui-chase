@@ -18,6 +18,11 @@ const GAMMA_RANGE = { min: 0.1, max: 4 };
 const PORTRAIT_WIDTH = 360;
 const PORTRAIT_MIN_HEIGHT = 320;
 
+// Radio máximo del desenfoque de despertar, en texels de la resolución base
+// (640×480). A más resolución se escala para conservar el mismo tamaño en
+// pantalla.
+const BLUR_MAX_TEXELS = 6;
+
 function imageModeId(mode: ImageMode): number {
   const id = IMAGE_MODE_IDS[mode];
   return typeof id === 'number' ? id : IMAGE_MODE_IDS.psx;
@@ -46,6 +51,7 @@ export class PsxRenderer {
   private surfaceWidth = 1;
   private surfaceHeight = 1;
   private imageMode: ImageMode = 'psx';
+  private blurAmount = 0;
 
   constructor(canvas: HTMLCanvasElement, config: PsxConfig, portraitEnabled = false) {
     this.config = config;
@@ -79,6 +85,7 @@ export class PsxRenderer {
         u_intensity: { value: 0 },
         u_time: { value: 0 },
         u_texel: { value: new THREE.Vector2(1 / resWidth, 1 / resHeight) },
+        u_blur: { value: 0 },
       },
       depthTest: false,
       depthWrite: false,
@@ -135,6 +142,7 @@ export class PsxRenderer {
 
     const [resWidth, resHeight] = this.resolution;
     (this.blitMaterial.uniforms.u_texel.value as THREE.Vector2).set(1 / resWidth, 1 / resHeight);
+    this.syncBlur();
 
     const fit = Math.min(width / resWidth, height / resHeight);
     // En vertical se prioriza llenar la pantalla: el escalado entero dejaría
@@ -234,6 +242,17 @@ export class PsxRenderer {
 
   setFade(value: number): void {
     this.blitMaterial.uniforms.u_fade.value = THREE.MathUtils.clamp(value, 0, 1);
+  }
+
+  // Desenfoque de pantalla completa (0–1) para la secuencia de despertar.
+  setBlur(value: number): void {
+    this.blurAmount = THREE.MathUtils.clamp(value, 0, 1);
+    this.syncBlur();
+  }
+
+  private syncBlur(): void {
+    const scale = this.resolution[1] / this.baseResolution[1];
+    this.blitMaterial.uniforms.u_blur.value = this.blurAmount * BLUR_MAX_TEXELS * scale;
   }
 
   render(scene: THREE.Scene, camera: THREE.Camera): void {

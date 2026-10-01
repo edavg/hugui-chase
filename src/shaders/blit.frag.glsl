@@ -6,6 +6,9 @@ uniform float u_mode;
 uniform float u_intensity;
 uniform float u_time;
 uniform vec2 u_texel;
+// Radio de desenfoque en texels (0 = sin desenfoque). Se usa en la secuencia
+// de despertar: el mundo entra borroso y se va enfocando.
+uniform float u_blur;
 
 varying vec2 v_uv;
 
@@ -34,11 +37,30 @@ vec2 curveUV(vec2 uv, float amount) {
   return (c * (1.0 + r2 * 0.08 * amount)) * 0.5 + 0.5;
 }
 
+// Muestreo con desenfoque de disco (centro + 8 taps). Con u_blur a 0 se reduce
+// a una única lectura, así que no cuesta nada fuera de la secuencia de despertar.
+vec3 sampleSource(vec2 uv) {
+  if (u_blur <= 0.001) {
+    return texture2D(u_source, uv).rgb;
+  }
+  vec2 texelStep = u_texel * u_blur;
+  vec3 sum = texture2D(u_source, uv).rgb * 0.2;
+  sum += texture2D(u_source, uv + vec2(1.0, 0.0) * texelStep).rgb * 0.1;
+  sum += texture2D(u_source, uv + vec2(-1.0, 0.0) * texelStep).rgb * 0.1;
+  sum += texture2D(u_source, uv + vec2(0.0, 1.0) * texelStep).rgb * 0.1;
+  sum += texture2D(u_source, uv + vec2(0.0, -1.0) * texelStep).rgb * 0.1;
+  sum += texture2D(u_source, uv + vec2(0.7071, 0.7071) * texelStep).rgb * 0.1;
+  sum += texture2D(u_source, uv + vec2(-0.7071, 0.7071) * texelStep).rgb * 0.1;
+  sum += texture2D(u_source, uv + vec2(0.7071, -0.7071) * texelStep).rgb * 0.1;
+  sum += texture2D(u_source, uv + vec2(-0.7071, -0.7071) * texelStep).rgb * 0.1;
+  return sum;
+}
+
 void main() {
   float amount = clamp(u_intensity, 0.0, 1.0);
   float t = mod(u_time, 600.0);
   vec2 pixel = floor(v_uv / u_texel);
-  vec3 color = texture2D(u_source, v_uv).rgb;
+  vec3 color = sampleSource(v_uv);
 
   if (u_mode < 0.5) {
     color *= 1.0 - 0.075 * amount * scanWave(pixel.y, 2.0);
@@ -54,9 +76,9 @@ void main() {
 
     float shift = 2.5 * amount * u_texel.x;
     vec3 bleed;
-    bleed.r = texture2D(u_source, uv + vec2(shift, 0.0)).r;
-    bleed.g = texture2D(u_source, uv).g;
-    bleed.b = texture2D(u_source, uv - vec2(shift, 0.0)).b;
+    bleed.r = sampleSource(uv + vec2(shift, 0.0)).r;
+    bleed.g = sampleSource(uv).g;
+    bleed.b = sampleSource(uv - vec2(shift, 0.0)).b;
     float luma = dot(bleed, vec3(0.299, 0.587, 0.114));
     bleed += (bleed - vec3(luma)) * 0.5 * amount;
 
@@ -77,10 +99,10 @@ void main() {
       vec2 radial = uv - 0.5;
       vec2 offset = radial * dot(radial, radial) * 6.0 * amount * u_texel.x;
       vec3 fringe;
-      fringe.r = texture2D(u_source, uv + offset).r;
-      fringe.g = texture2D(u_source, uv).g;
-      fringe.b = texture2D(u_source, uv - offset).b;
-      color = mix(texture2D(u_source, uv).rgb, fringe, amount);
+      fringe.r = sampleSource(uv + offset).r;
+      fringe.g = sampleSource(uv).g;
+      fringe.b = sampleSource(uv - offset).b;
+      color = mix(sampleSource(uv), fringe, amount);
 
       vec2 curvedPixel = floor(uv / u_texel);
       color *= 1.0 - 0.3 * amount * scanWave(curvedPixel.y, 2.0);
