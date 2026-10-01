@@ -1,7 +1,7 @@
 import { fetchJson } from './fetchJson';
 import type { Language } from './i18n';
 
-export type ItemKind = 'note' | 'key' | 'tool' | 'poster';
+export type ItemKind = 'note' | 'key' | 'tool' | 'poster' | 'lore';
 
 export interface ItemDef {
   id: string;

@@ -11,6 +11,8 @@ import {
   POSTER_IDS,
   itemDesc,
   itemName,
+  itemText,
+  itemTitle,
   loadItemCatalog,
   type ItemDef,
 } from './items';
@@ -36,8 +38,6 @@ const NAV_REPEAT_INTERVAL = 0.22;
 const DEFAULT_HEARTS = 3;
 const DEFAULT_HIT_INVULN = 2.5;
 const HIT_KNOCKBACK = 1.0;
-const CLIMB_LIFT = 2.2;
-const CLIMB_STEPS = 6;
 const INTRO_OBJECTIVE_SECONDS = 7;
 const WAKE_SECONDS = 3.2;
 const ARRIVAL_DOOR_SECONDS = 0.9;
@@ -46,7 +46,7 @@ const AIM_ITEM_LIFT = 0.12;
 const AIM_FLAT_VIEW_EPS = 0.08;
 const AIM_FOV_FALLBACK = 32;
 
-type State = 'playing' | 'transition' | 'inventory' | 'examine' | 'ending';
+type State = 'playing' | 'transition' | 'inventory' | 'examine' | 'reading' | 'ending';
 
 type Axis = 'up' | 'down' | 'left' | 'right';
 
@@ -880,6 +880,9 @@ export class Game {
       case 'examine':
         this.handleExamine(dt);
         break;
+      case 'reading':
+        this.handleReading();
+        break;
       case 'ending':
         break;
     }
@@ -1179,6 +1182,8 @@ export class Game {
         label = texts.promptBurnPoster;
       } else if (def?.kind === 'tool') {
         label = texts.promptPickTool(itemName(def, this.config.language));
+      } else if (def?.kind === 'lore') {
+        label = texts.promptExamine;
       }
       best = { door: null, item, label };
     }
@@ -1305,6 +1310,8 @@ export class Game {
       const def = this.catalog.get(target.item.id);
       if (def?.kind === 'poster') {
         void this.burnPoster(target.item);
+      } else if (def?.kind === 'lore') {
+        this.readLore(target.item);
       } else {
         this.pickUpItem(target.item);
       }
@@ -1488,6 +1495,44 @@ export class Game {
     }
   }
 
+  // Examinable fijo (placa de la escalera): muestra el texto en pantalla sin
+  // recogerlo al inventario. Se puede releer; solo marca `read:<id>`.
+  private readLore(item: ItemHandle): void {
+    const def = this.catalog.get(item.id);
+    if (!def) {
+      return;
+    }
+    this.flags.set(`read:${item.id}`);
+    this.audio.play('pickup_note');
+    this.ui.setPrompt('');
+    this.ui.showNote(
+      itemTitle(def, this.config.language),
+      itemText(def, this.config.language),
+    );
+    this.input.clearPending();
+    this.state = 'reading';
+  }
+
+  private handleReading(): void {
+    if (this.press('KeyE', 'interact') || this.press('Enter', 'confirm')) {
+      if (!this.ui.noteComplete) {
+        this.ui.revealNote();
+        return;
+      }
+      this.closeReading();
+      return;
+    }
+    if (this.press('Escape', 'cancel')) {
+      this.closeReading();
+    }
+  }
+
+  private closeReading(): void {
+    this.ui.hideNote();
+    this.state = 'playing';
+    this.input.clearPending();
+  }
+
   private toggleFlashlight(): void {
     if (!this.flashlight.toggle()) {
       return;
@@ -1514,8 +1559,6 @@ export class Game {
 
     const roomPromise = this.getRoom(target);
     const previousRoom = this.room.id;
-    const climbing = door.action === 'up' || door.action === 'down';
-    const climbSign = door.action === 'up' ? 1 : -1;
 
     if (door.leaves.length > 0) {
       await this.wait(doorDuration, (progress) => {
@@ -1524,13 +1567,7 @@ export class Game {
     }
     await this.wait(fadeDuration, (progress) => {
       this.psx.setFade(progress);
-      if (climbing) {
-        this.player.setLift(CLIMB_LIFT * climbSign * easeInOut(progress));
-      }
     });
-    if (climbing) {
-      this.scheduleClimbSteps();
-    }
 
     const elapsed = (performance.now() - this.transitionStart) / 1000;
     const remainingMin = Math.max(0, minTotal - elapsed);
@@ -1560,19 +1597,6 @@ export class Game {
       0.45,
     );
     this.state = 'playing';
-  }
-
-  // Pasos de subida/bajada repartidos durante el fundido, sin bloquear la
-  // transición. El material de suelo es el de la sala en cada momento.
-  private scheduleClimbSteps(): void {
-    let played = 0;
-    void this.wait(1.2, (progress) => {
-      const wanted = Math.min(CLIMB_STEPS, Math.floor(progress * CLIMB_STEPS) + 1);
-      while (played < wanted) {
-        this.audio.footstep(false);
-        played += 1;
-      }
-    });
   }
 
   // La puerta de la sala destino por la que acabas de entrar aparece abierta

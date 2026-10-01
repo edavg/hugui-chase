@@ -23,6 +23,7 @@ export interface UiTexts {
   promptDown: string;
   promptPickNote: string;
   promptPickKey: string;
+  promptExamine: string;
   promptPickTool: (name: string) => string;
   promptBurnPoster: string;
   promptEndingReady: string;
@@ -124,6 +125,7 @@ export const TEXTS: Record<Language, UiTexts> = {
     promptDown: 'E — BAJAR',
     promptPickNote: 'E — COGER NOTA',
     promptPickKey: 'E — COGER LLAVE',
+    promptExamine: 'E — EXAMINAR',
     promptPickTool: (name) => `E — COGER ${name.toUpperCase()}`,
     promptBurnPoster: 'E — QUEMAR AFICHE',
     promptEndingReady: 'E — SALIR DE LA CASA',
@@ -226,6 +228,7 @@ export const TEXTS: Record<Language, UiTexts> = {
     promptDown: 'E — GO DOWN',
     promptPickNote: 'E — TAKE NOTE',
     promptPickKey: 'E — TAKE KEY',
+    promptExamine: 'E — EXAMINE',
     promptPickTool: (name) => `E — TAKE ${name.toUpperCase()}`,
     promptBurnPoster: 'E — BURN POSTER',
     promptEndingReady: 'E — LEAVE THE HOUSE',

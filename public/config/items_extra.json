@@ -7,6 +7,18 @@
       "name_en": "Flashlight",
       "desc_es": "Una linterna de taller, arañada y pesada. Alguien la dejó sobre una caja en la escalera del sótano. La pila está casi llena. Enciende con F.",
       "desc_en": "A scratched, heavy workshop flashlight. Someone left it on a crate by the basement stairs. The battery is almost full. Turn it on with F."
+    },
+    {
+      "id": "stair_plaque",
+      "kind": "lore",
+      "name_es": "Placa del rellano",
+      "name_en": "Landing plaque",
+      "title_es": "PLACA DEL RELLANO",
+      "title_en": "LANDING PLAQUE",
+      "desc_es": "Una placa de latón atornillada a la pared del rellano.",
+      "desc_en": "A brass plaque screwed to the landing wall.",
+      "text_es": "AQUÍ HUBO UNA ESCALERA. SE HUNDIÓ CON LA TORMENTA DEL 94 Y LA TABICARON. SOLO QUEDAN LAS PUERTAS DE LOS RELLANOS. NO TE DETENGAS EN ELLAS. — E.",
+      "text_en": "THERE USED TO BE STAIRS HERE. THEY COLLAPSED IN THE STORM OF '94 AND WERE WALLED UP. ONLY THE LANDING DOORS REMAIN. DO NOT LINGER IN THEM. — E."
     }
   ]
 }

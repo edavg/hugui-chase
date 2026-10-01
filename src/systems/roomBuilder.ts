@@ -965,6 +965,13 @@ function buildItemModel(kind: ItemKind, material: THREE.Material): THREE.Object3
     return group;
   }
 
+  if (kind === 'lore') {
+    const plate = new THREE.BoxGeometry(0.45, 0.55, 0.02);
+    paintVertexColors(plate, () => 1.0);
+    group.add(new THREE.Mesh(plate, material));
+    return group;
+  }
+
   if (kind === 'tool') {
     const parts: THREE.BufferGeometry[] = [];
     const body = new THREE.CylinderGeometry(0.03, 0.034, 0.17, 8);

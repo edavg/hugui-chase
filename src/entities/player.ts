@@ -30,7 +30,6 @@ export class Player {
   private pitch = 0;
   private bobPhase = 0;
   private moveBlend = 0;
-  private lift = 0;
   private wakeAmount = 0;
 
   constructor(
@@ -49,14 +48,6 @@ export class Player {
   lookAt(yawDegrees: number, pitchDegrees: number): void {
     this.yaw = THREE.MathUtils.degToRad(yawDegrees);
     this.pitch = THREE.MathUtils.clamp(THREE.MathUtils.degToRad(pitchDegrees), -1.5, 1.5);
-    this.placeCamera(this.config, 0);
-  }
-
-  // Desplazamiento vertical de cámara durante las transiciones de escalera
-  // (subir/bajar). El jugador se recrea al llegar a la sala, así que vuelve a
-  // 0 en el destino.
-  setLift(value: number): void {
-    this.lift = value;
     this.placeCamera(this.config, 0);
   }
 
@@ -178,7 +169,7 @@ export class Player {
     const wake = this.wakeAmount;
     const eyeHeight = config.player.eye_height;
     const height = eyeHeight - (eyeHeight - WAKE_FLOOR_HEIGHT) * wake;
-    this.camera.position.set(this.position.x, height + bobY + this.lift, this.position.z);
+    this.camera.position.set(this.position.x, height + bobY, this.position.z);
     this.camera.rotation.set(
       this.pitch + WAKE_PITCH * wake,
       this.yaw,
