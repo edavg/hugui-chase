@@ -117,7 +117,7 @@ sala destino por la que entraste aparece abierta y se cierra sola a tu espalda.
 - **E** actúa sobre el interactuable más cercano a la dirección de vista dentro de `player.interact_radius` (1.2 m) y del cono `player.interact_fov_deg` (32° a cada lado): puertas o ítems sin recoger. No hay mira: basta con estar cerca y mirar hacia el objetivo. Las puertas son superficies altas, así que se comprueban **solo en horizontal** (miras al pomo, al suelo o al techo y sigue funcionando) y se apuntan a la altura de los ojos; los ítems se comprueban en 3D y se apuntan 12 cm por encima para que la mesa o la cama que los sostiene no los tape. Se exige línea de visión (raycast que ignora el propio objetivo y los últimos 15 cm), así que no se interactúa a través de paredes.
 - Al recoger una nota se abre la pantalla de lectura a pantalla completa (máquina de escribir); se relee desde el inventario. Las llaves se examinan en 3D.
 - El inventario tiene 8 slots; las notas se guardan como "NOTA I/II/III" y las llaves con su nombre.
-- **Herramientas** (`kind: "tool"`, M9): se recogen y examinan como las llaves; la linterna se enciende/apaga con **F** (mando: Y) y es la única forma cómoda de ver en el sótano. Vive en `items_extra.json` sobre una caja de la Escalera del Sótano.
+- **Herramientas** (`kind: "tool"`, M9): se recogen y examinan como las llaves; la linterna se enciende/apaga con **F** (mando: Y) y es la única forma cómoda de ver en el sótano. Vive en `items_extra.json` sobre una mesita (`Mesa_Cabeceira_*` del Room Furniture de Kalebe) en la Escalera del Sótano.
 - La puerta principal del Vestíbulo usa `requires` + `ending`; el prompt muestra `E — CERRADA (n/3 NOTAS)` hasta tenerlas todas.
 
 ## Salas actuales y texturas
@@ -154,6 +154,7 @@ Las puertas usan las texturas del PanelkaPack (madera en la casa, metal en el s�
 | Comedor / Cuarto | `living_room/book_brown_1.glb` / `book_blue_1.glb` |
 | Despacho | `living_room/`: `bookcase`, `armchair`, `old_controller_tv` |
 | Dormitorio / Invitados | `bedroom/room_furniture.glb`: cama (`Base_Cama_01`, `Cabeceira_Cama_01`, `Colchao_Cama_01`), `Mesa_Cabeceira_*`, `Guarda_Roupa_*`; el dormitorio además `Abajur_*` |
+| Sótano | `bedroom/room_furniture.glb`: `Mesa_Cabeceira_*` (mesita bajo la linterna) |
 | Cuarto | `bedroom/room_furniture.glb`: `Escrivaninha_*` |
 
 Herramientas de preparación (FBX→GLB, parcheo de texturas, decimación e inspección): `tools/` (`convert_fbx.mjs`, `patch_glb.mjs`, `decimate_glb.mjs`, `inspect_glb.mjs`).

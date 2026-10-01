@@ -287,12 +287,31 @@
       "collide": true
     }
   ],
+  "models": [
+    {
+      "file": "bedroom/room_furniture.glb",
+      "node": "Mesa_Cabeceira_*",
+      "position": [
+        1.85,
+        0,
+        0.9
+      ],
+      "yaw": 180,
+      "tint": 1.2,
+      "collide": true,
+      "size": [
+        0.5,
+        0.45,
+        0.5
+      ]
+    }
+  ],
   "items": [
     {
       "id": "flashlight",
       "position": [
-        1.5,
-        0.51,
+        1.85,
+        0.46,
         0.9
       ],
       "yaw": 35

@@ -109,38 +109,6 @@
     {
       "kind": "box",
       "position": [
-        2,
-        0.3,
-        -2.35
-      ],
-      "size": [
-        1.4,
-        0.6,
-        0.5
-      ],
-      "texture": "wall",
-      "tint": 0.6,
-      "collide": true
-    },
-    {
-      "kind": "box",
-      "position": [
-        -3.2,
-        0.4,
-        0.2
-      ],
-      "size": [
-        0.9,
-        0.8,
-        0.4
-      ],
-      "texture": "wall",
-      "tint": 0.65,
-      "collide": true
-    },
-    {
-      "kind": "box",
-      "position": [
         -3.87,
         1.5,
         0.2
@@ -152,55 +120,6 @@
       ],
       "texture": "metal",
       "tint": 0.35,
-      "collide": false,
-      "decal": true
-    },
-    {
-      "kind": "box",
-      "position": [
-        -3.4,
-        0.9,
-        -2.5
-      ],
-      "size": [
-        0.16,
-        1.8,
-        0.16
-      ],
-      "texture": "wall",
-      "tint": 0.5,
-      "collide": true
-    },
-    {
-      "kind": "box",
-      "position": [
-        3.4,
-        0.25,
-        -2.5
-      ],
-      "size": [
-        0.5,
-        0.5,
-        0.5
-      ],
-      "texture": "door",
-      "tint": 0.55,
-      "collide": true
-    },
-    {
-      "kind": "box",
-      "position": [
-        0.2,
-        0.005,
-        0.4
-      ],
-      "size": [
-        2.6,
-        0.01,
-        2
-      ],
-      "texture": "wall",
-      "tint": 0.5,
       "collide": false,
       "decal": true
     },
@@ -220,6 +139,87 @@
       "tint": 0.3,
       "collide": false,
       "decal": true
+    }
+  ],
+  "models": [
+    {
+      "file": "living_room/rug.glb",
+      "position": [
+        0,
+        0,
+        2.25
+      ],
+      "yaw": 0,
+      "subdivision": 0
+    },
+    {
+      "file": "living_room/coffe_table.glb",
+      "position": [
+        0,
+        0,
+        2.25
+      ],
+      "yaw": 0,
+      "collide": true,
+      "size": [
+        1.1,
+        0.45,
+        0.6
+      ]
+    },
+    {
+      "file": "living_room/armchair.glb",
+      "position": [
+        -1.6,
+        0,
+        2.25
+      ],
+      "yaw": 90,
+      "collide": true,
+      "size": [
+        0.9,
+        0.9,
+        1.0
+      ]
+    },
+    {
+      "file": "living_room/armchair.glb",
+      "position": [
+        1.6,
+        0,
+        2.25
+      ],
+      "yaw": 270,
+      "collide": true,
+      "size": [
+        0.9,
+        0.9,
+        1.0
+      ]
+    },
+    {
+      "file": "living_room/bookcase.glb",
+      "position": [
+        -3.55,
+        0,
+        0.6
+      ],
+      "yaw": 90,
+      "collide": true,
+      "size": [
+        0.5,
+        1.8,
+        1.0
+      ]
+    },
+    {
+      "file": "living_room/book_brown_1.glb",
+      "position": [
+        0.3,
+        0.42,
+        2.15
+      ],
+      "yaw": 25
     }
   ],
   "items": [

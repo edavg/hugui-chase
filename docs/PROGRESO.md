@@ -332,7 +332,7 @@ linterna, escaleras y atmósfera del sótano.
 | B | Baño alto | **HECHA** | Manchas y mobiliario de baño |
 | B | Invitados (nueva) | **HECHA** | Cama individual, armario, maleta; → Pasillo Alto |
 | B | Trastero (nueva) | **HECHA** | Cajas, muebles tapados; → Pasillo Alto |
-| C (sótano) | Escalera del Sótano | **HECHA** | **Linterna** sobre una caja; peldaños descendentes; → Pasillo (subir) y → Lavandería |
+| C (sótano) | Escalera del Sótano | **HECHA** | **Linterna** sobre una mesita; peldaños descendentes; → Pasillo (subir) y → Lavandería |
 | C | Lavandería | **HECHA** | Lavadora, pila, tuberías; → Sótano, → Calderas y → Bodega |
 | C | Calderas | **HECHA** | **Nota 3**; caldera, bidones, escombros; → Lavandería y → Bodega |
 | C | Bodega (nueva) | **HECHA** | Estanterías, barriles, cajas; → Lavandería y → Calderas |
@@ -383,7 +383,7 @@ linterna, escaleras y atmósfera del sótano.
 |---|---|---|
 | PSX Kitchen Pack (Punga) | `kitchen/kitchen_pack.glb` | Encimera, fregadero y nevera de la Cocina (nodos `Cabinet`, `Kitchen_Sink`, `Fridge`) |
 | Living Room Pack PSX (KaFe-z) | `living_room/*.glb` | Salón (sofá, mesa, TV, mueble, alfombra), Despacho (estantería, sillón, mando), libros en Comedor y Cuarto |
-| Room Furniture PSX (Kalebe) | `bedroom/room_furniture.glb` | Camas, mesitas, armarios y lámpara (Dormitorio/Invitados) y escritorio (Cuarto) |
+| Room Furniture PSX (Kalebe) | `bedroom/room_furniture.glb` | Camas, mesitas, armarios y lámpara (Dormitorio/Invitados), mesita de la linterna (Sótano) y escritorio (Cuarto) |
 
 ### Pendientes de recibir del usuario
 

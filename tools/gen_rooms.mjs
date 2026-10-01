@@ -612,7 +612,10 @@ const rooms = [
       { side: 'S', offset: 1.7, width: 1.1, to: 'room_lavanderia' },
     ],
     start: { position: [0.0, 2.2], yaw: 0 },
-    items: [{ id: 'flashlight', position: [1.5, 0.51, 0.9], yaw: 35 }],
+    models: [
+      { file: 'bedroom/room_furniture.glb', node: 'Mesa_Cabeceira_*', position: [1.85, 0.0, 0.9], yaw: 180, tint: 1.2, collide: true, size: [0.5, 0.45, 0.5] },
+    ],
+    items: [{ id: 'flashlight', position: [1.85, 0.46, 0.9], yaw: 35 }],
     props: [
       ...STEP(-1.35, 1.1, 1.9, 12, 0.26, 0.22, 'stone', 0.46),
     ],
