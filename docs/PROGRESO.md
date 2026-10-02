@@ -1,6 +1,6 @@
 # Mondyi — Estado del proyecto
 
-Última actualización: 30 sep 2026. Hitos **M0–M3 y M5–M10 completados** (M4 guardado descartado).
+Última actualización: 2 oct 2026. Hitos **M0–M3, M5–M11 completados** (M4 guardado descartado).
 Vertical slice jugable de principio a fin (M9): 3 notas, linterna del sótano, escaleras con
 subida/bajada y final único. Arranque directo para web pública: sin logo/aviso/título/menú
 principal — se entra directo a jugar (M8). La casa se amplió a **18 salas** (M10) con mobiliario
@@ -95,6 +95,7 @@ Duración objetivo: 20–30 min. Amenaza: 1 stalker.
     assets/textures/horror_pack/ 100 PNG 128×128 CC0 (7 categorías) + License.txt
     assets/models/stalker/       monster.glb (M5)
     assets/models/furniture/     GLB de mobiliario (M10): kitchen/, living_room/, bedroom/
+    assets/models/hands/         Brazos en primera persona (M11): drillimpact_arms/ (rig + anims), wrad_arms/, oga_arms/
   src/
     main.ts                      Boot + atajos de debug + handle __mondyi (solo dev)
     entities/player.ts           Movimiento, colisiones, head-bob, cámara
@@ -112,6 +113,7 @@ Duración objetivo: 20–30 min. Amenaza: 1 stalker.
       proceduralTextures.ts      Textura procedural de nota 64×64 (M3)
       psxMaterial.ts             ShaderMaterial PSX + flags de efectos + atmósfera por sala
       flashlight.ts              Linterna: uniforms compartidos + parpadeo (M9)
+      hands.ts                   Manos en primera persona: rig, poses, linterna en mano, cover (M11)
       psxRenderer.ts             RT 640×480, escalado entero, pillarbox, fade
       items.ts                   Catálogo de ítems y textos localizados (M3)
       flags.ts                   Banderas de partida (M3)
@@ -244,7 +246,7 @@ Duración objetivo: 20–30 min. Amenaza: 1 stalker.
 
 - **Linterna del sótano**: ítem `flashlight` (`kind: "tool"`) sobre una caja de la Escalera del Sótano. Se recoge con **E** y se enciende/apaga con **F** (mando: **Y**), con clic sintetizado (`flash_click`). Modelo de primitivas (cuerpo cilíndrico, cabezal y lente con vertex color casi emisivo) sobre la textura metálica.
 - **Haz como luz**: `psx.vert.glsl` pasa posición y normal de mundo; `psx.frag.glsl` suma un spot con cono suave, atenuación por distancia, N·L suavizado y color cálido. Los uniforms (`u_flash_*`) son **compartidos por todos los materiales** de `flashlight.ts`: se actualizan una vez por frame y valen para cualquier sala en caché. Parpadeo sutil con micro-cortes (`config.flashlight.flicker`).
-- **Atmósfera por sala**: bloque opcional `atmosphere` en el JSON de sala (`fog_start`, `fog_end`, `fog_color`, `ambient`) que pisa la niebla global y el ambiente al sincronizar materiales. El sótano queda casi a oscuras (Calderas 2/10 y ambiente 0.13) y la linterna es la única forma cómoda de avanzar; la planta de arriba mantiene la niebla global.
+- **Atmósfera por sala**: bloque opcional `atmosphere` en el JSON de sala (`fog_start`, `fog_end`, `fog_color`, `ambient`, `direct`, `lamp`) que pisa la niebla global y el ambiente al sincronizar materiales. El sótano queda casi a oscuras (`direct` 0.05–0.06 y ambiente 0.035–0.05: sin linterna apenas se ven siluetas) y la linterna es la única forma cómoda de avanzar; la planta de arriba mantiene la niebla global. `lamp` es un foco puntual fijo: la bombilla sobre la mesa de la linterna en la Escalera del Sótano. El stalker y el afiche se sincronizan con la atmósfera de la sala: el afiche no "brilla" a oscuras (sólo lo revela el haz) y el stalker deja de destacar en el sótano.
 - **Escaleras**: al usar una puerta `up`/`down`, la cámara **sube/baja 2.2 m** durante el fundido con pasos de escalón, y al llegar se restaura la altura. De vuelta, la puerta de la sala de destino aparece abierta y **se cierra sola a tu espalda** (arregla el salto brusco de M3).
 - **Interlineado**: `wrapText`/`wrapCentered` aceptan `lineSpacing`; nota, final, inventario, examen, game over, controles y créditos añaden 2–3 px de aire entre líneas, sin tocar la rejilla de 8 px de la fuente.
 - **QA**: `?flashlight=1` empieza con la linterna encendida; métodos `debugGiveFlashlight`, `debugToggleFlashlight`, `debugFlashlight`, `debugTeleport`, `debugCameraY` para el E2E.
@@ -298,6 +300,14 @@ Duración objetivo: 20–30 min. Amenaza: 1 stalker.
   papel pintado) y el flujo para integrarlos (`Custom/` para texturas, `models` para GLB).
 - **Verificación**: typecheck + build OK; smoke test headless de las 18 salas (la consola reporta
   tris, colliders, puertas e ítems sin errores) y validación cruzada con 0 errores.
+
+### M11 — Manos en primera persona (ELIMINADO)
+
+- Decisión: se retiró el viewmodel de brazos (`systems/hands.ts` eliminado y
+  referencias en `game.ts`/`main.ts` fuera). Los assets quedan en
+  `public/assets/models/hands/` por si se retoman.
+- La linterna vuelve a salir de la cámara (`Flashlight.update`): el cono apunta
+  siempre donde mira el jugador.
 
 ---
 

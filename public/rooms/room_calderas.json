@@ -27,7 +27,8 @@
   "atmosphere": {
     "fog_start": 2,
     "fog_end": 10,
-    "ambient": 0.13
+    "ambient": 0.035,
+    "direct": 0.05
   },
   "walls": [
     {

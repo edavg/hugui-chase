@@ -47,6 +47,7 @@ export interface UiTexts {
   toastFlashlightTouch: string;
   toastStalker: string;
   toastStalkerSeen: string;
+  toastSecondStalker: string;
   toastHit: (hearts: number) => string;
   menuOptions: string;
   menuControls: string;
@@ -150,6 +151,7 @@ export const TEXTS: Record<Language, UiTexts> = {
     toastFlashlightTouch: 'LINTERNA CONSEGUIDA — BOTÓN LUZ PARA ENCENDERLA',
     toastStalker: 'ALGO SE HA DESPERTADO EN LA CASA…',
     toastStalkerSeen: 'TE HA VISTO',
+    toastSecondStalker: 'OTRO HUGUI HA APARECIDO EN EL VESTÍBULO…',
     toastHit: (hearts) =>
       hearts > 0 ? `TE HA GOLPEADO — QUEDAN ${hearts} CORAZONES` : 'TE HA ALCANZADO',
     menuOptions: 'OPCIONES',
@@ -253,6 +255,7 @@ export const TEXTS: Record<Language, UiTexts> = {
     toastFlashlightTouch: 'FLASHLIGHT COLLECTED — LIGHT BUTTON TO TURN IT ON',
     toastStalker: 'SOMETHING HAS AWOKEN IN THE HOUSE…',
     toastStalkerSeen: 'IT HAS SEEN YOU',
+    toastSecondStalker: 'ANOTHER HUGUI HAS APPEARED IN THE VESTIBULE…',
     toastHit: (hearts) =>
       hearts > 0 ? `IT STRUCK YOU — ${hearts} HEARTS LEFT` : 'IT GOT YOU',
     menuOptions: 'OPTIONS',

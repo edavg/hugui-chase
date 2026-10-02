@@ -29,7 +29,8 @@ export class Player {
   private yaw: number;
   private pitch = 0;
   private bobPhase = 0;
-  private moveBlend = 0;
+  private locomotionBlend = 0;
+  private running = false;
   private wakeAmount = 0;
 
   constructor(
@@ -56,6 +57,19 @@ export class Player {
   setWakeAmount(value: number): void {
     this.wakeAmount = THREE.MathUtils.clamp(value, 0, 1);
     this.placeCamera(this.config, 0);
+  }
+
+  // Estado de locomoción para el viewmodel (manos en primera persona).
+  get moveBlend(): number {
+    return this.locomotionBlend;
+  }
+
+  get isRunning(): boolean {
+    return this.running;
+  }
+
+  get waking(): boolean {
+    return this.wakeAmount > 0.001;
   }
 
   knockback(fromX: number, fromZ: number, distance: number): void {
@@ -112,6 +126,7 @@ export class Player {
     }
 
     const running = input.isDown('ShiftLeft') || input.isDown('ShiftRight') || input.padDown('run');
+    this.running = running;
     const speed = running ? config.player.run : config.player.walk;
 
     const sinYaw = Math.sin(this.yaw);
@@ -137,10 +152,10 @@ export class Player {
     }
 
     const targetBlend = moveLength > 0 ? 1 : 0;
-    this.moveBlend += (targetBlend - this.moveBlend) * Math.min(1, dt * 10);
+    this.locomotionBlend += (targetBlend - this.locomotionBlend) * Math.min(1, dt * 10);
 
     const bobAmplitude =
-      config.player.head_bob * Math.min(speed / config.player.run, 1) * this.moveBlend;
+      config.player.head_bob * Math.min(speed / config.player.run, 1) * this.locomotionBlend;
     const bobY = Math.sin(this.bobPhase) * bobAmplitude;
 
     this.placeCamera(config, bobY);

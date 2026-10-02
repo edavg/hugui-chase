@@ -606,7 +606,14 @@ const rooms = [
       wood: 'Floor/Horror_Floor_03-128x128.png',
     },
     audio: { reverb: 'corridor', floor_material: 'stone', ambience: 'basement' },
-    atmosphere: { fog_start: 3.0, fog_end: 14.0, ambient: 0.2 },
+    atmosphere: {
+      fog_start: 3.0,
+      fog_end: 14.0,
+      ambient: 0.05,
+      direct: 0.06,
+      // Bombilla sobre la mesa de la linterna: único punto iluminado del sótano.
+      lamp: { position: [1.1, 1.55, 0.9], color: [1.0, 0.78, 0.5], range: 3.0, intensity: 1.7 },
+    },
     doors: [
       { side: 'N', offset: 1.7, width: 1.1, to: 'room_pasillo', action: 'up' },
       { side: 'S', offset: 1.7, width: 1.1, to: 'room_lavanderia' },
@@ -636,7 +643,7 @@ const rooms = [
       stain: 'Stains/Horror_Stain_13-128x128.png',
     },
     audio: { reverb: 'cave', floor_material: 'stone', ambience: 'basement' },
-    atmosphere: { fog_start: 2.5, fog_end: 12.0, ambient: 0.16 },
+    atmosphere: { fog_start: 2.5, fog_end: 12.0, ambient: 0.04, direct: 0.05 },
     doors: [
       { side: 'N', offset: 2.95, width: 1.1, to: 'room_sotano' },
       { side: 'S', offset: 2.95, width: 1.1, to: 'room_calderas' },
@@ -670,7 +677,7 @@ const rooms = [
       wood: 'Floor/Horror_Floor_03-128x128.png',
     },
     audio: { reverb: 'cave', floor_material: 'metal', ambience: 'basement' },
-    atmosphere: { fog_start: 2.0, fog_end: 10.0, ambient: 0.13 },
+    atmosphere: { fog_start: 2.0, fog_end: 10.0, ambient: 0.035, direct: 0.05 },
     doors: [
       { side: 'N', offset: 3.45, width: 1.1, to: 'room_lavanderia' },
       { side: 'E', offset: 2.7, width: 1.1, to: 'room_bodega' },
@@ -705,7 +712,7 @@ const rooms = [
       stain: 'Stains/Horror_Stain_14-128x128.png',
     },
     audio: { reverb: 'cave', floor_material: 'stone', ambience: 'basement' },
-    atmosphere: { fog_start: 2.0, fog_end: 10.0, ambient: 0.14 },
+    atmosphere: { fog_start: 2.0, fog_end: 10.0, ambient: 0.035, direct: 0.05 },
     doors: [
       { side: 'W', offset: 1.95, width: 1.1, to: 'room_calderas' },
       { side: 'N', offset: 2.45, width: 1.1, to: 'room_lavanderia' },

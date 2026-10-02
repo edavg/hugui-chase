@@ -26,7 +26,22 @@
   "atmosphere": {
     "fog_start": 3,
     "fog_end": 14,
-    "ambient": 0.2
+    "ambient": 0.05,
+    "direct": 0.06,
+    "lamp": {
+      "position": [
+        1.1,
+        1.55,
+        0.9
+      ],
+      "color": [
+        1,
+        0.78,
+        0.5
+      ],
+      "range": 3,
+      "intensity": 1.7
+    }
   },
   "walls": [
     {

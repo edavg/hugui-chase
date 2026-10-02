@@ -13,6 +13,7 @@ uniform float u_fog_start;
 uniform float u_fog_end;
 uniform vec3 u_light_dir;
 uniform float u_ambient;
+uniform float u_direct;
 
 varying vec3 v_uvw;
 varying vec2 v_uv;
@@ -47,7 +48,7 @@ void main() {
 
   vec3 n = normalize(mat3(modelMatrix) * objectNormal);
   float lambert = max(dot(n, normalize(u_light_dir)), 0.0);
-  float lightMul = u_ambient + (1.0 - u_ambient) * lambert;
+  float lightMul = u_ambient + (1.0 - u_ambient) * lambert * u_direct;
   v_color = vec4(a_color * lightMul, 1.0);
   v_world = worldPos.xyz;
   v_normal = n;

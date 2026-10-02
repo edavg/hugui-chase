@@ -16,7 +16,14 @@ Los ítems recogibles se definen en la sala y se resuelven contra `public/config
     "fog_start": 3.0,              // en metros; por defecto effects.fog.start
     "fog_end": 14.0,               // por defecto effects.fog.end
     "fog_color": [0.01, 0.01, 0.015], // opcional; por defecto effects.fog.color
-    "ambient": 0.2                 // luz ambiente base; global = 0.45
+    "ambient": 0.05,               // luz ambiente base; global = 0.45
+    "direct": 0.06,                // opcional; peso de la luz direccional falsa (global = 1)
+    "lamp": {                      // opcional; foco puntual fijo (bombilla de la sala)
+      "position": [1.1, 1.55, 0.9], // [x, y, z] en coordenadas de la sala
+      "color": [1.0, 0.78, 0.5],   // opcional; por defecto blanco
+      "range": 3.0,                // opcional; radio en metros (por defecto 4)
+      "intensity": 1.7             // opcional; por defecto 1
+    }
   },
   "textures": {
     "wall": "Wall/Horror_Wall_12-128x128.png",
@@ -91,7 +98,7 @@ Los ítems recogibles se definen en la sala y se resuelven contra `public/config
 - `subdivision` (opcional, por modelo): arista máxima en metros para reteselar la malla al cargar (`TessellateModifier`, por defecto 1.0 como las salas). Evita que las texturas "naden" al girar la cámara por el affine mapping del shader PSX; `0` la desactiva en modelos planos donde no molesta (alfombra, pantalla de la tele).
 - Subdivisión de geometría: `SUB_QUADS = 2` en `roomBuilder.ts` ⇒ una arista por metro con `texture_scale: 2` (rango documentado de 1–2 m).
 - `items`: `{ id, position: [x,y,z] (centro del modelo), yaw? }`. El id debe existir en `public/config/items.json` o `items_extra.json`. La `y` es la altura del centro: notas planas (~0.21×0.30 m) sobre mesas/camas/encimeras; llaves (~0.14 m) y la linterna (~0.17 m) sobre superficies.
-- `atmosphere` (opcional, M9): override por sala de niebla y luz ambiente (`fog_start`, `fog_end`, `fog_color`, `ambient`). Lo usan las tres salas del sótano para quedar casi a oscuras; la linterna es la fuente principal de luz.
+- `atmosphere` (opcional, M9): override por sala de niebla, luz ambiente y foco (`fog_start`, `fog_end`, `fog_color`, `ambient`, `direct`, `lamp`). `direct` baja la luz direccional falsa (el sótano usa 0.05–0.06 para quedar casi a oscuras) y `lamp` enciende un foco puntual fijo en `[x,y,z]` (la bombilla sobre la mesa de la linterna en `room_sotano`). El afiche ignora `direct` y el ambiente en salas con atmósfera propia: sin linterna es negro y sólo lo revela el haz.
 - `spawns`: puntos de entrada `[x, z]` + `yaw` (grados; 0 mira a −Z). `start` es el spawn inicial; además debe existir un `from_*` por cada puerta entrante, situado 1.0–1.5 m dentro de la sala y nunca dentro de un collider.
 - Colisiones: AABB en el plano XZ; el jugador es un círculo de radio `player.radius`.
 - La luz es direccional global (uniform `u_light_dir`); el resto del sombreado va baked en vertex colors.

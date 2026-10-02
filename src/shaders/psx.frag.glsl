@@ -13,6 +13,12 @@ uniform float u_flash_cos_inner;
 uniform float u_flash_range;
 uniform float u_flash_intensity;
 
+uniform float u_lamp_on;
+uniform vec3 u_lamp_pos;
+uniform vec3 u_lamp_color;
+uniform float u_lamp_range;
+uniform float u_lamp_intensity;
+
 varying vec3 v_uvw;
 varying vec2 v_uv;
 varying vec4 v_color;
@@ -49,6 +55,16 @@ void main() {
     atten *= atten;
     float facing = 0.35 + 0.65 * max(dot(v_normal, lightDir), 0.0);
     col.rgb += tex.rgb * u_flash_color * (cone * atten * facing * u_flash_intensity);
+  }
+
+  if (u_lamp_on > 0.5 && u_lamp_intensity > 0.001) {
+    vec3 toLamp = u_lamp_pos - v_world;
+    float lampDist = length(toLamp);
+    vec3 lampDir = toLamp / max(lampDist, 0.0001);
+    float lampAtten = clamp(1.0 - lampDist / u_lamp_range, 0.0, 1.0);
+    lampAtten *= lampAtten;
+    float lampFacing = 0.7 + 0.3 * max(dot(v_normal, lampDir), 0.0);
+    col.rgb += tex.rgb * u_lamp_color * (lampAtten * lampFacing * u_lamp_intensity);
   }
 
   ivec2 px = ivec2(gl_FragCoord.xy) & 3;

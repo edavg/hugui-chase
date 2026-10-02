@@ -3,7 +3,7 @@ import type { PsxConfig } from '../systems/config';
 import { colliderForBox, type Collider, type RoomDoorway } from '../systems/roomBuilder';
 import type { RoomGraph } from '../systems/roomGraph';
 import { NavGrid, type NavPoint } from '../systems/navGrid';
-import { createPsxMaterial, type PsxMaterialHandle } from '../systems/psxMaterial';
+import { createPsxMaterial, type Atmosphere, type PsxMaterialHandle } from '../systems/psxMaterial';
 import { loadStalkerHeadAtlas, type HeadAtlas } from '../systems/stalkerFace';
 import { loadStalkerRig, type StalkerRig } from '../systems/stalkerModel';
 import {
@@ -83,6 +83,7 @@ export class Stalker {
   private readonly random: () => number;
   private readonly body: PsxMaterialHandle;
   private readonly head: PsxMaterialHandle;
+  private atmosphere: Atmosphere | null = null;
   private rig: StalkerRig | null = null;
   private animator: StalkerAnimator | null = null;
   private readonly hips = new THREE.Group();
@@ -123,6 +124,11 @@ export class Stalker {
   private attackTimer = 0;
   private attackReadyAt = 0;
   private speedScale = 1;
+  // Sala que este stalker debe vigilar (2º stalker del final): mientras
+  // patrulla o vuelve, se queda dentro en vez de vagar por patrol_rooms.
+  // En persecución/búsqueda sospecha sí puede salir a por el jugador, y al
+  // volver regresa a la sala vigilada.
+  private guardRoom: string | null = null;
 
   private constructor(
     config: PsxConfig,
@@ -172,8 +178,16 @@ export class Stalker {
   }
 
   syncConfig(config: PsxConfig): void {
-    this.body.sync(config);
-    this.head.sync(config);
+    this.body.sync(config, this.atmosphere);
+    this.head.sync(config, this.atmosphere);
+  }
+
+  // La atmósfera de la sala donde se dibuja el stalker también lo oscurece: en
+  // el sótano sin linterna deja de "brillar" y sólo lo revela el haz.
+  syncAtmosphere(config: PsxConfig, atmosphere: Atmosphere | null): void {
+    this.atmosphere = atmosphere;
+    this.body.sync(config, atmosphere);
+    this.head.sync(config, atmosphere);
   }
 
   get active(): boolean {
@@ -259,6 +273,21 @@ export class Stalker {
     const step = this.config.poster_speed_step ?? DEFAULT_POSTER_SPEED_STEP;
     const max = this.config.poster_speed_max ?? DEFAULT_POSTER_SPEED_MAX;
     this.speedScale = Math.min(max, 1 + Math.max(0, count) * step);
+  }
+
+  /**
+   * Fija la sala a vigilar (2º stalker del final). En patrulla/retorno se
+   * queda dentro; la sala vigilada nunca cuenta como prohibida.
+   */
+  setGuardRoom(room: string | null): void {
+    this.guardRoom = room;
+    if (room) {
+      this.patrolTarget = room;
+    }
+  }
+
+  get guardRoomId(): string | null {
+    return this.guardRoom;
   }
 
   teleportTo(room: string, x: number, z: number, yaw: number): void {
@@ -479,6 +508,10 @@ export class Stalker {
   }
 
   private pickPatrolTarget(): void {
+    if (this.guardRoom) {
+      this.patrolTarget = this.guardRoom;
+      return;
+    }
     const allowed = this.config.patrol_rooms.filter((id) => !this.isForbidden(id));
     const pool = allowed.length > 0 ? allowed : this.config.patrol_rooms;
     const options = pool.filter((id) => id !== this.roomId);
@@ -487,6 +520,9 @@ export class Stalker {
   }
 
   private nearestPatrolRoom(): string | null {
+    if (this.guardRoom) {
+      return this.guardRoom;
+    }
     let best: string | null = null;
     let bestHops = Number.POSITIVE_INFINITY;
     for (const id of this.config.patrol_rooms) {
@@ -503,6 +539,9 @@ export class Stalker {
   }
 
   private isForbidden(room: string): boolean {
+    if (this.guardRoom && room === this.guardRoom) {
+      return false;
+    }
     if (!this.config.forbidden_rooms.includes(room)) {
       return false;
     }
@@ -692,21 +731,30 @@ export class Stalker {
     switch (this.state) {
       case 'attack':
         // El clip de ataque se lanza una sola vez al iniciar la embestida.
-        break;
-      case 'chase':
-        animator.play(RUN_CLIP, 0.18);
-        break;
-      case 'patrol':
-      case 'return':
-        animator.play(WALK_CLIP, 0.3);
-        break;
-      case 'suspect':
-      case 'search':
-        animator.play(IDLE_CLIP, 0.25);
-        break;
+        return;
       case 'dormant':
         animator.play(IDLE_CLIP, 0.3);
+        return;
+      default:
         break;
+    }
+    // El clip se elige por velocidad real (igual que StalkerLab), no solo por
+    // estado: suspect/search sí se mueven (search_speed) pero antes forzaban
+    // IDLE y se deslizaban sin mover las piernas; y patrol/chase/return
+    // forzaban WALK/RUN aun quietos (giro en el sitio, repath del A*, llegada
+    // a waypoint), patinando en el sitio.
+    if (this.locomotionSpeed <= 0.1) {
+      animator.play(IDLE_CLIP, 0.25);
+      return;
+    }
+    const walk =
+      animator.naturalSpeed(WALK_CLIP) ?? DEFAULT_CLIP_SPEEDS[WALK_CLIP] ?? 0.35;
+    const run = animator.naturalSpeed(RUN_CLIP) ?? DEFAULT_CLIP_SPEEDS[RUN_CLIP] ?? 2.0;
+    const threshold = (walk + run) / 2;
+    if (this.locomotionSpeed <= threshold) {
+      animator.play(WALK_CLIP, 0.3);
+    } else {
+      animator.play(RUN_CLIP, 0.18);
     }
   }
 

@@ -165,6 +165,7 @@ export interface BuiltRoom {
   items: ItemHandle[];
   spawns: Record<string, RoomSpawn>;
   audio: RoomAudio;
+  atmosphere: Atmosphere | null;
   sync: (config: PsxConfig) => void;
   triangleCount: number;
 }
@@ -360,7 +361,13 @@ export async function buildRoom(
     textureKeys.map((key, index) => [key, createPsxMaterial(config, textures[index], atmosphere)]),
   ) as Record<string, PsxMaterialHandle>;
 
-  const posterMaterial = createPsxMaterial(config, loadPosterTexture(), atmosphere);
+  // El afiche nunca recibe la luz direccional falsa; en salas con atmósfera
+  // propia (sótano a oscuras) tampoco el ambiente: sin linterna es negro y sólo
+  // lo revela el haz. En la casa conserva el ambiente global para poder verlo.
+  const posterAtmosphere: Atmosphere = atmosphere
+    ? { ...atmosphere, ambient: 0, direct: 0 }
+    : { direct: 0 };
+  const posterMaterial = createPsxMaterial(config, loadPosterTexture(), posterAtmosphere);
 
   const scene = new THREE.Scene();
   const colliders = computeColliders(data);
@@ -755,9 +762,10 @@ export async function buildRoom(
     items,
     spawns: data.spawns,
     audio: { ...FALLBACK_ROOM_AUDIO, ...ROOM_AUDIO_DEFAULTS[data.id], ...data.audio },
+    atmosphere,
     sync: (next) => {
       textureKeys.forEach((key) => materials[key].sync(next, atmosphere));
-      posterMaterial.sync(next, atmosphere);
+      posterMaterial.sync(next, posterAtmosphere);
       extraMaterials.forEach((handle) => handle.sync(next, atmosphere));
     },
     triangleCount: countTriangles(scene),
@@ -953,7 +961,7 @@ function buildItemModel(kind: ItemKind, material: THREE.Material): THREE.Object3
 
   if (kind === 'poster') {
     const plane = new THREE.PlaneGeometry(0.55, 0.85);
-    paintVertexColors(plane, () => 1.1);
+    paintVertexColors(plane, () => 1.0);
     group.add(new THREE.Mesh(plane, material));
     return group;
   }

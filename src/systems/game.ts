@@ -45,6 +45,9 @@ const AIM_OCCLUSION_MARGIN = 0.15;
 const AIM_ITEM_LIFT = 0.12;
 const AIM_FLAT_VIEW_EPS = 0.08;
 const AIM_FOV_FALLBACK = 32;
+// Sala donde termina la partida (puerta con `ending: true`): al quemar los 8
+// afiches aparece ahí un 2º stalker vigilando la salida.
+const ENDING_ROOM_ID = 'room_vestibulo';
 
 type State = 'playing' | 'transition' | 'inventory' | 'examine' | 'reading' | 'ending';
 
@@ -105,6 +108,13 @@ export class Game {
   private stalker: Stalker | null = null;
   private stalkerLoading = false;
   private stalkerRoom: string | null = null;
+  // 2º stalker: aparece en la zona final al quemar los 8 afiches y vigila
+  // ENDING_ROOM_ID. Tiene su propio enganche a escena y su propio flag de
+  // carga para no interferir con el primero.
+  private stalkerSecond: Stalker | null = null;
+  private stalkerSecondLoading = false;
+  private stalkerSecondRoom: string | null = null;
+  private secondStalkerSpawned = false;
   private readonly flashlight: Flashlight;
   private musicLevel: 0 | 1 | 2 = 0;
   private lastPlayerX = 0;
@@ -205,6 +215,7 @@ export class Game {
     });
     this.room?.sync(this.config);
     this.stalker?.syncConfig(this.config);
+    this.stalkerSecond?.syncConfig(this.config);
     if (this.player) {
       this.player.camera.aspect = width / height;
       this.player.camera.fov = this.fovFor(portrait);
@@ -253,6 +264,9 @@ export class Game {
     if (params.get('stalker') === '1') {
       void this.activateStalker(params.get('stalkerroom'));
     }
+    if (params.get('stalker2') === '1') {
+      void this.activateSecondStalker(params.get('stalker2room') ?? ENDING_ROOM_ID);
+    }
     if (params.get('flashlight') === '1') {
       this.flashlight.give();
       this.flashlight.on = true;
@@ -266,6 +280,7 @@ export class Game {
     console.info('[M6] Audio procedural activo: pasos, ambiente, reverb por sala y música reactiva.');
     console.info('[M7] Pausa y opciones con teclado y mando. ESC pausa.');
     console.info('[M5] QA: ?stalker=1&stalkerroom=<id> despierta a Hugui en esa sala.');
+    console.info('[M5] QA: ?stalker2=1&stalker2room=<id> despierta al 2º stalker del final.');
     console.info('[M8] Post-proceso PSX/VHS/B&N/CRT activo (modo de imagen en opciones).');
     console.info('[M9] Linterna del sótano: F para encender/apagar. QA: ?flashlight=1.');
   }
@@ -318,7 +333,98 @@ export class Game {
     }
     this.stalker = null;
     this.stalkerRoom = null;
+    this.deactivateSecondStalker();
     this.setMusicLevel(0);
+  }
+
+  // 2º stalker del final: nace en ENDING_ROOM_ID al quemar los 8 afiches y
+  // se queda vigilando esa zona (guardRoom). Si el jugador ya está allí,
+  // se coloca en el spawn más lejano para no aparecer encima.
+  private async activateSecondStalker(room?: string | null): Promise<void> {
+    if (this.stalkerSecond || this.stalkerSecondLoading || this.secondStalkerSpawned) {
+      return;
+    }
+    this.stalkerSecondLoading = true;
+    try {
+      const graph = await this.ensureGraph();
+      const target =
+        room && graph.hasRoom(room)
+          ? room
+          : graph.hasRoom(ENDING_ROOM_ID)
+            ? ENDING_ROOM_ID
+            : this.room.id;
+      const stalker = await Stalker.create(this.config, graph);
+      stalker.object.name = 'stalker2';
+      stalker.setBurnedPosters(this.burnedPosters());
+      stalker.setGuardRoom(graph.hasRoom(ENDING_ROOM_ID) ? ENDING_ROOM_ID : target);
+      stalker.activate();
+      const spawn = this.pickSecondStalkerSpawn(graph, target);
+      stalker.teleportTo(target, spawn.x, spawn.z, spawn.yaw);
+      // teleportTo repasa patrolTarget con el guard: reimponer por si acaso.
+      if (graph.hasRoom(ENDING_ROOM_ID)) {
+        stalker.setGuardRoom(ENDING_ROOM_ID);
+      }
+      this.stalkerSecond = stalker;
+      this.secondStalkerSpawned = true;
+      this.syncSecondStalkerPresence();
+      this.audio.play('stinger', 0.9);
+      this.ui.toast(TEXTS[this.config.language].toastSecondStalker);
+      console.info(`[M5] 2º stalker en ${target} vigilando ${stalker.guardRoomId ?? target}`);
+    } catch (error) {
+      console.error('[M5] No se pudo despertar al 2º stalker', error);
+    } finally {
+      this.stalkerSecondLoading = false;
+    }
+  }
+
+  private pickSecondStalkerSpawn(
+    graph: RoomGraph,
+    target: string,
+  ): { x: number; z: number; yaw: number } {
+    const nav = graph.room(target);
+    const fallback = { x: 0, z: 0, yaw: 0 };
+    if (!nav) {
+      return fallback;
+    }
+    const spawns = Object.values(nav.spawns);
+    if (spawns.length === 0) {
+      return fallback;
+    }
+    // Si el jugador está en la sala destino, elegir el spawn más lejano a él
+    // para que el 2º stalker no aparezca encima.
+    if (target === this.room.id) {
+      let best = spawns[0];
+      let bestDistance = -Infinity;
+      for (const spawn of spawns) {
+        const distance = Math.hypot(
+          spawn.position[0] - this.player.position.x,
+          spawn.position[1] - this.player.position.z,
+        );
+        if (distance > bestDistance) {
+          bestDistance = distance;
+          best = spawn;
+        }
+      }
+      return {
+        x: best.position[0],
+        z: best.position[1],
+        yaw: (best.yaw * Math.PI) / 180,
+      };
+    }
+    const start = nav.spawns.start ?? spawns[0];
+    return {
+      x: start.position[0],
+      z: start.position[1],
+      yaw: (start.yaw * Math.PI) / 180,
+    };
+  }
+
+  private deactivateSecondStalker(): void {
+    if (this.stalkerSecond) {
+      this.stalkerSecond.object.removeFromParent();
+    }
+    this.stalkerSecond = null;
+    this.stalkerSecondRoom = null;
   }
 
   private syncStalkerPresence(): void {
@@ -332,6 +438,7 @@ export class Game {
       this.detachStalker();
       this.room.scene.add(stalker.object);
       this.stalkerRoom = this.room.id;
+      stalker.syncAtmosphere(this.config, this.room.atmosphere);
     } else if (!here) {
       this.detachStalker();
     }
@@ -344,6 +451,30 @@ export class Game {
     }
   }
 
+  private syncSecondStalkerPresence(): void {
+    const stalker = this.stalkerSecond;
+    if (!stalker || !stalker.active) {
+      this.detachSecondStalker();
+      return;
+    }
+    const here = stalker.roomId === this.room.id;
+    if (here && this.stalkerSecondRoom !== this.room.id) {
+      this.detachSecondStalker();
+      this.room.scene.add(stalker.object);
+      this.stalkerSecondRoom = this.room.id;
+      stalker.syncAtmosphere(this.config, this.room.atmosphere);
+    } else if (!here) {
+      this.detachSecondStalker();
+    }
+  }
+
+  private detachSecondStalker(): void {
+    if (this.stalkerSecondRoom !== null) {
+      this.stalkerSecond?.object.removeFromParent();
+      this.stalkerSecondRoom = null;
+    }
+  }
+
   private setMusicLevel(level: 0 | 1 | 2): void {
     if (this.musicLevel === level) {
       return;
@@ -353,8 +484,10 @@ export class Game {
   }
 
   private updateStalker(dt: number): void {
-    const stalker = this.stalker;
-    if (!stalker || !stalker.active) {
+    const stalkers = [this.stalker, this.stalkerSecond].filter(
+      (candidate): candidate is Stalker => !!candidate && candidate.active,
+    );
+    if (stalkers.length === 0) {
       return;
     }
     const position = this.player.position;
@@ -400,12 +533,16 @@ export class Game {
       },
     };
 
-    stalker.update(dt, sense, hooks);
+    for (const stalker of stalkers) {
+      stalker.update(dt, sense, hooks);
+    }
     this.syncStalkerPresence();
+    this.syncSecondStalkerPresence();
 
-    const sameRoom = stalker.roomId === this.room.id;
+    const anyChase = stalkers.some((stalker) => stalker.state === 'chase');
+    const anySameRoom = stalkers.some((stalker) => stalker.roomId === this.room.id);
     this.setMusicLevel(
-      stalker.state === 'chase' ? 2 : sameRoom ? 1 : this.flags.has('stalker_active') ? 1 : 0,
+      anyChase ? 2 : anySameRoom ? 1 : this.flags.has('stalker_active') ? 1 : 0,
     );
   }
 
@@ -726,6 +863,31 @@ export class Game {
     return this.stalker?.overlapsCollider() ?? false;
   }
 
+  debugWakeSecondStalker(): void {
+    void this.activateSecondStalker(this.room.id);
+  }
+
+  debugSecondStalkerState(): string {
+    return this.stalkerSecond?.state ?? 'none';
+  }
+
+  debugSecondStalkerPosition(): { x: number; z: number; room: string; yaw: number } {
+    const stalker = this.stalkerSecond;
+    if (!stalker) {
+      return { x: 0, z: 0, room: '', yaw: 0 };
+    }
+    return {
+      x: stalker.position.x,
+      z: stalker.position.z,
+      room: stalker.roomId,
+      yaw: stalker.yaw,
+    };
+  }
+
+  debugSecondStalkerSpawned(): boolean {
+    return this.secondStalkerSpawned;
+  }
+
 
   // Los controles táctiles solo se muestran en dispositivos táctiles y si el
   // ajuste está activo (se puede desactivar desde OPCIONES > CONTROLES).
@@ -761,6 +923,8 @@ export class Game {
     this.room.sync(this.config);
     this.stalker?.syncConfig(this.config);
     this.stalker?.setBurnedPosters(this.burnedPosters());
+    this.stalkerSecond?.syncConfig(this.config);
+    this.stalkerSecond?.setBurnedPosters(this.burnedPosters());
     this.psx.syncEffects(this.config);
     this.audio.setVolumes(this.config.audio);
     this.audio.setMuted(!this.config.audio.enabled);
@@ -804,6 +968,8 @@ export class Game {
     this.examineObject = null;
     this.flashlight.reset();
     this.deactivateStalker();
+    this.secondStalkerSpawned = false;
+    this.stalkerSecondLoading = false;
     this.roomCache.clear();
     this.room = await this.getRoom(this.introRoom);
     this.player = this.createPlayer(this.room, this.introSpawn);
@@ -1422,8 +1588,13 @@ export class Game {
 
     const have = this.burnedPosters();
     this.stalker?.setBurnedPosters(have);
+    this.stalkerSecond?.setBurnedPosters(have);
     this.ui.toast(texts.toastPoster(have, POSTER_IDS.length));
     this.updatePosterHud();
+    // Al completar los 8 afiches aparece un 2º stalker en la zona final.
+    if (have >= POSTER_IDS.length) {
+      void this.activateSecondStalker();
+    }
   }
 
   private updatePosterHud(): void {
@@ -1589,6 +1760,7 @@ export class Game {
     this.lastPlayerZ = this.player.position.z;
     this.applyRoomState(nextRoom);
     this.syncStalkerPresence();
+    this.syncSecondStalkerPresence();
     this.closeArrivalDoor(previousRoom, nextRoom);
 
     await this.wait(fadeDuration, (progress) => this.psx.setFade(1 - progress));
