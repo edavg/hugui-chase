@@ -1,5 +1,63 @@
 # Mondyi — Estado del proyecto
 
+## M12 — Salto a estética PS2 y casa ampliada (11 oct 2026)
+
+- **Render PS2** (`psx.vert/frag.glsl`, `psxMaterial.ts`, `psxRenderer.ts`): texturas bilineales con
+  mipmaps y anisotropía, normal maps, luces puntuales por píxel por sala (`sceneLights.ts`, máx. 4,
+  con parpadeo/bombillas rotas), especular por superficie, linterna con **sombra proyectada** (mapa de
+  profundidad 1024, foco desplazado al pecho como en Silent Hill 2), niebla exponencial que se ilumina con
+  el haz, compresión de altas luces. Post "PS2": halo, aberración leve, grano y viñeta. 800×600 a 8 bits/canal.
+  El vertex snap y el affine siguen disponibles (`psx_config.json`) como modo retro.
+- **Texturas propias 256 px + normal map** generadas en código: `python3 tools/gen_textures.py --sheet <png>`
+  → `public/assets/textures/ps2/` (papeles pintados, maderas, baldosas, ladrillo, piedra, hormigón,
+  alfombras, libros, retratos, exterior…). Las rutas `ps2/...` de las salas cargan su `_n.png` solo.
+- **Arquitectura**: zócalo, cornisa, friso de madera (`wainscot`), marcos de puerta y ventana con
+  alféizar, picaportes de latón, luminarias visibles (colgante, bombilla, aplique), AO horneado en vértices,
+  props cilíndricos (`shape: 'cylinder'`), `fit`, `hidden`, decales con mezcla alfa.
+- **Mundo ampliado a 23 salas y 12 afiches**: Biblioteca (desde el Salón), Jardín exterior con cielo
+  (desde la Cocina), Garaje (Jardín ↔ Vestíbulo: nuevo bucle para despistar al stalker), Invernadero
+  (llave del ático) y Ático de campaña (Pasillo Alto, requiere `key_attic`). Afiches 9–12 en Biblioteca,
+  Jardín, Garaje y Ático. Todo sale de `node tools/gen_rooms.mjs` (sincronizado de nuevo con el Rellano y
+  el Vestíbulo) y se valida con `node tools/validate_rooms.mjs`.
+- **Stalker**: el cubo de la cabeza se sustituye por una cabeza esculpida (`stalkerHead.ts`) con la cara
+  horneada por proyección del despiece (frente/perfiles/pelo/cuello, fondo recortado) y cuello que entra en
+  el torso; se recorta todo el muñón del cuello original. Sus materiales ya reciben la atmósfera de la sala.
+
+- **M12b — sonido, puertas, chimeneas y candados**:
+  - `audioSynth.ts` reescrito: 44,1 kHz, efectos por capas (impacto + cuerpo resonante + textura +
+    cola), bisagras con tren de impulsos stick-slip, fuego con crepitar, pasos con talón/punta/material
+    (nuevos `grass`/`dirt`, 4 variantes, sin repetir), varias tomas por efecto (`ONE_SHOT_VARIANTS`),
+    ambientes estéreo de 20 s (casa con viento, reloj y crujidos; sótano con caldera, goteo y tuberías;
+    `outdoor` nuevo con viento entre árboles, grillos y búho), música y reverbs estéreo. Nuevos:
+    `door_locked`, `padlock_unlock`, `hurt`.
+  - Puertas con llave llevan **candado**: sin llave suena el picaporte y avisa qué llave falta; con
+    llave, E abre el candado (giro, salta el grillete, cae al suelo) y tras ~0,8 s se puede abrir.
+    Flag `unlocked:<sala>><destino>`.
+  - Puertas: textura 512×1024 con largueros/travesaños y molduras horneadas (y variante pintada
+    desconchada); la hoja cubre todo el hueco (sin rendijas negras).
+  - Chimeneas completas (`FIREPLACE` en `gen_rooms.mjs`): Salón (la ventana que quedaba detrás pasa al
+    muro este) y Biblioteca. Jardín: fachada de ladrillo real en el muro norte (`wallTextures`), puertas de
+    madera, árboles con corteza y ramas (`rot` en props), agua en la fuente. Ladrillos a escala real.
+
+- **M12c — quema del afiche y retratos**: `burnFx.ts` (frente de fuego irregular desde la llama,
+  papel que se tuesta, brasa, carbonizado, agujeros con jirones de ceniza, hoja que se curva), llamas,
+  humo, chispas y ceniza en la capa 1 (sin sombra de linterna), luz de fuego real (`setFireLight`) y marca
+  de hollín permanente. Retratos del usuario (`tools/portraits/` → `ps2/portrait_1..3`, marco dorado y
+  barniz): galería en el muro sur del Vestíbulo, sobre las chimeneas del Salón y la Biblioteca y en el Despacho.
+
+- **M12d — llaves, sin inventario y chipas**: la llave de la cocina (`key_kids`) vuelve a abrir el candado
+  del Cuarto Infantil (antes no abría nada). Inventario eliminado (tecla I, pantalla, examen, botón BOLSA
+  táctil, botón X del mando, textos); las llaves se siguen guardando internamente. 6 chipas (`kind: 'food'`,
+  `chipa_1..6`: Cocina, Comedor, Biblioteca, Garaje, Invernadero, Ático) dan +1 corazón, hasta 8.
+
+- **M12e — puertas despejadas y verificación**: `node tools/check_access.mjs` comprueba paso libre delante de
+  cada puerta (radio del stalker), conectividad de puertas e ítems por sala y simula la partida con llaves y
+  candados (12/12 afiches y salida). Movidos: estantería del Garaje (tapaba la puerta al Jardín), caja de la
+  Lavandería y tres muebles del Pasillo Alto (Escalera, Baño Alto, Ático).
+
+---
+
+
 Última actualización: 2 oct 2026. Hitos **M0–M3, M5–M11 completados** (M4 guardado descartado).
 Vertical slice jugable de principio a fin (M9): 3 notas, linterna del sótano, escaleras con
 subida/bajada y final único. Arranque directo para web pública: sin logo/aviso/título/menú

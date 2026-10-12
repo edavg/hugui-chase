@@ -237,7 +237,8 @@ for (const room of rooms.values()) {
   if (!room.audio) warn(`${room.id}: sin bloque audio`);
 
   for (const [key, path] of Object.entries(room.textures)) {
-    if (!existsSync(`${TEX_DIR}/${path}`)) fail(`${room.id}: textura ${key} no existe en disco (${path})`);
+    const onDisk = path.startsWith('ps2/') ? `${ROOT}/public/assets/textures/${path}` : `${TEX_DIR}/${path}`;
+    if (!existsSync(onDisk)) fail(`${room.id}: textura ${key} no existe en disco (${path})`);
   }
 
   for (const run of room.walls) {
@@ -353,8 +354,10 @@ for (const room of rooms.values()) {
   }
 
   const tris = estimateTris(room);
-  if (tris > 4000) fail(`${room.id}: ${tris} tris estimados superan el presupuesto (4000)`);
-  else if (tris > 3700) warn(`${room.id}: ${tris} tris estimados cerca del presupuesto`);
+  // Presupuesto PS2 (antes 4.000 tris PSX). La estimación no cuenta molduras ni
+  // luminarias; el recuento real lo imprime el juego en consola.
+  if (tris > 60000) fail(`${room.id}: ${tris} tris estimados superan el presupuesto (60000)`);
+  else if (tris > 50000) warn(`${room.id}: ${tris} tris estimados cerca del presupuesto`);
   console.log(
     `${room.id.padEnd(20)} ${w.toFixed(1)}x${d.toFixed(1)}  tex ${room.texture_scale}  tris ~${tris}  col ${colliders.length}  items ${room.items?.length ?? 0}`,
   );

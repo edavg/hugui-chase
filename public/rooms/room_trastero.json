@@ -9,11 +9,14 @@
   "texture_scale": 2,
   "wall_thickness": 0.15,
   "textures": {
-    "wall": "Wall/Horror_Wall_11-128x128.png",
-    "floor": "Floor/Horror_Floor_07-128x128.png",
-    "ceiling": "Misc/Horror_Misc_08-128x128.png",
-    "door": "Custom/WoodenDoor3diffuse.png",
-    "stain": "Stains/Horror_Stain_11-128x128.png"
+    "wall": "ps2/boards.png",
+    "floor": "ps2/floor_pine.png",
+    "ceiling": "ps2/ceiling_dark.png",
+    "door": "ps2/door_white.png",
+    "stain": "Stains/Horror_Stain_11-128x128.png",
+    "wood": "ps2/wood_light.png",
+    "painting": "ps2/painting.png",
+    "painting_b": "ps2/painting_b.png"
   },
   "audio": {
     "reverb": "small",
@@ -21,6 +24,35 @@
     "ambience": "house"
   },
   "door_fit": true,
+  "atmosphere": {
+    "ambient": 0.22,
+    "ambient_color": [
+      0.75,
+      0.78,
+      0.92
+    ],
+    "direct": 0.35,
+    "fog_start": 3.5,
+    "fog_end": 22
+  },
+  "lights": [
+    {
+      "position": [
+        0,
+        2.2,
+        0
+      ],
+      "color": [
+        1,
+        0.82,
+        0.58
+      ],
+      "range": 4,
+      "intensity": 0.7,
+      "broken": true,
+      "fixture": "bulb"
+    }
+  ],
   "walls": [
     {
       "start": [
@@ -87,7 +119,7 @@
         0.5,
         0.6
       ],
-      "texture": "wall",
+      "texture": "wood",
       "tint": 0.45,
       "collide": true
     },
@@ -103,7 +135,7 @@
         0.4,
         0.5
       ],
-      "texture": "wall",
+      "texture": "wood",
       "tint": 0.4,
       "collide": true
     },
@@ -119,7 +151,7 @@
         0.6,
         0.7
       ],
-      "texture": "wall",
+      "texture": "wood",
       "tint": 0.45,
       "collide": true
     },
@@ -135,7 +167,7 @@
         0.3,
         0.45
       ],
-      "texture": "wall",
+      "texture": "wood",
       "tint": 0.4,
       "collide": true
     },
@@ -151,7 +183,7 @@
         0.6,
         0.45
       ],
-      "texture": "wall",
+      "texture": "wood",
       "tint": 0.5,
       "collide": true
     },

@@ -31,14 +31,42 @@ const STUTTER_WINDOW = 0.045;
 const STUTTER_SCALE = 0.35;
 
 const forward = new THREE.Vector3();
+const right = new THREE.Vector3();
+const up = new THREE.Vector3();
+const eye = new THREE.Vector3();
+const aim = new THREE.Vector3();
+const UP = new THREE.Vector3(0, 1, 0);
+
+// La linterna va "en el pecho", a la derecha y algo por debajo de los ojos:
+// así el haz proyecta sombras visibles (si saliera de los ojos, cada sombra
+// quedaría escondida justo detrás de su objeto).
+const OFFSET_RIGHT = 0.2;
+const OFFSET_DOWN = 0.24;
+const CONVERGE_DISTANCE = 4.5;
 
 export class Flashlight {
   owned = false;
   on = false;
 
   private time = 0;
+  private castsShadow = false;
+  private readonly casterPosition = new THREE.Vector3();
+  private readonly casterDirection = new THREE.Vector3(0, 0, -1);
 
   constructor(private readonly config: PsxConfig) {}
+
+  // Parámetros del foco para el pase de sombra (null si está apagada).
+  shadowCaster(): { position: THREE.Vector3; direction: THREE.Vector3; angleDeg: number; range: number } | null {
+    if (!this.castsShadow) {
+      return null;
+    }
+    return {
+      position: this.casterPosition,
+      direction: this.casterDirection,
+      angleDeg: Math.max(4, Math.min(80, this.config.flashlight.angle_deg)),
+      range: Math.max(1, this.config.flashlight.range),
+    };
+  }
 
   get intensity(): number {
     return FLASHLIGHT_UNIFORMS.u_flash_intensity.value;
@@ -68,9 +96,23 @@ export class Flashlight {
   update(dt: number, camera: THREE.Camera, allowLight: boolean): void {
     this.time += dt;
     camera.updateMatrixWorld();
-    camera.getWorldPosition(FLASHLIGHT_UNIFORMS.u_flash_pos.value);
+    camera.getWorldPosition(eye);
     camera.getWorldDirection(forward);
-    (FLASHLIGHT_UNIFORMS.u_flash_dir.value as THREE.Vector3).copy(forward);
+    right.crossVectors(forward, UP);
+    if (right.lengthSq() < 1e-6) {
+      right.set(1, 0, 0);
+    }
+    right.normalize();
+    up.crossVectors(right, forward).normalize();
+    this.casterPosition
+      .copy(eye)
+      .addScaledVector(right, OFFSET_RIGHT)
+      .addScaledVector(up, -OFFSET_DOWN)
+      .addScaledVector(forward, 0.05);
+    aim.copy(eye).addScaledVector(forward, CONVERGE_DISTANCE);
+    this.casterDirection.copy(aim).sub(this.casterPosition).normalize();
+    FLASHLIGHT_UNIFORMS.u_flash_pos.value.copy(this.casterPosition);
+    (FLASHLIGHT_UNIFORMS.u_flash_dir.value as THREE.Vector3).copy(this.casterDirection);
 
     const tuning = this.config.flashlight;
     const outer = Math.max(4, Math.min(80, tuning.angle_deg));
@@ -88,6 +130,7 @@ export class Flashlight {
 
   private applyUniforms(allowLight = true): void {
     const active = this.on && this.owned && allowLight;
+    this.castsShadow = active;
     const tuning = this.config.flashlight;
     FLASHLIGHT_UNIFORMS.u_flash_on.value = active ? 1 : 0;
     FLASHLIGHT_UNIFORMS.u_flash_intensity.value = active

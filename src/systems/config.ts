@@ -3,8 +3,8 @@ import { fetchJson } from './fetchJson';
 export type ImageMode = 'psx' | 'vhs' | 'bw' | 'crt';
 
 export type ReverbType = 'small' | 'hall' | 'cave' | 'corridor';
-export type FloorMaterial = 'wood' | 'tile' | 'stone' | 'metal' | 'brick';
-export type AmbienceType = 'house' | 'basement';
+export type FloorMaterial = 'wood' | 'tile' | 'stone' | 'metal' | 'brick' | 'dirt' | 'grass';
+export type AmbienceType = 'house' | 'basement' | 'outdoor';
 
 export interface AudioConfig {
   enabled: boolean;

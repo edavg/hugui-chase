@@ -1,3 +1,4 @@
+import { applyFiltering } from './textures';
 import * as THREE from 'three';
 
 let posterTextureCache: THREE.Texture | null = null;
@@ -9,12 +10,9 @@ export function loadPosterTexture(): THREE.Texture {
     posterTextureCache = loader.load(
       `${import.meta.env.BASE_URL}assets/textures/poster_hugui.jpeg`,
     );
-    posterTextureCache.magFilter = THREE.NearestFilter;
-    posterTextureCache.minFilter = THREE.NearestFilter;
-    posterTextureCache.generateMipmaps = false;
+    applyFiltering(posterTextureCache, { repeat: false });
     posterTextureCache.wrapS = THREE.ClampToEdgeWrapping;
     posterTextureCache.wrapT = THREE.ClampToEdgeWrapping;
-    posterTextureCache.colorSpace = THREE.SRGBColorSpace;
   }
   return posterTextureCache;
 }
@@ -89,8 +87,8 @@ export function createFireParticleTexture(): THREE.CanvasTexture {
   ctx.fillRect(0, 0, size, size);
 
   const texture = new THREE.CanvasTexture(canvas);
-  texture.magFilter = THREE.NearestFilter;
-  texture.minFilter = THREE.NearestFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearFilter;
   texture.generateMipmaps = false;
   fireParticleTextureCache = texture;
   return texture;

@@ -180,6 +180,8 @@ export class Stalker {
   syncConfig(config: PsxConfig): void {
     this.body.sync(config, this.atmosphere);
     this.head.sync(config, this.atmosphere);
+    this.rig?.material.sync(config, this.atmosphere);
+    this.rig?.headMaterial.sync(config, this.atmosphere);
   }
 
   // La atmósfera de la sala donde se dibuja el stalker también lo oscurece: en
@@ -188,6 +190,8 @@ export class Stalker {
     this.atmosphere = atmosphere;
     this.body.sync(config, atmosphere);
     this.head.sync(config, atmosphere);
+    this.rig?.material.sync(config, atmosphere);
+    this.rig?.headMaterial.sync(config, atmosphere);
   }
 
   get active(): boolean {

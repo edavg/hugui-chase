@@ -9,14 +9,16 @@
   "texture_scale": 2,
   "wall_thickness": 0.15,
   "textures": {
-    "wall": "Brick/Horror_Brick_14-128x128.png",
-    "floor": "Floor/Horror_Floor_11-128x128.png",
-    "ceiling": "Misc/Horror_Misc_09-128x128.png",
-    "door": "Custom/GreenMetalDoordiffuse.png",
-    "stone": "Stone/Horror_Stone_06-128x128.png",
-    "wood": "Floor/Horror_Floor_03-128x128.png",
-    "rust": "Metal/Horror_Metal_07-128x128.png",
-    "stain": "Stains/Horror_Stain_14-128x128.png"
+    "wall": "ps2/stone_wall.png",
+    "floor": "ps2/concrete.png",
+    "ceiling": "ps2/ceiling_dark.png",
+    "door": "ps2/metal_rust.png",
+    "stone": "ps2/stone_wall.png",
+    "wood": "ps2/wood_dark.png",
+    "rust": "ps2/metal_rust.png",
+    "stain": "Stains/Horror_Stain_14-128x128.png",
+    "painting": "ps2/painting.png",
+    "painting_b": "ps2/painting_b.png"
   },
   "audio": {
     "reverb": "cave",
@@ -24,6 +26,7 @@
     "ambience": "basement"
   },
   "door_fit": true,
+  "trim": false,
   "atmosphere": {
     "fog_start": 2,
     "fog_end": 10,

@@ -3,18 +3,25 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { PsxConfig } from './config';
 import { createPsxMaterial, type PsxMaterialHandle } from './psxMaterial';
 import type { HeadAtlas } from './stalkerFace';
+import { buildHeadMesh } from './stalkerHead';
 import { addVertexColors } from './vertexColors';
+import { applyFiltering } from './textures';
 
 export const STALKER_MODEL_URL = 'assets/models/stalker/monster.glb';
 export const MODEL_HEAD_SIZE = 0.5;
 
 const HEAD_BONE_HINTS = ['head'];
-const HEAD_CUT_WEIGHT = 0.55;
+const HEAD_CUT_WEIGHT = 0.5;
 const HEAD_OVERSIZE = 1.15;
 const HEAD_SIZE_RATIO = 0.16;
 const HEAD_CENTER_RATIO = 0.42;
 const MODEL_ROTATION_Y = Math.PI;
-const MODEL_SHADE = 1.45;
+// Las texturas ya no se decodifican como sRGB: el cuerpo sale más claro que
+// antes, así que el sombreado de vértice baja (piel oscura, enfermiza).
+const MODEL_SHADE = 0.46;
+// La cabeza esculpida mide 1 unidad (coronilla→barbilla); el cubo medía 0.5.
+const HEAD_GEOMETRY_SCALE = 0.6;
+const HEAD_DROP = -0.04;
 
 export interface StalkerRig {
   root: THREE.Group;
@@ -22,6 +29,7 @@ export interface StalkerRig {
   headBone: THREE.Bone;
   headCube: THREE.Group;
   material: PsxMaterialHandle;
+  headMaterial: PsxMaterialHandle;
   mixer: THREE.AnimationMixer;
   clips: Map<string, THREE.AnimationClip>;
   scale: number;
@@ -50,13 +58,10 @@ export async function loadStalkerRig(
     throw new Error('El GLB del stalker no trae textura');
   }
   const texture = source.map;
-  texture.magFilter = THREE.NearestFilter;
-  texture.minFilter = THREE.NearestFilter;
-  texture.generateMipmaps = false;
-  texture.anisotropy = 1;
-  texture.colorSpace = THREE.SRGBColorSpace;
+  applyFiltering(texture, { repeat: false });
+  texture.colorSpace = THREE.NoColorSpace;
 
-  const material = createPsxMaterial(config, texture);
+  const material = createPsxMaterial(config, texture, null, { spec: 0.35, gloss: 26 });
   mesh.material = material.material;
   mesh.castShadow = false;
   mesh.frustumCulled = false;
@@ -77,7 +82,7 @@ export async function loadStalkerRig(
 
   const head = measureHead(headBone, bounds.max.y * scale, config.enemy.height);
   const removedTriangles = stripHeadGeometry(mesh, headBone);
-  const headCube = buildHeadCube(config, atlas);
+  const { group: headCube, material: headMaterial } = buildHead(config, atlas);
   // La cadena de huesos del FBX trae una escala espuria con shear, así que en vez
   // de descomponerla se compone la matriz local exacta: hueso⁻¹ · mundo deseado.
   const desired = new THREE.Matrix4().compose(
@@ -102,7 +107,7 @@ export async function loadStalkerRig(
     `[M5] Modelo del stalker: ${meshHeight.toFixed(2)} m → escala ${scale.toFixed(3)} | cabeza ${head.size.toFixed(2)} m (${head.vertices} vértices) | ${removedTriangles} triángulos sustituidos | clips: ${[...clips.keys()].join(', ')}`,
   );
 
-  return { root, mesh, headBone, headCube, material, mixer, clips, scale, meshHeight, removedTriangles };
+  return { root, mesh, headBone, headCube, material, headMaterial, mixer, clips, scale, meshHeight, removedTriangles };
 }
 
 function findSkinnedMesh(root: THREE.Object3D): THREE.SkinnedMesh | null {
@@ -181,9 +186,11 @@ function stripHeadGeometry(mesh: THREE.SkinnedMesh, headBone: THREE.Bone): numbe
     const a = source[i];
     const b = source[i + 1];
     const c = source[i + 2];
+    // Basta con que UN vértice sea de la cabeza: así no quedan picos del
+    // muñón del cuello atravesando la cabeza esculpida (mejillas, papada).
     if (
-      headWeight(skinIndex, skinWeight, a, boneIndex) >= HEAD_CUT_WEIGHT &&
-      headWeight(skinIndex, skinWeight, b, boneIndex) >= HEAD_CUT_WEIGHT &&
+      headWeight(skinIndex, skinWeight, a, boneIndex) >= HEAD_CUT_WEIGHT ||
+      headWeight(skinIndex, skinWeight, b, boneIndex) >= HEAD_CUT_WEIGHT ||
       headWeight(skinIndex, skinWeight, c, boneIndex) >= HEAD_CUT_WEIGHT
     ) {
       continue;
@@ -198,15 +205,17 @@ function stripHeadGeometry(mesh: THREE.SkinnedMesh, headBone: THREE.Bone): numbe
   return removed;
 }
 
-function buildHeadCube(config: PsxConfig, atlas: HeadAtlas): THREE.Group {
+function buildHead(config: PsxConfig, atlas: HeadAtlas): { group: THREE.Group; material: PsxMaterialHandle } {
   const group = new THREE.Group();
-  group.name = 'stalker_head_cube';
-  const geometry = new THREE.BoxGeometry(MODEL_HEAD_SIZE, MODEL_HEAD_SIZE, MODEL_HEAD_SIZE);
-  atlas.remap(geometry);
-  addVertexColors(geometry, 1);
-  const material = createPsxMaterial(config, atlas.texture);
-  group.add(new THREE.Mesh(geometry, material.material));
-  return group;
+  group.name = 'stalker_head';
+  const head = buildHeadMesh(atlas);
+  const geometry = head.geometry.clone();
+  geometry.scale(HEAD_GEOMETRY_SCALE, HEAD_GEOMETRY_SCALE, HEAD_GEOMETRY_SCALE);
+  geometry.translate(0, -HEAD_DROP, 0);
+  addVertexColors(geometry, 0.95);
+  const material = createPsxMaterial(config, head.texture, null, { spec: 0.28, gloss: 22 });
+  const mesh = new THREE.Mesh(geometry, material.material);
+  mesh.frustumCulled = false;
+  group.add(mesh);
+  return { group, material };
 }
-
-

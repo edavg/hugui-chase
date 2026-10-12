@@ -2,6 +2,18 @@ import * as THREE from 'three';
 import type { ImageMode, PsxConfig } from './config';
 import blitVert from '../shaders/blit.vert.glsl?raw';
 import blitFrag from '../shaders/blit.frag.glsl?raw';
+import { SCENE_LIGHT_UNIFORMS } from './sceneLights';
+import { setMaxAnisotropy } from './textures';
+
+// Sombra de la linterna (spot): mapa de profundidad cuadrado.
+const SHADOW_SIZE = 1024;
+
+export interface ShadowCaster {
+  position: THREE.Vector3;
+  direction: THREE.Vector3;
+  angleDeg: number;
+  range: number;
+}
 
 const IMAGE_MODE_IDS: Readonly<Record<ImageMode, number>> = {
   psx: 0,
@@ -52,6 +64,11 @@ export class PsxRenderer {
   private surfaceHeight = 1;
   private imageMode: ImageMode = 'psx';
   private blurAmount = 0;
+  private readonly shadowTarget: THREE.WebGLRenderTarget;
+  private readonly shadowCamera = new THREE.PerspectiveCamera(60, 1, 0.08, 12);
+  private readonly shadowMaterial = new THREE.MeshDepthMaterial({ side: THREE.DoubleSide });
+  private shadowCaster: ShadowCaster | null = null;
+  private readonly shadowLook = new THREE.Vector3();
 
   constructor(canvas: HTMLCanvasElement, config: PsxConfig, portraitEnabled = false) {
     this.config = config;
@@ -68,6 +85,20 @@ export class PsxRenderer {
     this.renderer.setPixelRatio(1);
     this.renderer.autoClear = false;
     this.renderer.shadowMap.enabled = false;
+    setMaxAnisotropy(this.renderer.capabilities.getMaxAnisotropy());
+
+    const depthTexture = new THREE.DepthTexture(SHADOW_SIZE, SHADOW_SIZE);
+    depthTexture.type = THREE.UnsignedIntType;
+    depthTexture.minFilter = THREE.NearestFilter;
+    depthTexture.magFilter = THREE.NearestFilter;
+    this.shadowTarget = new THREE.WebGLRenderTarget(SHADOW_SIZE, SHADOW_SIZE, {
+      depthBuffer: true,
+      depthTexture,
+      generateMipmaps: false,
+    });
+    this.shadowMaterial.colorWrite = false;
+    SCENE_LIGHT_UNIFORMS.u_shadow_map.value = depthTexture;
+    SCENE_LIGHT_UNIFORMS.u_shadow_texel.value = 1 / SHADOW_SIZE;
 
     this.renderTarget = this.createRenderTarget(resWidth, resHeight);
 
@@ -184,15 +215,15 @@ export class PsxRenderer {
 
   private createRenderTarget(width: number, height: number): THREE.WebGLRenderTarget {
     const target = new THREE.WebGLRenderTarget(width, height, {
-      minFilter: THREE.NearestFilter,
-      magFilter: THREE.NearestFilter,
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
       generateMipmaps: false,
       depthBuffer: true,
     });
     const texture = target.texture;
     texture.generateMipmaps = false;
-    texture.minFilter = THREE.NearestFilter;
-    texture.magFilter = THREE.NearestFilter;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
     texture.wrapS = THREE.ClampToEdgeWrapping;
     texture.wrapT = THREE.ClampToEdgeWrapping;
     return target;
@@ -255,9 +286,49 @@ export class PsxRenderer {
     this.blitMaterial.uniforms.u_blur.value = this.blurAmount * BLUR_MAX_TEXELS * scale;
   }
 
+  // La linterna proyecta sombras (como en Silent Hill 2): el foco va algo
+  // desplazado de los ojos para que las sombras se vean al apuntar.
+  setShadowCaster(caster: ShadowCaster | null): void {
+    this.shadowCaster = caster;
+  }
+
+  private renderShadow(scene: THREE.Scene): void {
+    const caster = this.shadowCaster;
+    if (!caster) {
+      SCENE_LIGHT_UNIFORMS.u_shadow_on.value = 0;
+      return;
+    }
+    const cam = this.shadowCamera;
+    cam.fov = Math.min(120, caster.angleDeg * 2 + 8);
+    cam.far = Math.max(1, caster.range);
+    cam.near = 0.08;
+    cam.updateProjectionMatrix();
+    cam.position.copy(caster.position);
+    this.shadowLook.copy(caster.position).add(caster.direction);
+    cam.lookAt(this.shadowLook);
+    cam.updateMatrixWorld();
+
+    const renderer = this.renderer;
+    const previousOverride = scene.overrideMaterial;
+    scene.overrideMaterial = this.shadowMaterial;
+    renderer.setRenderTarget(this.shadowTarget);
+    renderer.setViewport(0, 0, SHADOW_SIZE, SHADOW_SIZE);
+    renderer.setScissorTest(false);
+    renderer.clear(false, true, false);
+    renderer.render(scene, cam);
+    scene.overrideMaterial = previousOverride;
+
+    SCENE_LIGHT_UNIFORMS.u_shadow_matrix.value.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
+    SCENE_LIGHT_UNIFORMS.u_shadow_on.value = 1;
+  }
+
   render(scene: THREE.Scene, camera: THREE.Camera): void {
     const renderer = this.renderer;
     const [resWidth, resHeight] = this.resolution;
+    camera.getWorldPosition(SCENE_LIGHT_UNIFORMS.u_eye_pos.value);
+    // Capa 1 = efectos (fuego, humo): visibles, pero sin sombra de linterna.
+    camera.layers.enable(1);
+    this.renderShadow(scene);
 
     this.blitMaterial.uniforms.u_time.value = performance.now() / 1000;
     renderer.setRenderTarget(this.renderTarget);

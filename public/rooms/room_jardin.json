@@ -1,0 +1,815 @@
+{
+  "id": "room_jardin",
+  "name": "Jardín",
+  "size": [
+    14,
+    2.2,
+    11
+  ],
+  "texture_scale": 2,
+  "wall_thickness": 0.15,
+  "textures": {
+    "wall": "ps2/fence.png",
+    "floor": "ps2/grass.png",
+    "ceiling": "ps2/ceiling_dark.png",
+    "door": "ps2/door_wood.png",
+    "bark": "ps2/bark.png",
+    "facade": "ps2/brick_red.png",
+    "hedge": "ps2/hedge.png",
+    "gravel": "ps2/gravel.png",
+    "stone": "ps2/stone_wall.png",
+    "wood": "ps2/wood_dark.png",
+    "metal": "ps2/metal_rust.png",
+    "window": "ps2/window_night.png",
+    "water": "ps2/water.png",
+    "painting": "ps2/painting.png",
+    "painting_b": "ps2/painting_b.png"
+  },
+  "audio": {
+    "reverb": "hall",
+    "floor_material": "grass",
+    "ambience": "outdoor"
+  },
+  "door_fit": true,
+  "outdoor": true,
+  "atmosphere": {
+    "outdoor": true,
+    "ambient": 0.4,
+    "ambient_color": [
+      0.55,
+      0.62,
+      0.8
+    ],
+    "direct": 1,
+    "fog_start": 1,
+    "fog_end": 16,
+    "fog_color": [
+      0.11,
+      0.12,
+      0.145
+    ]
+  },
+  "lights": [
+    {
+      "position": [
+        -1.8,
+        2.85,
+        -2.3
+      ],
+      "color": [
+        1,
+        0.85,
+        0.6
+      ],
+      "range": 6.5,
+      "intensity": 1,
+      "flicker": 0.1,
+      "fixture": "bulb"
+    }
+  ],
+  "walls": [
+    {
+      "start": [
+        -7,
+        -5.5
+      ],
+      "end": [
+        7,
+        -5.5
+      ],
+      "openings": [
+        {
+          "kind": "window",
+          "offset": 2.2,
+          "width": 1.3,
+          "height": 1,
+          "sill": 0.95
+        },
+        {
+          "kind": "door",
+          "offset": 6.45,
+          "width": 1.1,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_cocina",
+          "spawn": "from_jardin"
+        },
+        {
+          "kind": "window",
+          "offset": 10.5,
+          "width": 1.3,
+          "height": 1,
+          "sill": 0.95
+        }
+      ],
+      "texture": "facade"
+    },
+    {
+      "start": [
+        7,
+        -5.5
+      ],
+      "end": [
+        7,
+        5.5
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 4.95,
+          "width": 1.1,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_garaje",
+          "spawn": "from_jardin"
+        }
+      ]
+    },
+    {
+      "start": [
+        7,
+        5.5
+      ],
+      "end": [
+        -7,
+        5.5
+      ]
+    },
+    {
+      "start": [
+        -7,
+        5.5
+      ],
+      "end": [
+        -7,
+        -5.5
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 4.95,
+          "width": 1.1,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_invernadero",
+          "spawn": "from_jardin"
+        }
+      ]
+    }
+  ],
+  "props": [
+    {
+      "kind": "box",
+      "position": [
+        0,
+        3.35,
+        -5.5
+      ],
+      "size": [
+        14,
+        2.3,
+        0.15
+      ],
+      "texture": "facade",
+      "tint": 0.85,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.4,
+        3.3,
+        -5.414
+      ],
+      "size": [
+        1.2,
+        1,
+        0.02
+      ],
+      "texture": "window",
+      "tint": 0.9,
+      "collide": false,
+      "fit": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        4.4,
+        3.3,
+        -5.414
+      ],
+      "size": [
+        1.2,
+        1,
+        0.02
+      ],
+      "texture": "window",
+      "tint": 0.9,
+      "collide": false,
+      "fit": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.1,
+        2.24,
+        -5.42
+      ],
+      "size": [
+        14,
+        0.08,
+        0.05
+      ],
+      "texture": "wood",
+      "tint": 0.6,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        0.006,
+        -2.8
+      ],
+      "size": [
+        1.6,
+        0.01,
+        4.8
+      ],
+      "texture": "gravel",
+      "tint": 0.85,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        0.006,
+        0.05
+      ],
+      "size": [
+        13.6,
+        0.01,
+        1.6
+      ],
+      "texture": "gravel",
+      "tint": 0.85,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        0.25,
+        0.05
+      ],
+      "size": [
+        2.6,
+        0.5,
+        2.6
+      ],
+      "texture": "stone",
+      "tint": 0.8,
+      "collide": true,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        0.46,
+        0.05
+      ],
+      "size": [
+        2.25,
+        0.04,
+        2.25
+      ],
+      "texture": "water",
+      "tint": 0.9,
+      "collide": false,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        0.95,
+        0.05
+      ],
+      "size": [
+        0.32,
+        1,
+        0.32
+      ],
+      "texture": "stone",
+      "tint": 0.75,
+      "collide": false,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        1.5,
+        0.05
+      ],
+      "size": [
+        0.9,
+        0.14,
+        0.9
+      ],
+      "texture": "stone",
+      "tint": 0.75,
+      "collide": false,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        -5.2,
+        0.55,
+        -3
+      ],
+      "size": [
+        2.6,
+        1.1,
+        0.9
+      ],
+      "texture": "hedge",
+      "tint": 0.9,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        5.2,
+        0.55,
+        -3
+      ],
+      "size": [
+        2.6,
+        1.1,
+        0.9
+      ],
+      "texture": "hedge",
+      "tint": 0.9,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -5,
+        0.55,
+        3.4
+      ],
+      "size": [
+        3,
+        1.1,
+        0.9
+      ],
+      "texture": "hedge",
+      "tint": 0.9,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        5,
+        0.55,
+        3.4
+      ],
+      "size": [
+        3,
+        1.1,
+        0.9
+      ],
+      "texture": "hedge",
+      "tint": 0.9,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.5,
+        1.7,
+        2.2
+      ],
+      "size": [
+        0.34,
+        3.4,
+        0.34
+      ],
+      "texture": "bark",
+      "tint": 0.65,
+      "collide": true,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.996,
+        2.32,
+        2.017
+      ],
+      "size": [
+        0.136,
+        1.4,
+        0.136
+      ],
+      "texture": "bark",
+      "tint": 0.6,
+      "collide": false,
+      "shape": "cylinder",
+      "rot": [
+        0,
+        20,
+        -50
+      ]
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.867,
+        2.736,
+        1.988
+      ],
+      "size": [
+        0.119,
+        1.2,
+        0.119
+      ],
+      "texture": "bark",
+      "tint": 0.6,
+      "collide": false,
+      "shape": "cylinder",
+      "rot": [
+        0,
+        150,
+        -45
+      ]
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.559,
+        3.153,
+        2.533
+      ],
+      "size": [
+        0.10200000000000001,
+        1.1,
+        0.10200000000000001
+      ],
+      "texture": "bark",
+      "tint": 0.6,
+      "collide": false,
+      "shape": "cylinder",
+      "rot": [
+        0,
+        260,
+        -38
+      ]
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.461,
+        3.45,
+        1.978
+      ],
+      "size": [
+        0.085,
+        0.9,
+        0.085
+      ],
+      "texture": "bark",
+      "tint": 0.6,
+      "collide": false,
+      "shape": "cylinder",
+      "rot": [
+        0,
+        80,
+        -30
+      ]
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.9,
+        1.8,
+        -1.9
+      ],
+      "size": [
+        0.4,
+        3.6,
+        0.4
+      ],
+      "texture": "bark",
+      "tint": 0.65,
+      "collide": true,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        4.404,
+        2.43,
+        -2.083
+      ],
+      "size": [
+        0.16000000000000003,
+        1.4,
+        0.16000000000000003
+      ],
+      "texture": "bark",
+      "tint": 0.6,
+      "collide": false,
+      "shape": "cylinder",
+      "rot": [
+        0,
+        20,
+        -50
+      ]
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.533,
+        2.872,
+        -2.112
+      ],
+      "size": [
+        0.13999999999999999,
+        1.2,
+        0.13999999999999999
+      ],
+      "texture": "bark",
+      "tint": 0.6,
+      "collide": false,
+      "shape": "cylinder",
+      "rot": [
+        0,
+        150,
+        -45
+      ]
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.841,
+        3.313,
+        -1.567
+      ],
+      "size": [
+        0.12,
+        1.1,
+        0.12
+      ],
+      "texture": "bark",
+      "tint": 0.6,
+      "collide": false,
+      "shape": "cylinder",
+      "rot": [
+        0,
+        260,
+        -38
+      ]
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.939,
+        3.63,
+        -2.122
+      ],
+      "size": [
+        0.1,
+        0.9,
+        0.1
+      ],
+      "texture": "bark",
+      "tint": 0.6,
+      "collide": false,
+      "shape": "cylinder",
+      "rot": [
+        0,
+        80,
+        -30
+      ]
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.6,
+        1.5,
+        -1.4
+      ],
+      "size": [
+        0.26,
+        3,
+        0.26
+      ],
+      "texture": "bark",
+      "tint": 0.65,
+      "collide": true,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.096,
+        2.1,
+        -1.583
+      ],
+      "size": [
+        0.10400000000000001,
+        1.4,
+        0.10400000000000001
+      ],
+      "texture": "bark",
+      "tint": 0.6,
+      "collide": false,
+      "shape": "cylinder",
+      "rot": [
+        0,
+        20,
+        -50
+      ]
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.967,
+        2.464,
+        -1.612
+      ],
+      "size": [
+        0.091,
+        1.2,
+        0.091
+      ],
+      "texture": "bark",
+      "tint": 0.6,
+      "collide": false,
+      "shape": "cylinder",
+      "rot": [
+        0,
+        150,
+        -45
+      ]
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.659,
+        2.833,
+        -1.067
+      ],
+      "size": [
+        0.078,
+        1.1,
+        0.078
+      ],
+      "texture": "bark",
+      "tint": 0.6,
+      "collide": false,
+      "shape": "cylinder",
+      "rot": [
+        0,
+        260,
+        -38
+      ]
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.561,
+        3.09,
+        -1.622
+      ],
+      "size": [
+        0.065,
+        0.9,
+        0.065
+      ],
+      "texture": "bark",
+      "tint": 0.6,
+      "collide": false,
+      "shape": "cylinder",
+      "rot": [
+        0,
+        80,
+        -30
+      ]
+    },
+    {
+      "kind": "box",
+      "position": [
+        2.6,
+        0.42,
+        3
+      ],
+      "size": [
+        1.6,
+        0.08,
+        0.45
+      ],
+      "texture": "wood",
+      "tint": 0.75,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        2.6,
+        0.2,
+        3
+      ],
+      "size": [
+        1.4,
+        0.4,
+        0.3
+      ],
+      "texture": "metal",
+      "tint": 0.5,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        2.6,
+        0.72,
+        3.2
+      ],
+      "size": [
+        1.6,
+        0.5,
+        0.06
+      ],
+      "texture": "wood",
+      "tint": 0.7,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.8,
+        1.4,
+        -2.3
+      ],
+      "size": [
+        0.12,
+        2.8,
+        0.12
+      ],
+      "texture": "metal",
+      "tint": 0.6,
+      "collide": true,
+      "shape": "cylinder"
+    }
+  ],
+  "items": [
+    {
+      "id": "poster_10",
+      "position": [
+        2.2,
+        1.35,
+        5.405
+      ],
+      "yaw": 180
+    }
+  ],
+  "spawns": {
+    "from_cocina": {
+      "position": [
+        0,
+        -4.25
+      ],
+      "yaw": 180
+    },
+    "from_garaje": {
+      "position": [
+        5.75,
+        0
+      ],
+      "yaw": 90
+    },
+    "from_invernadero": {
+      "position": [
+        -5.75,
+        0
+      ],
+      "yaw": 270
+    },
+    "start": {
+      "position": [
+        0,
+        -4
+      ],
+      "yaw": 180
+    }
+  }
+}

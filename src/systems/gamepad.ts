@@ -6,7 +6,6 @@ export type PadAction =
   | 'confirm'
   | 'cancel'
   | 'interact'
-  | 'inventory'
   | 'combine'
   | 'pause'
   | 'menu'
@@ -37,7 +36,6 @@ const NO_RUMBLE = -1;
 const BUTTON_ACTIONS = new Map<number, readonly PadAction[]>([
   [0, ['interact', 'confirm']],
   [1, ['cancel']],
-  [2, ['inventory']],
   [3, ['combine']],
   [4, ['pageUp']],
   [5, ['pageDown']],

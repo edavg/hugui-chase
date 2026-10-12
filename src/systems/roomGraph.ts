@@ -26,6 +26,11 @@ export const ROOM_IDS = [
   'room_lavanderia',
   'room_calderas',
   'room_bodega',
+  'room_biblioteca',
+  'room_jardin',
+  'room_garaje',
+  'room_invernadero',
+  'room_atico',
 ] as const;
 
 const ROOM_GAP = 5.5;

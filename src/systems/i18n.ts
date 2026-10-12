@@ -7,18 +7,20 @@ export interface UiTexts {
   clickToPlay: string;
   touchToPlay: string;
   touchUse: string;
-  touchBag: string;
   touchLight: string;
   touchRun: string;
   touchPause: string;
-  inventoryHintsNoteTouch: string;
-  inventoryHintsKeyTouch: string;
-  inventoryHintsEmptyTouch: string;
-  examineHintTouch: string;
   readHintTouch: string;
   promptOpen: string;
   promptClosed: string;
   promptKeyLocked: string;
+  promptPadlock: string;
+  promptEat: string;
+  toastFood: (hearts: number) => string;
+  toastFoodFull: string;
+  promptUnlock: string;
+  toastUnlocked: string;
+  toastNeedKey: (name: string) => string;
   promptUp: string;
   promptDown: string;
   promptPickNote: string;
@@ -28,14 +30,7 @@ export interface UiTexts {
   promptBurnPoster: string;
   promptEndingReady: string;
   promptEndingLocked: (have: number, total: number) => string;
-  inventoryTitle: string;
-  inventoryEmpty: string;
-  inventoryHintsNote: string;
-  inventoryHintsKey: string;
-  inventoryHintsEmpty: string;
   inventoryFull: string;
-  combineNone: string;
-  examineHint: string;
   readHint: string;
   endingTitle: string;
   endingText: string;
@@ -106,22 +101,24 @@ export interface UiTexts {
 
 export const TEXTS: Record<Language, UiTexts> = {
   es: {
-    introObjective: 'QUEMA LOS 8 AFICHES PARA PODER SALIR',
-    clickToPlay: 'CLICK PARA JUGAR — WASD MOVER · SHIFT CORRER · E INTERACTUAR · I INVENTARIO',
+    introObjective: 'QUEMA LOS 12 AFICHES PARA PODER SALIR',
+    clickToPlay: 'CLICK PARA JUGAR — WASD MOVER · SHIFT CORRER · E INTERACTUAR · F LINTERNA',
     touchToPlay: 'JOYSTICK IZQ MOVER · ARRASTRA DER MIRAR',
     touchUse: 'USAR',
-    touchBag: 'BOLSA',
     touchLight: 'LUZ',
     touchRun: 'CORRER',
     touchPause: 'PAUSA',
-    inventoryHintsNoteTouch: 'JOYSTICK ELEGIR · USAR LEER · BOLSA',
-    inventoryHintsKeyTouch: 'JOYSTICK ELEGIR · USAR EXAMINAR · BOLSA',
-    inventoryHintsEmptyTouch: 'JOYSTICK ELEGIR · BOLSA CERRAR',
-    examineHintTouch: 'JOYSTICK GIRAR · PAUSA VOLVER',
     readHintTouch: 'USAR CONTINUAR · PAUSA CERRAR',
     promptOpen: 'E — ABRIR',
     promptClosed: 'E — CERRADA',
     promptKeyLocked: 'E — CERRADA CON LLAVE',
+    promptPadlock: 'E — CERRADA CON CANDADO',
+    promptEat: 'E — COMER CHIPA',
+    toastFood: (hearts) => `¡CHIPA! +1 CORAZÓN (${hearts})`,
+    toastFoodFull: 'YA NO TE ENTRA NI UNA CHIPA MÁS',
+    promptUnlock: 'E — ABRIR EL CANDADO',
+    toastUnlocked: 'EL CANDADO CEDE…',
+    toastNeedKey: (name) => `NECESITAS: ${name}`,
     promptUp: 'E — SUBIR',
     promptDown: 'E — BAJAR',
     promptPickNote: 'E — COGER NOTA',
@@ -131,18 +128,11 @@ export const TEXTS: Record<Language, UiTexts> = {
     promptBurnPoster: 'E — QUEMAR AFICHE',
     promptEndingReady: 'E — SALIR DE LA CASA',
     promptEndingLocked: (have, total) => `E — CERRADA (${have}/${total} AFICHES)`,
-    inventoryTitle: 'INVENTARIO',
-    inventoryEmpty: 'VACÍO',
-    inventoryHintsNote: 'FLECHAS ELEGIR · E LEER · C COMBINAR · I CERRAR',
-    inventoryHintsKey: 'FLECHAS ELEGIR · E EXAMINAR · C COMBINAR · I CERRAR',
-    inventoryHintsEmpty: 'FLECHAS ELEGIR · I CERRAR',
     inventoryFull: 'NO PUEDES LLEVAR MÁS COSAS',
-    combineNone: 'NO HAY NADA QUE COMBINAR',
-    examineHint: 'RATÓN O FLECHAS GIRAR · ESC VOLVER',
     readHint: 'E CONTINUAR · ESC CERRAR',
     endingTitle: 'HAS ESCAPADO',
     endingText:
-      'La puerta principal se cierra a tu espalda. La casa se queda atrás, vacía.\n\nQuemaste los ocho afiches de Hugui Farías. Sin su propaganda, sin su presencia. Por eso la puerta se abrió.',
+      'La puerta principal se cierra a tu espalda. La casa se queda atrás, vacía.\n\nQuemaste los doce afiches de Hugui Farías. Sin su propaganda, sin su presencia. Por eso la puerta se abrió.',
     endingHint: 'E — VOLVER A JUGAR',
     toastNote: (have, total) => `NOTA CONSEGUIDA (${have}/${total})`,
     toastPoster: (have, total) => `AFICHE QUEMADO (${have}/${total})`,
@@ -183,7 +173,7 @@ export const TEXTS: Record<Language, UiTexts> = {
     optionTouchControls: 'CONTROLES TÁCTILES',
     optionsRestore: 'RESTAURAR VALORES',
     controlsTitle: 'CONTROLES',
-    controlsNote: 'CON MANDO: CRUZ PARA MOVER, A INTERACTUAR, X INVENTARIO, START PAUSA.',
+    controlsNote: 'CON MANDO: CRUZ PARA MOVER, A INTERACTUAR, Y LINTERNA, START PAUSA.',
     creditsTitle: 'CRÉDITOS',
     creditsBody:
       'MONDYI\n\nMOTOR, ARTE, CÓDIGO Y SONIDO: ASISTENTE\n\nTEXTURAS: SCREAMING BRAIN STUDIOS — HORROR PACK 128×128 (CC0)\n\nPAQUETE DE TEXTURAS DISTRIBUIDO BAJO LICENCIA CC0.\n\nAGRADECIMIENTOS A LOS JUEGOS QUE ENSEÑARON A HACER ESTO.',
@@ -196,7 +186,7 @@ export const TEXTS: Record<Language, UiTexts> = {
     valueOff: 'NO',
     valueModern: 'MODERNO',
     valueTank: 'TANQUE',
-    valuePsx: 'PSX',
+    valuePsx: 'PS2',
     valueVhs: 'VHS',
     valueBw: 'B/N',
     valueCrt: 'CRT',
@@ -210,22 +200,24 @@ export const TEXTS: Record<Language, UiTexts> = {
     menuHintBackTouch: 'PAUSA',
   },
   en: {
-    introObjective: 'BURN ALL 8 POSTERS TO ESCAPE',
-    clickToPlay: 'CLICK TO PLAY — WASD MOVE · SHIFT RUN · E INTERACT · I INVENTORY',
+    introObjective: 'BURN ALL 12 POSTERS TO ESCAPE',
+    clickToPlay: 'CLICK TO PLAY — WASD MOVE · SHIFT RUN · E INTERACT · F FLASHLIGHT',
     touchToPlay: 'LEFT JOYSTICK MOVE · DRAG RIGHT TO LOOK',
     touchUse: 'USE',
-    touchBag: 'BAG',
     touchLight: 'LIGHT',
     touchRun: 'RUN',
     touchPause: 'PAUSE',
-    inventoryHintsNoteTouch: 'JOYSTICK SELECT · USE READ · BAG',
-    inventoryHintsKeyTouch: 'JOYSTICK SELECT · USE EXAMINE · BAG',
-    inventoryHintsEmptyTouch: 'JOYSTICK SELECT · BAG CLOSE',
-    examineHintTouch: 'JOYSTICK ROTATE · PAUSE BACK',
     readHintTouch: 'USE CONTINUE · PAUSE CLOSE',
     promptOpen: 'E — OPEN',
     promptClosed: 'E — LOCKED',
     promptKeyLocked: 'E — LOCKED WITH A KEY',
+    promptPadlock: 'E — PADLOCKED',
+    promptEat: 'E — EAT CHIPA',
+    toastFood: (hearts) => `CHIPA! +1 HEART (${hearts})`,
+    toastFoodFull: 'YOU CANNOT EAT ANOTHER CHIPA',
+    promptUnlock: 'E — UNLOCK THE PADLOCK',
+    toastUnlocked: 'THE PADLOCK GIVES WAY…',
+    toastNeedKey: (name) => `YOU NEED: ${name}`,
     promptUp: 'E — GO UP',
     promptDown: 'E — GO DOWN',
     promptPickNote: 'E — TAKE NOTE',
@@ -235,18 +227,11 @@ export const TEXTS: Record<Language, UiTexts> = {
     promptBurnPoster: 'E — BURN POSTER',
     promptEndingReady: 'E — LEAVE THE HOUSE',
     promptEndingLocked: (have, total) => `E — LOCKED (${have}/${total} POSTERS)`,
-    inventoryTitle: 'INVENTORY',
-    inventoryEmpty: 'EMPTY',
-    inventoryHintsNote: 'ARROWS SELECT · E READ · C COMBINE · I CLOSE',
-    inventoryHintsKey: 'ARROWS SELECT · E EXAMINE · C COMBINE · I CLOSE',
-    inventoryHintsEmpty: 'ARROWS SELECT · I CLOSE',
     inventoryFull: 'YOU CANNOT CARRY ANYTHING ELSE',
-    combineNone: 'THERE IS NOTHING TO COMBINE',
-    examineHint: 'MOUSE OR ARROWS ROTATE · ESC BACK',
     readHint: 'E CONTINUE · ESC CLOSE',
     endingTitle: 'YOU ESCAPED',
     endingText:
-      'The front door closes behind your back. The house stays behind, empty.\n\nYou burned all eight of Hugui Farías\'s posters. No more propaganda, no more presence. That is why the door opened.',
+      'The front door closes behind your back. The house stays behind, empty.\n\nYou burned all twelve of Hugui Farías\'s posters. No more propaganda, no more presence. That is why the door opened.',
     endingHint: 'E — PLAY AGAIN',
     toastNote: (have, total) => `NOTE COLLECTED (${have}/${total})`,
     toastPoster: (have, total) => `POSTER BURNED (${have}/${total})`,
@@ -287,7 +272,7 @@ export const TEXTS: Record<Language, UiTexts> = {
     optionTouchControls: 'TOUCH CONTROLS',
     optionsRestore: 'RESTORE DEFAULTS',
     controlsTitle: 'CONTROLS',
-    controlsNote: 'WITH A GAMEPAD: STICK TO MOVE, A TO INTERACT, X FOR INVENTORY, START TO PAUSE.',
+    controlsNote: 'WITH A GAMEPAD: STICK TO MOVE, A TO INTERACT, Y FOR FLASHLIGHT, START TO PAUSE.',
     creditsTitle: 'CREDITS',
     creditsBody:
       'MONDYI\n\nENGINE, ART, CODE AND SOUND: ASSISTANT\n\nTEXTURES: SCREAMING BRAIN STUDIOS — HORROR PACK 128×128 (CC0)\n\nTEXTURE PACK DISTRIBUTED UNDER THE CC0 LICENSE.\n\nTHANKS TO THE GAMES THAT TAUGHT US HOW TO DO THIS.',
@@ -300,7 +285,7 @@ export const TEXTS: Record<Language, UiTexts> = {
     valueOff: 'NO',
     valueModern: 'MODERN',
     valueTank: 'TANK',
-    valuePsx: 'PSX',
+    valuePsx: 'PS2',
     valueVhs: 'VHS',
     valueBw: 'B&W',
     valueCrt: 'CRT',
@@ -321,11 +306,8 @@ export const CONTROLS: Record<Language, readonly ControlRow[]> = {
     ['CORRER', 'MAYÚS'],
     ['MIRAR', 'RATÓN'],
     ['INTERACTUAR', 'E'],
-    ['INVENTARIO', 'I'],
     ['LEER / REVELAR', 'E / ESPACIO'],
     ['LINTERNA', 'F'],
-    ['COMBINAR', 'C'],
-    ['EXAMINAR', 'E'],
     ['PAUSA', 'ESC'],
     ['CARGAS RÁPIDAS', 'F1'],
   ],
@@ -334,11 +316,8 @@ export const CONTROLS: Record<Language, readonly ControlRow[]> = {
     ['RUN', 'SHIFT'],
     ['LOOK', 'MOUSE'],
     ['INTERACT', 'E'],
-    ['INVENTORY', 'I'],
     ['READ / REVEAL', 'E / SPACE'],
     ['FLASHLIGHT', 'F'],
-    ['COMBINE', 'C'],
-    ['EXAMINE', 'E'],
     ['PAUSE', 'ESC'],
     ['FAST LOAD', 'F1'],
   ],

@@ -5,11 +5,10 @@ import { FixedLoop } from './loop';
 import { Input } from './input';
 import { buildRoom, loadRoomData, type BuiltRoom, type DoorHandle, type ItemHandle } from './roomBuilder';
 import { Flags } from './flags';
-import { INVENTORY_SLOT_COUNT, Inventory } from './inventory';
+import { Inventory } from './inventory';
 import { TEXTS } from './i18n';
 import {
   POSTER_IDS,
-  itemDesc,
   itemName,
   itemText,
   itemTitle,
@@ -18,7 +17,8 @@ import {
 } from './items';
 import { Ui } from './ui';
 import { UiCanvas } from './uiCanvas';
-import { createBurnMaterial, createFireParticleTexture, loadPosterTexture } from './proceduralTextures';
+import { loadPosterTexture } from './proceduralTextures';
+import { BURN_SECONDS, PosterBurn } from './burnFx';
 import { createBitmapFont } from './font';
 import { Menu, type MenuScreen } from './menu';
 import { Settings, type SettingsData } from './settings';
@@ -27,15 +27,13 @@ import { TouchControls } from './touch';
 import { AudioSystem } from './audio';
 import { Flashlight } from './flashlight';
 import { RoomGraph } from './roomGraph';
+import { setSceneLights, updateSceneLights } from './sceneLights';
 import { Stalker, type StalkerHooks, type StalkerSense } from '../entities/stalker';
 import { Player } from '../entities/player';
 
-const GRID_COLUMNS = 4;
-const PORTRAIT_GRID_COLUMNS = 2;
 const PORTRAIT_FOV_FALLBACK = 95;
-const NAV_REPEAT_DELAY = 0.35;
-const NAV_REPEAT_INTERVAL = 0.22;
 const DEFAULT_HEARTS = 3;
+const MAX_HEARTS = 8;
 const DEFAULT_HIT_INVULN = 2.5;
 const HIT_KNOCKBACK = 1.0;
 const INTRO_OBJECTIVE_SECONDS = 7;
@@ -49,9 +47,8 @@ const AIM_FOV_FALLBACK = 32;
 // afiches aparece ahí un 2º stalker vigilando la salida.
 const ENDING_ROOM_ID = 'room_vestibulo';
 
-type State = 'playing' | 'transition' | 'inventory' | 'examine' | 'reading' | 'ending';
+type State = 'playing' | 'transition' | 'reading' | 'ending';
 
-type Axis = 'up' | 'down' | 'left' | 'right';
 
 interface Waiter {
   remaining: number;
@@ -75,34 +72,20 @@ export class Game {
   private readonly waiters: Waiter[] = [];
   private readonly flags = new Flags();
   private readonly inventory = new Inventory();
-  private readonly models = new Map<string, THREE.Object3D>();
   private readonly ui: Ui;
   private readonly uiCanvas: UiCanvas;
   private readonly settings: Settings;
   private readonly gamepad: Gamepad;
   private readonly menu: Menu;
   private readonly touch: TouchControls;
-  private invColumns = GRID_COLUMNS;
-  private readonly invAxes: Record<Axis, { held: boolean; timer: number }> = {
-    up: { held: false, timer: 0 },
-    down: { held: false, timer: 0 },
-    left: { held: false, timer: 0 },
-    right: { held: false, timer: 0 },
-  };
   private readonly introRoom: string;
   private readonly introSpawn: string;
   private readonly wakeEnabled: boolean;
+  private unlocking = false;
+  private readonly unlockReadyAt = new Map<string, number>();
   readonly audio: AudioSystem;
   private catalog = new Map<string, ItemDef>();
   private transitionStart = 0;
-  private inventorySelection = 0;
-  private examineObject: THREE.Object3D | null = null;
-  private readonly examineScene = new THREE.Scene();
-  private readonly examineYawGroup = new THREE.Group();
-  private readonly examinePitchGroup = new THREE.Group();
-  private readonly examineCamera: THREE.PerspectiveCamera;
-  private examineYaw = 0;
-  private examinePitch = 0;
   private graph: RoomGraph | null = null;
   private graphPromise: Promise<RoomGraph> | null = null;
   private stalker: Stalker | null = null;
@@ -120,6 +103,7 @@ export class Game {
   private lastPlayerX = 0;
   private lastPlayerZ = 0;
   private hearts = DEFAULT_HEARTS;
+  private heartSlots = DEFAULT_HEARTS;
   private invulnUntil = 0;
   private clock = 0;
   private readonly aimRaycaster = new THREE.Raycaster();
@@ -169,7 +153,7 @@ export class Game {
     });
     this.touch = new TouchControls(this.input, {
       getLanguage: () => this.config.language,
-      // La interfaz espera navegación fuera del juego activo: menús, inventario,
+      // La interfaz espera navegación fuera del juego activo: menús, lectura,
       // lectura y examen. Ahí el joystick emite flechas en lugar de movimiento.
       isNavMode: () => this.menu.active || this.state !== 'playing',
       isMenuActive: () => this.menu.active,
@@ -189,12 +173,6 @@ export class Game {
     );
 
     const [resWidth, resHeight] = config.resolution;
-    this.examineCamera = new THREE.PerspectiveCamera(40, resWidth / resHeight, 0.01, 5);
-    this.examineCamera.position.set(0, 0.14, 0.78);
-    this.examineCamera.lookAt(0, 0, 0);
-    this.examineYawGroup.add(this.examinePitchGroup);
-    this.examineScene.add(this.examineYawGroup);
-
     this.psx.onResolutionChange = (width, height) => this.handleResolutionChange(width, height);
     const [activeWidth, activeHeight] = this.psx.activeResolution;
     if (activeWidth !== resWidth || activeHeight !== resHeight) {
@@ -204,15 +182,10 @@ export class Game {
 
   // Resolución activa del render (4:3 en horizontal, vertical dinámico en
   // móvil): propaga el nuevo tamaño a cámaras, materiales (snap de vértices),
-  // canvas de interfaz y rejilla del inventario.
+  // y canvas de interfaz.
   private handleResolutionChange(width: number, height: number): void {
     this.config.resolution = [width, height];
     const portrait = height > width;
-    this.invColumns = portrait ? PORTRAIT_GRID_COLUMNS : GRID_COLUMNS;
-    this.ui.setOptions({
-      inventoryColumns: this.invColumns,
-      inventoryRows: INVENTORY_SLOT_COUNT / this.invColumns,
-    });
     this.room?.sync(this.config);
     this.stalker?.syncConfig(this.config);
     this.stalkerSecond?.syncConfig(this.config);
@@ -221,13 +194,7 @@ export class Game {
       this.player.camera.fov = this.fovFor(portrait);
       this.player.camera.updateProjectionMatrix();
     }
-    this.examineCamera.aspect = width / height;
-    this.examineCamera.fov = portrait ? this.fovFor(true) : 40;
-    this.examineCamera.updateProjectionMatrix();
     this.uiCanvas.setLogicalSize(width, height);
-    if (this.state === 'inventory') {
-      this.refreshInventory();
-    }
   }
 
   private fovFor(portrait: boolean): number {
@@ -276,7 +243,7 @@ export class Game {
     console.info(
       `[M3] ${this.config.title} | sala "${this.room.name}" | tris: ${this.room.triangleCount} | colisiones: ${this.room.colliders.length} | puertas: ${this.room.doors.length} | ítems: ${this.room.items.length}`,
     );
-    console.info('[M3] Click para capturar el ratón. E interactuar · I inventario.');
+    console.info('[M3] Click para capturar el ratón. E interactuar.');
     console.info('[M6] Audio procedural activo: pasos, ambiente, reverb por sala y música reactiva.');
     console.info('[M7] Pausa y opciones con teclado y mando. ESC pausa.');
     console.info('[M5] QA: ?stalker=1&stalkerroom=<id> despierta a Hugui en esa sala.');
@@ -556,8 +523,27 @@ export class Game {
 
   private resetHearts(): void {
     this.hearts = this.configuredHearts();
+    this.heartSlots = this.hearts;
     this.invulnUntil = 0;
-    this.ui.showHearts(this.hearts, this.hearts);
+    this.ui.showHearts(this.hearts, this.heartSlots);
+  }
+
+  // Chipa: +1 corazón. Se puede pasar de los 3 iniciales (hasta MAX_HEARTS);
+  // los huecos ganados se quedan dibujados aunque luego te golpeen.
+  private eatFood(item: ItemHandle): void {
+    const texts = TEXTS[this.config.language];
+    item.taken = true;
+    this.flags.set(`taken:${item.id}`);
+    item.object.removeFromParent();
+    this.audio.play('eat');
+    if (this.hearts >= MAX_HEARTS) {
+      this.ui.toast(texts.toastFoodFull);
+      return;
+    }
+    this.hearts += 1;
+    this.heartSlots = Math.max(this.heartSlots, this.hearts);
+    this.ui.showHearts(this.hearts, this.heartSlots);
+    this.ui.toast(texts.toastFood(this.hearts));
   }
 
   private takeHit(stalkerX: number, stalkerZ: number): void {
@@ -581,7 +567,8 @@ export class Game {
     }
     this.ui.flashDamage();
     this.ui.toast(TEXTS[this.config.language].toastHit(this.hearts));
-    this.audio.play('stinger', 0.5);
+    this.audio.play('hurt', 0.9);
+    this.audio.play('stinger', 0.35);
   }
 
   private async runCaught(): Promise<void> {
@@ -592,6 +579,7 @@ export class Game {
     this.ui.hideAll();
     this.ui.setPrompt('');
     this.input.consumeMouseDelta();
+    this.audio.play('hurt', 1);
     this.audio.play('stinger', 0.9);
     await this.wait(1.1, (progress) => this.psx.setFade(progress * 0.9));
     await this.wait(0.5, (progress) => this.psx.setFade(0.9 + progress * 0.1));
@@ -909,9 +897,6 @@ export class Game {
     if (changed === 'language') {
       this.menu.onLanguageChanged();
       this.touch.refreshLabels();
-      if (this.state === 'inventory') {
-        this.refreshInventory();
-      }
     }
   }
 
@@ -963,9 +948,6 @@ export class Game {
     for (let index = 0; index < this.inventory.slots.length; index += 1) {
       this.inventory.slots[index] = null;
     }
-    this.models.clear();
-    this.inventorySelection = 0;
-    this.examineObject = null;
     this.flashlight.reset();
     this.deactivateStalker();
     this.secondStalkerSpawned = false;
@@ -996,7 +978,7 @@ export class Game {
   private handleMenuInput(dt: number): void {
     const pausePressed =
       this.menu.active === false &&
-      (this.state === 'playing' || this.state === 'inventory') &&
+      this.state === 'playing' &&
       (this.input.consumePress('Escape') || this.input.padPress('pause'));
     if (pausePressed) {
       this.openMenu('pause');
@@ -1009,7 +991,8 @@ export class Game {
     this.gamepad.poll(dt);
     this.touch.sync();
     this.handleMenuInput(dt);
-    this.flashlight.update(dt, this.player.camera, this.state !== 'examine');
+    this.flashlight.update(dt, this.player.camera, true);
+    updateSceneLights(dt);
     if (this.menu.active) {
       this.ui.update(dt);
       this.flushWaiters(dt);
@@ -1023,10 +1006,6 @@ export class Game {
         this.player.update(dt, this.config, this.input);
         this.updateStalker(dt);
         this.preloadNearbyDoors();
-        if (this.input.consumePress('KeyI') || this.input.padPress('inventory')) {
-          this.openInventory();
-          break;
-        }
         if (this.input.consumePress('KeyF') || this.input.padPress('combine')) {
           this.toggleFlashlight();
         }
@@ -1040,12 +1019,6 @@ export class Game {
       case 'transition':
         this.input.consumeMouseDelta();
         break;
-      case 'inventory':
-        this.handleInventory(dt);
-        break;
-      case 'examine':
-        this.handleExamine(dt);
-        break;
       case 'reading':
         this.handleReading();
         break;
@@ -1055,11 +1028,8 @@ export class Game {
   }
 
   private render(): void {
-    if (this.state === 'examine' && this.examineObject) {
-      this.psx.render(this.examineScene, this.examineCamera);
-    } else {
-      this.psx.render(this.room.scene, this.player.camera);
-    }
+    this.psx.setShadowCaster(this.flashlight.shadowCaster());
+    this.psx.render(this.room.scene, this.player.camera);
     this.ui.draw();
     if (this.menu.active) {
       this.menu.draw();
@@ -1067,216 +1037,8 @@ export class Game {
     this.uiCanvas.end();
   }
 
-  private handleInventory(dt: number): void {
-    const columns = this.invColumns;
-    const rows = INVENTORY_SLOT_COUNT / columns;
-    const column = this.inventorySelection % columns;
-    const row = Math.floor(this.inventorySelection / columns);
-    let nextColumn = column;
-    let nextRow = row;
-    let moved = false;
-
-    if (this.inventoryStep('left', dt, this.press('ArrowLeft', 'left') || this.press('KeyA', 'left'))) {
-      nextColumn = (column + columns - 1) % columns;
-      moved = true;
-    }
-    if (this.inventoryStep('right', dt, this.press('ArrowRight', 'right') || this.press('KeyD', 'right'))) {
-      nextColumn = (column + 1) % columns;
-      moved = true;
-    }
-    if (this.inventoryStep('up', dt, this.press('ArrowUp', 'up') || this.press('KeyW', 'up'))) {
-      nextRow = (row + rows - 1) % rows;
-      moved = true;
-    }
-    if (this.inventoryStep('down', dt, this.press('ArrowDown', 'down') || this.press('KeyS', 'down'))) {
-      nextRow = (row + 1) % rows;
-      moved = true;
-    }
-    if (moved) {
-      this.inventorySelection = nextRow * columns + nextColumn;
-      this.refreshInventory();
-    }
-
-    if (this.press('KeyE', 'interact') || this.press('Enter', 'confirm')) {
-      this.useSelectedItem();
-      return;
-    }
-    if (this.press('KeyC', 'combine')) {
-      this.ui.toast(TEXTS[this.config.language].combineNone);
-    }
-    if (this.press('KeyI', 'inventory') || this.press('Escape', 'cancel')) {
-      this.closeInventory();
-    }
-  }
-
-  // Repetición al mantener la dirección (teclado o joystick táctil), igual que
-  // en los menús: primer paso inmediato, luego un paso cada NAV_REPEAT_INTERVAL.
-  private inventoryStep(axis: Axis, dt: number, pressed: boolean): boolean {
-    const state = this.invAxes[axis];
-    if (pressed) {
-      state.held = true;
-      state.timer = NAV_REPEAT_DELAY;
-      return true;
-    }
-    const codes =
-      axis === 'up'
-        ? ['ArrowUp', 'KeyW']
-        : axis === 'down'
-          ? ['ArrowDown', 'KeyS']
-          : axis === 'left'
-            ? ['ArrowLeft', 'KeyA']
-            : ['ArrowRight', 'KeyD'];
-    const down = codes.some((code) => this.input.isDown(code)) || this.input.padDown(axis);
-    if (!down) {
-      state.held = false;
-      state.timer = 0;
-      return false;
-    }
-    if (!state.held) {
-      state.held = true;
-      state.timer = NAV_REPEAT_DELAY;
-      return true;
-    }
-    state.timer -= dt;
-    if (state.timer > 0) {
-      return false;
-    }
-    state.timer = NAV_REPEAT_INTERVAL;
-    return true;
-  }
-
   private press(code: string, action: PadAction): boolean {
     return this.input.consumePress(code) || this.input.padPress(action);
-  }
-
-  private handleExamine(dt: number): void {
-    const mouse = this.input.consumeMouseDelta();
-    this.examineYaw -= mouse.dx * 0.01;
-    this.examinePitch = THREE.MathUtils.clamp(this.examinePitch + mouse.dy * 0.01, -1.3, 1.3);
-
-    const turn = 2.2 * dt;
-    if (this.input.isDown('ArrowLeft') || this.input.isDown('KeyA')) {
-      this.examineYaw += turn;
-    }
-    if (this.input.isDown('ArrowRight') || this.input.isDown('KeyD')) {
-      this.examineYaw -= turn;
-    }
-    if (this.input.isDown('ArrowUp') || this.input.isDown('KeyW')) {
-      this.examinePitch = THREE.MathUtils.clamp(this.examinePitch + turn, -1.3, 1.3);
-    }
-    if (this.input.isDown('ArrowDown') || this.input.isDown('KeyS')) {
-      this.examinePitch = THREE.MathUtils.clamp(this.examinePitch - turn, -1.3, 1.3);
-    }
-    this.examineYawGroup.rotation.y = this.examineYaw;
-    this.examinePitchGroup.rotation.x = this.examinePitch;
-
-    if (this.input.consumePress('Escape') || this.input.consumePress('KeyI')) {
-      this.closeExamine();
-    }
-  }
-
-  private openInventory(): void {
-    this.state = 'inventory';
-    this.input.clearPending();
-    this.resetInventoryAxes();
-    this.ui.setPrompt('');
-    this.refreshInventory();
-  }
-
-  private closeInventory(): void {
-    this.ui.hideInventory();
-    this.state = 'playing';
-    this.input.clearPending();
-    this.resetInventoryAxes();
-  }
-
-  private resetInventoryAxes(): void {
-    for (const axis of Object.keys(this.invAxes) as Axis[]) {
-      this.invAxes[axis].held = false;
-      this.invAxes[axis].timer = 0;
-    }
-  }
-
-  private refreshInventory(): void {
-    const texts = TEXTS[this.config.language];
-    const slots = this.inventory.slots.map((id) => {
-      if (!id) {
-        return null;
-      }
-      const def = this.catalog.get(id);
-      return def ? itemName(def, this.config.language) : id;
-    });
-
-    const selectedId = this.inventory.slots[this.inventorySelection];
-    const def = selectedId ? this.catalog.get(selectedId) : undefined;
-    const name = def ? itemName(def, this.config.language) : texts.inventoryEmpty;
-    const desc = def ? itemDesc(def, this.config.language) : '';
-    const touch = this.touchActive;
-    const hint = def
-      ? touch
-        ? texts.inventoryHintsKeyTouch
-        : texts.inventoryHintsKey
-      : touch
-        ? texts.inventoryHintsEmptyTouch
-        : texts.inventoryHintsEmpty;
-    this.ui.showInventory(slots, this.inventorySelection, name, desc, hint);
-  }
-
-  private useSelectedItem(): void {
-    const id = this.inventory.slots[this.inventorySelection];
-    if (!id) {
-      return;
-    }
-    const def = this.catalog.get(id);
-    if (!def) {
-      return;
-    }
-    this.openExamine(def);
-  }
-
-  private openExamine(def: ItemDef): void {
-    const model = this.models.get(def.id);
-    if (!model) {
-      return;
-    }
-    this.ui.hideInventory();
-    this.examineObject = model.clone(true);
-    this.examineObject.position.set(0, 0, 0);
-    this.examineObject.rotation.set(0, 0, 0);
-    this.examineObject.scale.set(1, 1, 1);
-
-    const box = new THREE.Box3().setFromObject(this.examineObject);
-    const size = box.getSize(new THREE.Vector3());
-    const center = box.getCenter(new THREE.Vector3());
-    const maxDimension = Math.max(size.x, size.y, size.z) || 1;
-    const scale = 0.42 / maxDimension;
-    this.examineObject.scale.setScalar(scale);
-    this.examineObject.position.copy(center).multiplyScalar(-scale);
-    this.examineYaw = -0.6;
-    this.examinePitch = 0.5;
-    this.examineYawGroup.rotation.y = this.examineYaw;
-    this.examinePitchGroup.rotation.x = this.examinePitch;
-    this.examinePitchGroup.add(this.examineObject);
-    this.input.clearPending();
-    this.ui.setPrompt('');
-
-    this.state = 'examine';
-    const texts = TEXTS[this.config.language];
-    this.ui.showExamine(
-      itemName(def, this.config.language),
-      itemDesc(def, this.config.language),
-      this.touchActive ? texts.examineHintTouch : texts.examineHint,
-    );
-  }
-
-  private closeExamine(): void {
-    if (this.examineObject) {
-      this.examinePitchGroup.remove(this.examineObject);
-      this.examineObject = null;
-    }
-    this.ui.hideExamine();
-    this.state = 'inventory';
-    this.refreshInventory();
   }
 
   private createPlayer(room: BuiltRoom, spawnName: string): Player {
@@ -1315,6 +1077,12 @@ export class Game {
   }
 
   private applyRoomState(room: BuiltRoom): void {
+    setSceneLights(room.lights);
+    for (const door of room.doors) {
+      if (door.lock && this.flags.has(`unlocked:${door.lockId}`) && door.lock.body.parent !== room.scene) {
+        door.lock.body.visible = false;
+      }
+    }
     for (const door of room.doors) {
       this.closeDoor(room, door);
     }
@@ -1350,6 +1118,8 @@ export class Game {
         label = texts.promptPickTool(itemName(def, this.config.language));
       } else if (def?.kind === 'lore') {
         label = texts.promptExamine;
+      } else if (def?.kind === 'food') {
+        label = texts.promptEat;
       }
       best = { door: null, item, label };
     }
@@ -1435,8 +1205,11 @@ export class Game {
         ? texts.promptEndingReady
         : texts.promptEndingLocked(have, door.requires.length);
     }
-    if (door.key && !this.inventory.has(door.key)) {
-      return texts.promptKeyLocked;
+    if (door.key && !this.flags.has(`unlocked:${door.lockId}`)) {
+      return this.inventory.has(door.key) ? texts.promptUnlock : texts.promptPadlock;
+    }
+    if (door.key && this.clock < (this.unlockReadyAt.get(door.lockId) ?? 0)) {
+      return '';
     }
     if (door.action === 'up') {
       return texts.promptUp;
@@ -1476,6 +1249,8 @@ export class Game {
       const def = this.catalog.get(target.item.id);
       if (def?.kind === 'poster') {
         void this.burnPoster(target.item);
+      } else if (def?.kind === 'food') {
+        this.eatFood(target.item);
       } else if (def?.kind === 'lore') {
         this.readLore(target.item);
       } else {
@@ -1487,11 +1262,26 @@ export class Game {
     if (!door) {
       return;
     }
-    if (door.key && !this.inventory.has(door.key)) {
+    if (door.key && !this.flags.has(`unlocked:${door.lockId}`)) {
+      if (!this.inventory.has(door.key)) {
+        this.audio.play('door_locked', 0.85);
+        const keyDef = this.catalog.get(door.key);
+        if (keyDef) {
+          this.ui.toast(TEXTS[this.config.language].toastNeedKey(itemName(keyDef, this.config.language).toUpperCase()));
+        }
+        return;
+      }
+      if (!this.unlocking) {
+        void this.runUnlock(door);
+      }
+      return;
+    }
+    if (door.key && this.clock < (this.unlockReadyAt.get(door.lockId) ?? 0)) {
       return;
     }
     if (door.ending) {
       if (!door.requires.every((id) => this.flags.has(`burned:${id}`))) {
+        this.audio.play('door_locked', 0.9);
         return;
       }
       void this.runEnding(door);
@@ -1503,6 +1293,43 @@ export class Game {
     void this.runDoorTransition(door);
   }
 
+  // Abrir el candado con la llave: giro, salta el grillete y el candado cae
+  // al suelo. La puerta se puede abrir tras una breve pausa.
+  private async runUnlock(door: DoorHandle): Promise<void> {
+    this.unlocking = true;
+    const room = this.room;
+    this.audio.play('padlock_unlock');
+    const lock = door.lock;
+    if (lock) {
+      await this.wait(0.45, (progress) => {
+        lock.body.rotation.z = Math.sin(progress * Math.PI * 4) * 0.14 * (1 - progress);
+      });
+      await this.wait(0.2, (progress) => {
+        lock.shackle.position.y = 0.014 * easeInOut(progress);
+        lock.body.rotation.z = -0.25 * progress;
+      });
+      room.scene.attach(lock.body);
+      const start = lock.body.position.clone();
+      const startRotX = lock.body.rotation.x;
+      const away = new THREE.Vector3(this.player.position.x - door.center.x, 0, this.player.position.z - door.center.z);
+      if (away.lengthSq() > 1e-6) {
+        away.normalize().multiplyScalar(0.22);
+      }
+      const floorY = 0.075;
+      await this.wait(0.45, (progress) => {
+        const fall = progress * progress;
+        lock.body.position.set(start.x + away.x * progress, start.y + (floorY - start.y) * fall, start.z + away.z * progress);
+        lock.body.rotation.x = startRotX + progress * 1.57;
+      });
+    } else {
+      await this.wait(0.9);
+    }
+    this.flags.set(`unlocked:${door.lockId}`);
+    this.unlockReadyAt.set(door.lockId, this.clock + 0.8);
+    this.ui.toast(TEXTS[this.config.language].toastUnlocked);
+    this.unlocking = false;
+  }
+
   private async burnPoster(item: ItemHandle): Promise<void> {
     const texts = TEXTS[this.config.language];
     item.taken = true;
@@ -1510,81 +1337,25 @@ export class Game {
     this.audio.play('burn');
 
     const mesh = item.object.children[0] as THREE.Mesh;
-    const burnMat = createBurnMaterial(loadPosterTexture());
-    mesh.material = burnMat;
-
-    const fireTex = createFireParticleTexture();
-    const particles: Array<{ sprite: THREE.Sprite; vx: number; vy: number; life: number }> = [];
-    const particleGroup = new THREE.Group();
-    this.room.scene.add(particleGroup);
-
-    const light = new THREE.PointLight(0xff6622, 3, 5, 2);
-    light.position.copy(item.position);
-    this.room.scene.add(light);
-
-    const yaw = item.object.rotation.y;
-    const cos = Math.cos(yaw);
-    const sin = Math.sin(yaw);
-    const duration = 1.6;
-
-    await this.wait(duration, (progress) => {
-      burnMat.uniforms.burnProgress.value = progress;
-
-      const burnLocalY = (progress * 1.3 - 0.15 - 0.5) * 0.85;
-      light.position.set(
-        item.position.x + sin * 0.05,
-        item.position.y + burnLocalY,
-        item.position.z + cos * 0.05,
-      );
-      light.intensity = 3 * (0.5 + 0.5 * Math.sin(progress * 35)) * (1 - progress * 0.5);
-
-      for (let i = 0; i < 3; i++) {
-        const mat = new THREE.SpriteMaterial({
-          map: fireTex,
-          transparent: true,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-        });
-        const sprite = new THREE.Sprite(mat);
-        const ox = (Math.random() - 0.5) * 0.5;
-        sprite.position.set(
-          item.position.x + cos * ox + sin * 0.06,
-          item.position.y + burnLocalY + (Math.random() - 0.5) * 0.05,
-          item.position.z - sin * ox + cos * 0.06,
-        );
-        sprite.scale.setScalar(0.03 + Math.random() * 0.05);
-        particleGroup.add(sprite);
-        particles.push({
-          sprite,
-          vx: (Math.random() - 0.5) * 0.4,
-          vy: 0.5 + Math.random() * 0.8,
-          life: 0.4 + Math.random() * 0.5,
-        });
-      }
-
-      const dt = 1 / 60;
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.life -= dt;
-        if (p.life <= 0) {
-          p.sprite.removeFromParent();
-          (p.sprite.material as THREE.SpriteMaterial).dispose();
-          particles.splice(i, 1);
-          continue;
-        }
-        p.sprite.position.y += p.vy * dt;
-        p.sprite.position.x += p.vx * dt;
-        (p.sprite.material as THREE.SpriteMaterial).opacity = Math.min(1, p.life * 3);
-      }
+    const brightness = this.room.audio.ambience === 'basement' ? 0.45 : 0.85;
+    const burnScene = this.room.scene;
+    const fx = new PosterBurn(burnScene, mesh, loadPosterTexture(), brightness);
+    let previous = 0;
+    await this.wait(BURN_SECONDS, (progress) => {
+      const dt = Math.max(0, (progress - previous) * BURN_SECONDS);
+      previous = progress;
+      fx.update(dt, progress, this.room.scene === burnScene);
     });
-
-    for (const p of particles) {
-      p.sprite.removeFromParent();
-      (p.sprite.material as THREE.SpriteMaterial).dispose();
-    }
-    particleGroup.removeFromParent();
-    light.removeFromParent();
+    fx.update(0, 1, this.room.scene === burnScene);
+    fx.leaveScorch();
     item.object.removeFromParent();
+    // El humo y la ceniza siguen un rato sin bloquear al jugador.
+    let tailPrevious = 0;
+    void this.wait(3, (progress) => {
+      const dt = Math.max(0, (progress - tailPrevious) * 3);
+      tailPrevious = progress;
+      fx.update(dt, 1, false);
+    }).then(() => fx.dispose());
 
     const have = this.burnedPosters();
     this.stalker?.setBurnedPosters(have);
@@ -1655,7 +1426,6 @@ export class Game {
     item.taken = true;
     this.flags.set(`taken:${item.id}`);
     item.object.removeFromParent();
-    this.models.set(item.id, item.object.clone(true));
     this.audio.play('pickup_key');
 
     if (def.kind === 'tool') {
@@ -1667,7 +1437,7 @@ export class Game {
   }
 
   // Examinable fijo (placa de la escalera): muestra el texto en pantalla sin
-  // recogerlo al inventario. Se puede releer; solo marca `read:<id>`.
+  // recogerlo. Se puede releer; solo marca `read:<id>`.
   private readLore(item: ItemHandle): void {
     const def = this.catalog.get(item.id);
     if (!def) {

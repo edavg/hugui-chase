@@ -22,7 +22,6 @@ const TITLE_SCALE = 2;
 const LINE_SCALE = 1;
 // Aire extra entre líneas de los párrafos (la celda 8×8 sin él se ve densa).
 const BODY_LINE_SPACING = 3;
-const DESC_LINE_SPACING = 2;
 const NOTE_WIDTH = 528;
 const NOTE_PADDING = 24;
 const NOTE_TITLE_GAP = 10;
@@ -30,30 +29,8 @@ const NOTE_MAX_HEIGHT = 400;
 const NOTE_HINT_GAP = 12;
 const NOTE_BOTTOM_MARGIN = 30;
 
-const INVENTORY_TITLE_Y = 84;
-const INVENTORY_RULE_Y = 112;
-const INVENTORY_GRID_Y = 134;
-const INVENTORY_PANEL_Y = 122;
-const INVENTORY_PANEL_PAD = 12;
-const INVENTORY_SECTION_GAP = 22;
-const INVENTORY_DESC_GAP = 8;
-const INVENTORY_HINT_GAP = 56;
-const INVENTORY_INFO_WIDTH = 520;
-const INVENTORY_RULE_WIDTH = 240;
 
-const SLOT_WIDTH = 128;
-const SLOT_HEIGHT = 72;
-const SLOT_GAP = 4;
-const SLOT_PAD = 8;
-const SLOT_MAX_WIDTH = 576;
-const SLOT_MAX_HEIGHT = 300;
 
-const EXAMINE_X = 60;
-const EXAMINE_WIDTH = 520;
-const EXAMINE_TOP = 372;
-const EXAMINE_BOTTOM = 470;
-const EXAMINE_PAD = 12;
-const EXAMINE_GAP = 8;
 
 const ENDING_WIDTH = 480;
 const ENDING_TITLE_SCALE = 3;
@@ -86,8 +63,6 @@ const POSTER_ICON_SIZE = 10;
 
 export interface UiOptions {
   showSubtitles: boolean;
-  inventoryColumns: number;
-  inventoryRows: number;
   touchControls: boolean;
 }
 
@@ -95,8 +70,6 @@ export interface UiVisibility {
   prompt: boolean;
   toast: boolean;
   note: boolean;
-  inventory: boolean;
-  examine: boolean;
 }
 
 export class Ui {
@@ -104,8 +77,6 @@ export class Ui {
   private readonly lang: () => Language;
   private options: UiOptions = {
     showSubtitles: true,
-    inventoryColumns: 4,
-    inventoryRows: 2,
     touchControls: false,
   };
 
@@ -118,17 +89,6 @@ export class Ui {
   private noteFull = '';
   private noteRevealed = 0;
 
-  private inventoryVisible = false;
-  private inventorySlots: ReadonlyArray<string | null> = [];
-  private inventorySelected = 0;
-  private inventoryName = '';
-  private inventoryDesc = '';
-  private inventoryHint = '';
-
-  private examineVisible = false;
-  private examineName = '';
-  private examineDesc = '';
-  private examineHint = '';
 
   private endingVisible = false;
   private endingTitle = '';
@@ -141,7 +101,7 @@ export class Ui {
   private damageFlash = 0;
 
   private posterHave = 0;
-  private posterTotal = 8;
+  private posterTotal = 12;
   private posterVisible = false;
 
   constructor(ui: UiCanvas, lang: () => Language) {
@@ -164,8 +124,6 @@ export class Ui {
       prompt: this.promptText !== '',
       toast: this.toastText !== '',
       note: this.noteVisible,
-      inventory: this.inventoryVisible,
-      examine: this.examineVisible,
     };
   }
 
@@ -227,8 +185,6 @@ export class Ui {
     this.toastText = '';
     this.toastRemaining = 0;
     this.noteVisible = false;
-    this.inventoryVisible = false;
-    this.examineVisible = false;
     this.endingVisible = false;
   }
 
@@ -249,36 +205,6 @@ export class Ui {
 
   hideNote(): void {
     this.noteVisible = false;
-  }
-
-  showInventory(
-    slots: ReadonlyArray<string | null>,
-    selected: number,
-    name: string,
-    desc: string,
-    hint: string,
-  ): void {
-    this.inventorySlots = slots;
-    this.inventorySelected = selected;
-    this.inventoryName = name;
-    this.inventoryDesc = desc;
-    this.inventoryHint = hint;
-    this.inventoryVisible = true;
-  }
-
-  hideInventory(): void {
-    this.inventoryVisible = false;
-  }
-
-  showExamine(name: string, desc: string, hint: string): void {
-    this.examineName = name;
-    this.examineDesc = desc;
-    this.examineHint = hint;
-    this.examineVisible = true;
-  }
-
-  hideExamine(): void {
-    this.examineVisible = false;
   }
 
   showEnding(title: string, text: string, hint: string): void {
@@ -304,13 +230,6 @@ export class Ui {
     if (this.noteVisible) {
       this.drawNote();
       return;
-    }
-    if (this.inventoryVisible) {
-      this.drawInventory();
-      return;
-    }
-    if (this.examineVisible) {
-      this.drawExamine();
     }
     if (this.heartsVisible) {
       this.drawHearts();
@@ -457,160 +376,6 @@ export class Ui {
       Math.min(ui.height - 12, sheetY + sheetHeight + NOTE_HINT_GAP),
       { color: PALETTE.textDark },
     );
-  }
-
-  private drawInventory(): void {
-    const ui = this.ui;
-    const texts = TEXTS[this.lang()];
-    const portrait = this.portrait;
-    const lineHeight = ui.font.lineHeight(LINE_SCALE);
-    const columns = Math.max(1, Math.round(this.options.inventoryColumns));
-    const rows = Math.max(1, Math.round(this.options.inventoryRows));
-    const titleY = portrait ? 56 : INVENTORY_TITLE_Y;
-    const ruleY = portrait ? 84 : INVENTORY_RULE_Y;
-    const panelY = portrait ? 92 : INVENTORY_PANEL_Y;
-    const gridY = portrait ? 104 : INVENTORY_GRID_Y;
-    const slotMaxWidth = portrait ? ui.width - 64 : SLOT_MAX_WIDTH;
-    const slotMaxHeight = portrait
-      ? Math.max(48, Math.floor((ui.height - 300) / rows))
-      : SLOT_MAX_HEIGHT;
-    const slotWidth = Math.max(
-      24,
-      Math.min(SLOT_WIDTH, Math.floor((slotMaxWidth - (columns - 1) * SLOT_GAP) / columns)),
-    );
-    const slotHeight = Math.max(
-      24,
-      Math.min(SLOT_HEIGHT, Math.floor((slotMaxHeight - (rows - 1) * SLOT_GAP) / rows)),
-    );
-    const gridWidth = columns * slotWidth + (columns - 1) * SLOT_GAP;
-    const gridHeight = rows * slotHeight + (rows - 1) * SLOT_GAP;
-    const gridX = Math.round((ui.width - gridWidth) / 2);
-    const panelX = gridX - INVENTORY_PANEL_PAD;
-    const panelWidth = gridWidth + INVENTORY_PANEL_PAD * 2;
-    const panelHeight = gridHeight + INVENTORY_PANEL_PAD * 2;
-    const nameY = panelY + panelHeight + INVENTORY_SECTION_GAP;
-    const descY = nameY + TITLE_SCALE * lineHeight + INVENTORY_DESC_GAP;
-    const descLineHeight = lineHeight + DESC_LINE_SPACING;
-    const infoWidth = portrait ? ui.width - 32 : INVENTORY_INFO_WIDTH;
-    const descLines = this.splitLines(this.inventoryDesc, infoWidth);
-    const hintY = descY + Math.max(INVENTORY_HINT_GAP, descLines.length * descLineHeight + 12);
-    const shift = Math.max(0, hintY + 12 - (ui.height - 10));
-
-    ui.clear(PALETTE.void, 0.88);
-    ui.textCentered(texts.inventoryTitle, titleY - shift, {
-      scale: TITLE_SCALE,
-      color: PALETTE.text,
-    });
-    ui.rect(
-      Math.round((ui.width - INVENTORY_RULE_WIDTH) / 2),
-      ruleY - shift,
-      INVENTORY_RULE_WIDTH,
-      1,
-      PALETTE.border,
-    );
-    ui.panel(panelX, panelY - shift, panelWidth, panelHeight, { alpha: 0.9 });
-
-    for (let index = 0; index < columns * rows; index += 1) {
-      const column = index % columns;
-      const row = Math.floor(index / columns);
-      this.drawSlot(
-        gridX + column * (slotWidth + SLOT_GAP),
-        gridY + row * (slotHeight + SLOT_GAP) - shift,
-        slotWidth,
-        slotHeight,
-        this.inventorySlots[index] ?? null,
-        index === this.inventorySelected,
-      );
-    }
-
-    const nameLines = this.splitLines(this.inventoryName, infoWidth, TITLE_SCALE);
-    nameLines.forEach((line, index) => {
-      ui.textCenteredIn(
-        line,
-        ui.width / 2,
-        nameY - shift + index * TITLE_SCALE * lineHeight,
-        { scale: TITLE_SCALE, color: PALETTE.textBright },
-      );
-    });
-    descLines.forEach((line, index) => {
-      ui.textCenteredIn(line, ui.width / 2, descY - shift + index * descLineHeight, {
-        color: PALETTE.textDim,
-      });
-    });
-    ui.textCentered(this.inventoryHint, hintY - shift, { color: PALETTE.textDark });
-  }
-
-  private drawSlot(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    label: string | null,
-    selected: boolean,
-  ): void {
-    const ui = this.ui;
-    const lineHeight = ui.font.lineHeight(LINE_SCALE);
-    ui.rect(
-      x,
-      y,
-      width,
-      height,
-      selected ? PALETTE.accentDim : PALETTE.panelLight,
-      selected ? 0.9 : 0.5,
-    );
-    ui.frame(x, y, width, height, selected ? PALETTE.accent : PALETTE.border, selected ? 2 : 1);
-    if (!label) {
-      ui.rect(x + 6, y + Math.floor(height / 2) - 1, width - 12, 1, PALETTE.textDark, 0.4);
-      return;
-    }
-    const lines = this.splitLines(label, width - SLOT_PAD * 2).slice(0, 3);
-    const startY = y + Math.max(2, Math.floor((height - lines.length * lineHeight) / 2));
-    lines.forEach((line, index) => {
-      ui.textCenteredIn(line, x + width / 2, startY + index * lineHeight, {
-        color: selected ? PALETTE.textBright : PALETTE.text,
-      });
-    });
-  }
-
-  private drawExamine(): void {
-    const ui = this.ui;
-    const portrait = this.portrait;
-    const lineHeight = ui.font.lineHeight(LINE_SCALE) + DESC_LINE_SPACING;
-    const titleLineHeight = ui.font.lineHeight(TITLE_SCALE);
-    const panelX = portrait ? 16 : EXAMINE_X;
-    const panelWidth = Math.min(EXAMINE_WIDTH, ui.width - panelX * 2);
-    const minTop = portrait ? ui.height - 260 : EXAMINE_TOP;
-    const maxBottom = portrait ? ui.height - 16 : EXAMINE_BOTTOM;
-    const innerWidth = panelWidth - EXAMINE_PAD * 2;
-    const nameLines = this.splitLines(this.examineName, innerWidth, TITLE_SCALE);
-    const descLines = this.splitLines(this.examineDesc, innerWidth);
-    const nameHeight = nameLines.length * titleLineHeight;
-    const descHeight = descLines.length * lineHeight;
-    const height = Math.min(
-      maxBottom - minTop,
-      EXAMINE_PAD * 2 + nameHeight + EXAMINE_GAP + descHeight + EXAMINE_GAP + lineHeight,
-    );
-    const top = Math.max(minTop, maxBottom - height);
-    const centerX = ui.width / 2;
-    let y = top + EXAMINE_PAD;
-
-    ui.panel(panelX, top, panelWidth, height, {
-      fill: PALETTE.void,
-      border: PALETTE.border,
-      alpha: 0.72,
-    });
-    nameLines.forEach((line, index) => {
-      ui.textCenteredIn(line, centerX, y + index * titleLineHeight, {
-        scale: TITLE_SCALE,
-        color: PALETTE.textBright,
-      });
-    });
-    y += nameHeight + EXAMINE_GAP;
-    descLines.forEach((line, index) => {
-      ui.textCenteredIn(line, centerX, y + index * lineHeight, { color: PALETTE.textDim });
-    });
-    y += descHeight + EXAMINE_GAP;
-    ui.textCentered(this.examineHint, y, { color: PALETTE.textDark });
   }
 
   private drawEnding(): void {

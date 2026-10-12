@@ -8,12 +8,21 @@ export interface HeadAtlas {
   texture: THREE.Texture;
   tile: number;
   remap: (geometry: THREE.BoxGeometry) => void;
+  // Lienzo del atlas (3×2 baldosas de `tile` px) para hornear la cabeza
+  // esculpida, y proporción ancho/alto original de cada bloque del despiece.
+  canvas: HTMLCanvasElement;
+  aspect: Record<HeadFace, number>;
+}
+
+export function atlasTileOrigin(face: HeadFace, tile: number): [number, number] {
+  const index = TILE_ORDER.indexOf(face);
+  return [(index % ATLAS_COLUMNS) * tile, Math.floor(index / ATLAS_COLUMNS) * tile];
 }
 
 const ATLAS_COLUMNS = 3;
 const ATLAS_ROWS = 2;
-const TILE = 64;
-const FALLBACK_TILE = 32;
+const TILE = 256;
+const FALLBACK_TILE = 64;
 
 const TILE_ORDER: HeadFace[] = ['top', 'front', 'back', 'left', 'right', 'bottom'];
 
@@ -550,8 +559,8 @@ function buildAtlas(
   });
 
   const texture = new THREE.CanvasTexture(canvas);
-  texture.magFilter = THREE.NearestFilter;
-  texture.minFilter = THREE.NearestFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearFilter;
   texture.generateMipmaps = false;
   texture.wrapS = THREE.ClampToEdgeWrapping;
   texture.wrapT = THREE.ClampToEdgeWrapping;
@@ -568,7 +577,7 @@ function buildAtlas(
     ]);
   });
 
-  return { texture, tile, remap: (geometry) => remapBoxUvs(geometry, tiles) };
+  return { texture, tile, remap: (geometry) => remapBoxUvs(geometry, tiles), canvas, aspect: regionAspect(regions, width, height) };
 }
 
 function remapBoxUvs(
@@ -660,8 +669,8 @@ function buildFallbackAtlas(): HeadAtlas {
   }
 
   const texture = new THREE.CanvasTexture(canvas);
-  texture.magFilter = THREE.NearestFilter;
-  texture.minFilter = THREE.NearestFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearFilter;
   texture.generateMipmaps = false;
   texture.wrapS = THREE.ClampToEdgeWrapping;
   texture.wrapT = THREE.ClampToEdgeWrapping;
@@ -678,5 +687,22 @@ function buildFallbackAtlas(): HeadAtlas {
     ]);
   });
 
-  return { texture, tile, remap: (geometry) => remapBoxUvs(geometry, tiles) };
+  return { texture, tile, remap: (geometry) => remapBoxUvs(geometry, tiles), canvas, aspect: unitAspect() };
+}
+
+function regionAspect(
+  regions: Record<HeadFace, [number, number, number, number]>,
+  width: number,
+  height: number,
+): Record<HeadFace, number> {
+  const out = {} as Record<HeadFace, number>;
+  for (const face of TILE_ORDER) {
+    const [x0, y0, x1, y1] = regions[face];
+    out[face] = Math.max(0.2, ((x1 - x0) * width) / Math.max(1, (y1 - y0) * height));
+  }
+  return out;
+}
+
+function unitAspect(): Record<HeadFace, number> {
+  return { top: 1, front: 1, back: 1, left: 1, right: 1, bottom: 1 };
 }

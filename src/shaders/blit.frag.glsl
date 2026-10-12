@@ -63,7 +63,26 @@ void main() {
   vec3 color = sampleSource(v_uv);
 
   if (u_mode < 0.5) {
-    color *= 1.0 - 0.075 * amount * scanWave(pixel.y, 2.0);
+    // Look PS2: halo suave en las luces, aberración cromática leve en los
+    // bordes, grano de película animado (más fuerte en las sombras) y viñeta.
+    vec2 radial = v_uv - 0.5;
+    vec2 ca = radial * dot(radial, radial) * 2.2 * amount * u_texel.x * 6.0;
+    color = vec3(sampleSource(v_uv + ca).r, color.g, sampleSource(v_uv - ca).b);
+    vec3 glow = vec3(0.0);
+    for (int i = 0; i < 8; i++) {
+      float a = float(i) * 0.7853982;
+      vec2 o = vec2(cos(a), sin(a)) * u_texel * 3.0;
+      vec3 s = texture2D(u_source, v_uv + o).rgb;
+      glow += max(s - 0.6, 0.0);
+      s = texture2D(u_source, v_uv + o * 2.2).rgb;
+      glow += max(s - 0.6, 0.0) * 0.6;
+    }
+    color += glow * (0.09 * amount);
+    float luma = dot(color, vec3(0.299, 0.587, 0.114));
+    float grain = noise21(pixel + vec2(floor(t * 24.0) * 17.0, floor(t * 24.0) * 29.0)) - 0.5;
+    color += grain * (0.035 + 0.06 * (1.0 - luma)) * amount;
+    color *= 1.0 - 0.03 * amount * scanWave(pixel.y, 2.0);
+    color *= vignetteAmount(v_uv, 0.55 * amount);
   } else if (u_mode < 1.5) {
     vec2 uv = v_uv;
 

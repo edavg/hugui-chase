@@ -31,3 +31,8 @@ El modelo del stalker viene en FBX (el original es `MonsterPSX.fbx`); el repo gu
 ## Trabajo original
 
 - *Mondyi* — diseño, código y contenido original del proyecto.
+
+
+## Texturas PS2 (M12)
+
+`public/assets/textures/ps2/` — generadas proceduralmente con `tools/gen_textures.py` para este proyecto (sin assets de terceros).

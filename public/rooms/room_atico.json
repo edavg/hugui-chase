@@ -1,0 +1,519 @@
+{
+  "id": "room_atico",
+  "name": "Ático",
+  "size": [
+    11,
+    2.4,
+    6
+  ],
+  "texture_scale": 2,
+  "wall_thickness": 0.15,
+  "textures": {
+    "wall": "ps2/boards.png",
+    "floor": "ps2/floor_pine.png",
+    "ceiling": "ps2/boards.png",
+    "door": "ps2/door_wood.png",
+    "wood": "ps2/wood_dark.png",
+    "light": "ps2/wood_light.png",
+    "cloth": "ps2/plaster_white.png",
+    "metal": "ps2/metal_rust.png",
+    "window": "ps2/window_night.png",
+    "stain": "Stains/Horror_Stain_11-128x128.png",
+    "painting": "ps2/painting.png",
+    "painting_b": "ps2/painting_b.png"
+  },
+  "audio": {
+    "reverb": "small",
+    "floor_material": "wood",
+    "ambience": "house"
+  },
+  "door_fit": true,
+  "trim": false,
+  "atmosphere": {
+    "ambient": 0.07,
+    "ambient_color": [
+      0.75,
+      0.75,
+      0.85
+    ],
+    "direct": 0.15,
+    "fog_start": 2,
+    "fog_end": 13
+  },
+  "lights": [
+    {
+      "position": [
+        2.4,
+        1.85,
+        -1.4
+      ],
+      "color": [
+        1,
+        0.82,
+        0.58
+      ],
+      "range": 5.5,
+      "intensity": 0.9,
+      "flicker": 0.25,
+      "fixture": "bulb"
+    },
+    {
+      "position": [
+        -3,
+        1.85,
+        0.6
+      ],
+      "color": [
+        1,
+        0.82,
+        0.58
+      ],
+      "range": 4.5,
+      "intensity": 0.6,
+      "broken": true,
+      "fixture": "bulb"
+    }
+  ],
+  "walls": [
+    {
+      "start": [
+        -5.5,
+        -3
+      ],
+      "end": [
+        5.5,
+        -3
+      ]
+    },
+    {
+      "start": [
+        5.5,
+        -3
+      ],
+      "end": [
+        5.5,
+        3
+      ],
+      "openings": [
+        {
+          "kind": "window",
+          "offset": 2.5,
+          "width": 1,
+          "height": 1,
+          "sill": 0.9
+        }
+      ]
+    },
+    {
+      "start": [
+        5.5,
+        3
+      ],
+      "end": [
+        -5.5,
+        3
+      ]
+    },
+    {
+      "start": [
+        -5.5,
+        3
+      ],
+      "end": [
+        -5.5,
+        -3
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 2.4,
+          "width": 1.2,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_pasillo_alto",
+          "spawn": "from_atico",
+          "action": "down"
+        }
+      ]
+    }
+  ],
+  "props": [
+    {
+      "kind": "box",
+      "position": [
+        -4.5,
+        2.28,
+        0
+      ],
+      "size": [
+        0.2,
+        0.22,
+        5.85
+      ],
+      "texture": "wood",
+      "tint": 0.6,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3,
+        2.28,
+        0
+      ],
+      "size": [
+        0.2,
+        0.22,
+        5.85
+      ],
+      "texture": "wood",
+      "tint": 0.6,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.5,
+        2.28,
+        0
+      ],
+      "size": [
+        0.2,
+        0.22,
+        5.85
+      ],
+      "texture": "wood",
+      "tint": 0.6,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        2.28,
+        0
+      ],
+      "size": [
+        0.2,
+        0.22,
+        5.85
+      ],
+      "texture": "wood",
+      "tint": 0.6,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.5,
+        2.28,
+        0
+      ],
+      "size": [
+        0.2,
+        0.22,
+        5.85
+      ],
+      "texture": "wood",
+      "tint": 0.6,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        3,
+        2.28,
+        0
+      ],
+      "size": [
+        0.2,
+        0.22,
+        5.85
+      ],
+      "texture": "wood",
+      "tint": 0.6,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        4.5,
+        2.28,
+        0
+      ],
+      "size": [
+        0.2,
+        0.22,
+        5.85
+      ],
+      "texture": "wood",
+      "tint": 0.6,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        2.16,
+        0
+      ],
+      "size": [
+        10.85,
+        0.18,
+        0.22
+      ],
+      "texture": "wood",
+      "tint": 0.55,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        2.4,
+        0.4,
+        -1.9
+      ],
+      "size": [
+        2,
+        0.8,
+        0.9
+      ],
+      "texture": "light",
+      "tint": 0.75,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        2,
+        0.92,
+        -1.9
+      ],
+      "size": [
+        0.6,
+        0.24,
+        0.85
+      ],
+      "texture": "cloth",
+      "tint": 0.85,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        2.8,
+        0.88,
+        -1.8
+      ],
+      "size": [
+        0.5,
+        0.16,
+        0.7
+      ],
+      "texture": "cloth",
+      "tint": 0.8,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2,
+        0.35,
+        -2.4
+      ],
+      "size": [
+        1.1,
+        0.7,
+        0.65
+      ],
+      "texture": "wood",
+      "tint": 0.75,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -0.6,
+        0.3,
+        -2.45
+      ],
+      "size": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "texture": "light",
+      "tint": 0.7,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -0.6,
+        0.78,
+        -2.45
+      ],
+      "size": [
+        0.45,
+        0.36,
+        0.45
+      ],
+      "texture": "light",
+      "tint": 0.65,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        4.6,
+        0.4,
+        2.2
+      ],
+      "size": [
+        0.8,
+        0.8,
+        0.8
+      ],
+      "texture": "light",
+      "tint": 0.7,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.7,
+        0.3,
+        2.4
+      ],
+      "size": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "texture": "light",
+      "tint": 0.65,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.6,
+        0.85,
+        2
+      ],
+      "size": [
+        0.55,
+        1.7,
+        0.55
+      ],
+      "texture": "cloth",
+      "tint": 0.8,
+      "collide": true,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.6,
+        1.82,
+        2
+      ],
+      "size": [
+        0.32,
+        0.3,
+        0.32
+      ],
+      "texture": "cloth",
+      "tint": 0.8,
+      "collide": false,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.4,
+        0.82,
+        1.9
+      ],
+      "size": [
+        0.5,
+        1.65,
+        0.5
+      ],
+      "texture": "cloth",
+      "tint": 0.75,
+      "collide": true,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.4,
+        1.76,
+        1.9
+      ],
+      "size": [
+        0.3,
+        0.28,
+        0.3
+      ],
+      "texture": "cloth",
+      "tint": 0.75,
+      "collide": false,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.3,
+        0.005,
+        1
+      ],
+      "size": [
+        1.8,
+        0.01,
+        1.4
+      ],
+      "texture": "stain",
+      "tint": 0.4,
+      "collide": false,
+      "decal": true
+    }
+  ],
+  "items": [
+    {
+      "id": "poster_12",
+      "position": [
+        3,
+        1.45,
+        -2.905
+      ],
+      "yaw": 0
+    },
+    {
+      "id": "chipa_6",
+      "position": [
+        2.9,
+        0.81,
+        -2.05
+      ],
+      "yaw": 0
+    }
+  ],
+  "spawns": {
+    "from_pasillo_alto": {
+      "position": [
+        -4.25,
+        0
+      ],
+      "yaw": 270
+    },
+    "start": {
+      "position": [
+        -4,
+        0
+      ],
+      "yaw": 270
+    }
+  }
+}

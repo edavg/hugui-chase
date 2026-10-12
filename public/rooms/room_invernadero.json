@@ -1,0 +1,419 @@
+{
+  "id": "room_invernadero",
+  "name": "Invernadero",
+  "size": [
+    7,
+    3,
+    6
+  ],
+  "texture_scale": 2,
+  "wall_thickness": 0.15,
+  "textures": {
+    "wall": "ps2/window_bars.png",
+    "floor": "ps2/tile_terracotta.png",
+    "ceiling": "ps2/window_night.png",
+    "door": "ps2/door_white.png",
+    "wood": "ps2/wood_light.png",
+    "pot": "ps2/tile_terracotta.png",
+    "hedge": "ps2/hedge.png",
+    "metal": "ps2/metal_rust.png",
+    "stain": "Stains/Horror_Stain_10-128x128.png",
+    "painting": "ps2/painting.png",
+    "painting_b": "ps2/painting_b.png"
+  },
+  "audio": {
+    "reverb": "small",
+    "floor_material": "tile",
+    "ambience": "outdoor"
+  },
+  "door_fit": true,
+  "trim": false,
+  "atmosphere": {
+    "ambient": 0.2,
+    "ambient_color": [
+      0.55,
+      0.65,
+      0.85
+    ],
+    "direct": 0.9,
+    "fog_start": 2,
+    "fog_end": 14,
+    "fog_color": [
+      0.07,
+      0.08,
+      0.1
+    ]
+  },
+  "lights": [
+    {
+      "position": [
+        0,
+        2.6,
+        0
+      ],
+      "color": [
+        0.9,
+        1,
+        0.85
+      ],
+      "range": 5,
+      "intensity": 0.5,
+      "broken": true,
+      "fixture": "bulb"
+    }
+  ],
+  "walls": [
+    {
+      "start": [
+        -3.5,
+        -3
+      ],
+      "end": [
+        3.5,
+        -3
+      ]
+    },
+    {
+      "start": [
+        3.5,
+        -3
+      ],
+      "end": [
+        3.5,
+        3
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 2.45,
+          "width": 1.1,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_jardin",
+          "spawn": "from_invernadero"
+        }
+      ]
+    },
+    {
+      "start": [
+        3.5,
+        3
+      ],
+      "end": [
+        -3.5,
+        3
+      ]
+    },
+    {
+      "start": [
+        -3.5,
+        3
+      ],
+      "end": [
+        -3.5,
+        -3
+      ]
+    }
+  ],
+  "props": [
+    {
+      "kind": "box",
+      "position": [
+        -2.4,
+        0.45,
+        -1.6
+      ],
+      "size": [
+        1.6,
+        0.9,
+        0.8
+      ],
+      "texture": "wood",
+      "tint": 0.7,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.4,
+        0.45,
+        1.6
+      ],
+      "size": [
+        1.6,
+        0.9,
+        0.8
+      ],
+      "texture": "wood",
+      "tint": 0.7,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.4,
+        0.45,
+        -2.4
+      ],
+      "size": [
+        2.4,
+        0.9,
+        0.7
+      ],
+      "texture": "wood",
+      "tint": 0.7,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.9,
+        1.05,
+        -1.5
+      ],
+      "size": [
+        0.32,
+        0.3,
+        0.32
+      ],
+      "texture": "pot",
+      "tint": 0.9,
+      "collide": false,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.9,
+        1.35,
+        -1.5
+      ],
+      "size": [
+        0.4,
+        0.35,
+        0.4
+      ],
+      "texture": "hedge",
+      "tint": 0.5,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.9,
+        1.05,
+        1.7
+      ],
+      "size": [
+        0.32,
+        0.3,
+        0.32
+      ],
+      "texture": "pot",
+      "tint": 0.9,
+      "collide": false,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.9,
+        1.4,
+        1.7
+      ],
+      "size": [
+        0.45,
+        0.45,
+        0.45
+      ],
+      "texture": "hedge",
+      "tint": 0.5,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.8,
+        1.05,
+        1.4
+      ],
+      "size": [
+        0.26,
+        0.26,
+        0.26
+      ],
+      "texture": "pot",
+      "tint": 0.85,
+      "collide": false,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        1.05,
+        -2.4
+      ],
+      "size": [
+        0.32,
+        0.3,
+        0.32
+      ],
+      "texture": "pot",
+      "tint": 0.9,
+      "collide": false,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        1,
+        1.05,
+        -2.35
+      ],
+      "size": [
+        0.32,
+        0.3,
+        0.32
+      ],
+      "texture": "pot",
+      "tint": 0.85,
+      "collide": false,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        1,
+        1.45,
+        -2.35
+      ],
+      "size": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "texture": "hedge",
+      "tint": 0.45,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        2.6,
+        0.45,
+        2.2
+      ],
+      "size": [
+        0.9,
+        0.9,
+        0.9
+      ],
+      "texture": "pot",
+      "tint": 0.8,
+      "collide": true,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        2.6,
+        1.35,
+        2.2
+      ],
+      "size": [
+        1.1,
+        1,
+        1.1
+      ],
+      "texture": "hedge",
+      "tint": 0.55,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.2,
+        0.006,
+        0.4
+      ],
+      "size": [
+        2,
+        0.01,
+        1.8
+      ],
+      "texture": "stain",
+      "tint": 0.4,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        2.92,
+        0
+      ],
+      "size": [
+        6.9,
+        0.08,
+        0.1
+      ],
+      "texture": "metal",
+      "tint": 0.5,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        2.92,
+        0
+      ],
+      "size": [
+        0.1,
+        0.08,
+        5.9
+      ],
+      "texture": "metal",
+      "tint": 0.5,
+      "collide": false
+    }
+  ],
+  "items": [
+    {
+      "id": "key_attic",
+      "position": [
+        -2.4,
+        0.93,
+        -1.6
+      ],
+      "yaw": 20
+    },
+    {
+      "id": "chipa_5",
+      "position": [
+        0.6,
+        0.91,
+        -2.35
+      ],
+      "yaw": 0
+    }
+  ],
+  "spawns": {
+    "from_jardin": {
+      "position": [
+        2.25,
+        0
+      ],
+      "yaw": 90
+    },
+    "start": {
+      "position": [
+        2,
+        0
+      ],
+      "yaw": 90
+    }
+  }
+}

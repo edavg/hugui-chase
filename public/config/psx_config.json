@@ -1,15 +1,15 @@
 {
   "title": "Mondyi",
   "resolution": [
-    640,
-    480
+    800,
+    600
   ],
   "fps": 30,
   "fov": 75,
   "fov_portrait": 95,
   "near": 0.1,
-  "far": 30,
-  "color_bits": 5,
+  "far": 32,
+  "color_bits": 8,
   "alpha_test": 0.5,
   "clear_color": [
     0.02,
@@ -17,8 +17,8 @@
     0.03
   ],
   "effects": {
-    "vertex_snap": true,
-    "affine_mapping": true,
+    "vertex_snap": false,
+    "affine_mapping": false,
     "affine_near": 1.5,
     "affine_far": 5.0,
     "dither": true,
@@ -27,14 +27,14 @@
       "start": 4.0,
       "end": 25.0,
       "color": [
-        0.02,
-        0.02,
-        0.03
+        0.03,
+        0.03,
+        0.04
       ]
     },
     "image_mode": "psx",
-    "post_intensity": 0.6,
-    "integer_scaling": true,
+    "post_intensity": 0.7,
+    "integer_scaling": false,
     "brightness": 1.0,
     "gamma": 1.0
   },
@@ -89,7 +89,10 @@
       "room_pasillo_alto",
       "room_dormitorio",
       "room_invitados",
-      "room_bodega"
+      "room_bodega",
+      "room_biblioteca",
+      "room_jardin",
+      "room_garaje"
     ],
     "forbidden_rooms": [
       "room_vestibulo"
@@ -108,17 +111,21 @@
     "angle_deg": 30.0,
     "softness": 0.55,
     "intensity": 1.6,
-    "color": [1.0, 0.93, 0.75],
+    "color": [
+      1.0,
+      0.93,
+      0.75
+    ],
     "flicker": 0.06
   },
   "budgets": {
-    "scene_tris": 4000,
-    "texture_mb": 3,
+    "scene_tris": 60000,
+    "texture_mb": 24,
     "audio_voices": 24
   },
   "audio": {
     "enabled": true,
-    "sample_rate": 22050,
+    "sample_rate": 44100,
     "master": 0.8,
     "ambience": 0.65,
     "sfx": 0.9,

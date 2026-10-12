@@ -9,14 +9,16 @@
   "texture_scale": 2,
   "wall_thickness": 0.15,
   "textures": {
-    "wall": "Brick/Horror_Brick_11-128x128.png",
-    "floor": "Floor/Horror_Floor_14-128x128.png",
-    "ceiling": "Misc/Horror_Misc_05-128x128.png",
-    "door": "Custom/WoodenDoor3diffuse.png",
-    "stone": "Stone/Horror_Stone_07-128x128.png",
-    "metal": "Metal/Horror_Metal_02-128x128.png",
-    "wood": "Floor/Horror_Floor_03-128x128.png",
-    "stain": "Stains/Horror_Stain_13-128x128.png"
+    "wall": "ps2/brick_red.png",
+    "floor": "ps2/concrete.png",
+    "ceiling": "ps2/ceiling_dark.png",
+    "door": "ps2/metal_rust.png",
+    "stone": "ps2/concrete.png",
+    "metal": "ps2/metal_clean.png",
+    "wood": "ps2/wood_dark.png",
+    "stain": "Stains/Horror_Stain_13-128x128.png",
+    "painting": "ps2/painting.png",
+    "painting_b": "ps2/painting_b.png"
   },
   "audio": {
     "reverb": "cave",
@@ -24,12 +26,31 @@
     "ambience": "basement"
   },
   "door_fit": true,
+  "trim": false,
   "atmosphere": {
     "fog_start": 2.5,
     "fog_end": 12,
     "ambient": 0.04,
     "direct": 0.05
   },
+  "lights": [
+    {
+      "position": [
+        -0.5,
+        2.2,
+        0.4
+      ],
+      "color": [
+        0.9,
+        0.9,
+        1
+      ],
+      "range": 4.5,
+      "intensity": 0.55,
+      "broken": true,
+      "fixture": "bulb"
+    }
+  ],
   "walls": [
     {
       "start": [
@@ -205,9 +226,9 @@
     {
       "kind": "box",
       "position": [
-        0.9,
+        2.4,
         0.175,
-        -2
+        -2.2
       ],
       "size": [
         0.6,

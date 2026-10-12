@@ -3,11 +3,10 @@ import { TEXTS, type Language } from './i18n';
 
 export interface TouchControlsOptions {
   getLanguage: () => Language;
-  // true cuando la interfaz espera navegación (menús, inventario, examen…):
+  // true cuando la interfaz espera navegación (menús, lectura…):
   // el joystick emite flechas en vez de mover al jugador.
   isNavMode: () => boolean;
-  // true solo con pantalla de menú abierta, donde cancelar es ESC; en el
-  // inventario/lectura/examen cerrar es I.
+  // true solo con pantalla de menú abierta (cancelar es ESC).
   isMenuActive: () => boolean;
   // El botón LUZ solo se muestra cuando el jugador tiene la linterna.
   isFlashlightOwned: () => boolean;
@@ -103,12 +102,6 @@ const STYLE = `
   width: 60px;
   height: 60px;
 }
-.touch-btn-bag {
-  right: calc(34px + env(safe-area-inset-right));
-  bottom: calc(124px + env(safe-area-inset-bottom));
-  width: 58px;
-  height: 58px;
-}
 .touch-btn-light {
   right: calc(126px + env(safe-area-inset-right));
   bottom: calc(132px + env(safe-area-inset-bottom));
@@ -131,11 +124,7 @@ const STYLE = `
     right: calc(118px + env(safe-area-inset-right));
     bottom: calc(36px + env(safe-area-inset-bottom));
   }
-  .touch-btn-bag {
-    right: calc(24px + env(safe-area-inset-right));
-    bottom: calc(120px + env(safe-area-inset-bottom));
-  }
-  .touch-btn-light {
+    .touch-btn-light {
     right: calc(92px + env(safe-area-inset-right));
     bottom: calc(120px + env(safe-area-inset-bottom));
   }
@@ -183,7 +172,6 @@ export class TouchControls {
 
     this.createButton('use', 'touch-btn touch-btn-use', () => this.onUse());
     this.createButton('run', 'touch-btn touch-btn-run', null, (down) => this.onRun(down));
-    this.createButton('bag', 'touch-btn touch-btn-bag', () => this.onBag());
     this.createButton('light', 'touch-btn touch-btn-light', () => this.onLight());
     this.createButton('pause', 'touch-btn touch-btn-pause', () => this.onPause());
 
@@ -237,7 +225,6 @@ export class TouchControls {
     const texts = TEXTS[this.options.getLanguage()];
     this.setButtonLabel('use', texts.touchUse);
     this.setButtonLabel('run', texts.touchRun);
-    this.setButtonLabel('bag', texts.touchBag);
     this.setButtonLabel('light', texts.touchLight);
     this.setButtonLabel('pause', texts.touchPause);
   }
@@ -408,14 +395,6 @@ export class TouchControls {
       return;
     }
     this.input.setVirtualKey('ShiftLeft', true);
-  }
-
-  private onBag(): void {
-    if (this.options.isMenuActive()) {
-      this.input.virtualPress('Escape');
-      return;
-    }
-    this.input.virtualPress('KeyI');
   }
 
   private onLight(): void {

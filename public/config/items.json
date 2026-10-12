@@ -65,12 +65,44 @@
       "desc_en": "A campaign poster stuck to the wall. It must be burned."
     },
     {
+      "id": "poster_9",
+      "kind": "poster",
+      "name_es": "Afiche — Hugui Farías",
+      "name_en": "Poster — Hugui Farías",
+      "desc_es": "Un afiche de campaña pegado a la pared. Hay que quemarlo.",
+      "desc_en": "A campaign poster stuck to the wall. It must be burned."
+    },
+    {
+      "id": "poster_10",
+      "kind": "poster",
+      "name_es": "Afiche — Hugui Farías",
+      "name_en": "Poster — Hugui Farías",
+      "desc_es": "Un afiche de campaña pegado a la pared. Hay que quemarlo.",
+      "desc_en": "A campaign poster stuck to the wall. It must be burned."
+    },
+    {
+      "id": "poster_11",
+      "kind": "poster",
+      "name_es": "Afiche — Hugui Farías",
+      "name_en": "Poster — Hugui Farías",
+      "desc_es": "Un afiche de campaña pegado a la pared. Hay que quemarlo.",
+      "desc_en": "A campaign poster stuck to the wall. It must be burned."
+    },
+    {
+      "id": "poster_12",
+      "kind": "poster",
+      "name_es": "Afiche — Hugui Farías",
+      "name_en": "Poster — Hugui Farías",
+      "desc_es": "Un afiche de campaña pegado a la pared. Hay que quemarlo.",
+      "desc_en": "A campaign poster stuck to the wall. It must be burned."
+    },
+    {
       "id": "key_kids",
       "kind": "key",
-      "name_es": "Llave pequeña",
-      "name_en": "Small key",
-      "desc_es": "Una llave diminuta con una cinta azul; abre el cuarto de Tomás. Estaba en la cocina.",
-      "desc_en": "A tiny key on a blue ribbon; it opens Tomás's room. It was in the kitchen."
+      "name_es": "Llave del cuarto infantil",
+      "name_en": "Child's room key",
+      "desc_es": "Una llave diminuta con una cinta azul. Abre el candado del cuarto infantil, arriba.",
+      "desc_en": "A tiny key on a blue ribbon. It opens the padlock on the child's room upstairs."
     },
     {
       "id": "key_basement",
@@ -79,6 +111,62 @@
       "name_en": "Basement key",
       "desc_es": "La llave que Elena escondió en el dormitorio. Sigue fría, como si viniera del sótano.",
       "desc_en": "The key Elena hid in the bedroom. It is still cold, as if it came from the basement."
+    },
+    {
+      "id": "key_attic",
+      "kind": "key",
+      "name_es": "Llave del ático",
+      "name_en": "Attic key",
+      "desc_es": "Una llave de hierro con una etiqueta de cartón: «ÁTICO — CAMPAÑA». Estaba entre las macetas del invernadero.",
+      "desc_en": "An iron key with a cardboard tag: “ATTIC — CAMPAIGN”. It was among the flowerpots in the greenhouse."
+    },
+    {
+      "id": "chipa_1",
+      "kind": "food",
+      "name_es": "Chipa",
+      "name_en": "Chipa",
+      "desc_es": "Una chipa todavía tibia. Comerla devuelve un corazón.",
+      "desc_en": "A still-warm chipa. Eating it restores a heart."
+    },
+    {
+      "id": "chipa_2",
+      "kind": "food",
+      "name_es": "Chipa",
+      "name_en": "Chipa",
+      "desc_es": "Una chipa todavía tibia. Comerla devuelve un corazón.",
+      "desc_en": "A still-warm chipa. Eating it restores a heart."
+    },
+    {
+      "id": "chipa_3",
+      "kind": "food",
+      "name_es": "Chipa",
+      "name_en": "Chipa",
+      "desc_es": "Una chipa todavía tibia. Comerla devuelve un corazón.",
+      "desc_en": "A still-warm chipa. Eating it restores a heart."
+    },
+    {
+      "id": "chipa_4",
+      "kind": "food",
+      "name_es": "Chipa",
+      "name_en": "Chipa",
+      "desc_es": "Una chipa todavía tibia. Comerla devuelve un corazón.",
+      "desc_en": "A still-warm chipa. Eating it restores a heart."
+    },
+    {
+      "id": "chipa_5",
+      "kind": "food",
+      "name_es": "Chipa",
+      "name_en": "Chipa",
+      "desc_es": "Una chipa todavía tibia. Comerla devuelve un corazón.",
+      "desc_en": "A still-warm chipa. Eating it restores a heart."
+    },
+    {
+      "id": "chipa_6",
+      "kind": "food",
+      "name_es": "Chipa",
+      "name_en": "Chipa",
+      "desc_es": "Una chipa todavía tibia. Comerla devuelve un corazón.",
+      "desc_en": "A still-warm chipa. Eating it restores a heart."
     }
   ]
 }

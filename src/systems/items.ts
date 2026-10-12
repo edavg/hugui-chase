@@ -1,7 +1,7 @@
 import { fetchJson } from './fetchJson';
 import type { Language } from './i18n';
 
-export type ItemKind = 'note' | 'key' | 'tool' | 'poster' | 'lore';
+export type ItemKind = 'note' | 'key' | 'tool' | 'poster' | 'lore' | 'food';
 
 export interface ItemDef {
   id: string;
@@ -25,6 +25,10 @@ export const POSTER_IDS = [
   'poster_6',
   'poster_7',
   'poster_8',
+  'poster_9',
+  'poster_10',
+  'poster_11',
+  'poster_12',
 ] as const;
 
 export type PosterId = (typeof POSTER_IDS)[number];

@@ -4,6 +4,8 @@ import {
   renderMusicLayer,
   renderOneShot,
   renderReverbImpulse,
+  FOOTSTEP_VARIANTS,
+  ONE_SHOT_VARIANTS,
   type OneShotId,
 } from './audioSynth';
 import type { AmbienceType, AudioConfig, FloorMaterial, ReverbType } from './config';
@@ -78,7 +80,7 @@ export class AudioSystem {
   private reverbWetGain: GainNode | null = null;
   private voices: Voice[] = [];
   private footstepBuffers = new Map<string, Promise<AudioBuffer>>();
-  private oneShotBuffers = new Map<OneShotId, Promise<AudioBuffer>>();
+  private oneShotBuffers = new Map<string, Promise<AudioBuffer>>();
   private ambienceBuffers = new Map<string, Promise<AudioBuffer>>();
   private reverbBuffers = new Map<ReverbType, AudioBuffer>();
   private currentAmbience: AmbienceHandle | null = null;
@@ -88,6 +90,8 @@ export class AudioSystem {
   private musicPending = new Set<number>();
   private musicLevel: 0 | 1 | 2 = 0;
   private footsteps = 0;
+  private lastStepVariant = -1;
+  private readonly lastOneShotVariant = new Map<OneShotId, number>();
   private readonly onGesture = (): void => {
     this.unlock();
   };
@@ -162,7 +166,12 @@ export class AudioSystem {
     if (!ctx || !material) {
       return;
     }
-    const variant: 0 | 1 = Math.random() < 0.5 ? 0 : 1;
+    // Nunca el mismo paso dos veces seguidas.
+    let variant = Math.floor(Math.random() * FOOTSTEP_VARIANTS);
+    if (variant === this.lastStepVariant) {
+      variant = (variant + 1) % FOOTSTEP_VARIANTS;
+    }
+    this.lastStepVariant = variant;
     const key = `${material}-${variant}-${running ? 'run' : 'walk'}`;
     let promise = this.footstepBuffers.get(key);
     if (!promise) {
@@ -490,13 +499,21 @@ export class AudioSystem {
     if (!bus) {
       return;
     }
-    let promise = this.oneShotBuffers.get(id);
+    // Varias tomas por efecto: se elige una distinta a la anterior.
+    const variants = ONE_SHOT_VARIANTS[id] ?? 1;
+    let variant = Math.floor(Math.random() * variants);
+    if (variants > 1 && variant === this.lastOneShotVariant.get(id)) {
+      variant = (variant + 1) % variants;
+    }
+    this.lastOneShotVariant.set(id, variant);
+    const key = `${id}#${variant}`;
+    let promise = this.oneShotBuffers.get(key);
     if (!promise) {
       promise = renderOneShot(ctx.sampleRate, id).catch((error) => {
-        this.oneShotBuffers.delete(id);
+        this.oneShotBuffers.delete(key);
         throw error;
       });
-      this.oneShotBuffers.set(id, promise);
+      this.oneShotBuffers.set(key, promise);
     }
     promise
       .then((buffer) => {

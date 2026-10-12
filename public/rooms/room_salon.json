@@ -9,14 +9,23 @@
   "texture_scale": 2,
   "wall_thickness": 0.15,
   "textures": {
-    "wall": "Wall/Horror_Wall_02-128x128.png",
-    "floor": "Floor/Horror_Floor_06-128x128.png",
-    "ceiling": "Misc/Horror_Misc_03-128x128.png",
-    "door": "Custom/WoodenDoor1diffuse.png",
-    "wood": "Floor/Horror_Floor_03-128x128.png",
-    "metal": "Metal/Horror_Metal_10-128x128.png",
+    "wall": "ps2/wp_damask_red.png",
+    "floor": "ps2/floor_walnut.png",
+    "ceiling": "ps2/ceiling.png",
+    "door": "ps2/door_wood.png",
+    "wood": "ps2/wood_dark.png",
+    "metal": "ps2/metal_clean.png",
     "stain": "Stains/Horror_Stain_12-128x128.png",
-    "window": "Custom/TiledWindowdiffuse.png"
+    "window": "ps2/window_night.png",
+    "wainscot": "ps2/wainscot.png",
+    "hearth": "ps2/stone_wall.png",
+    "firebrick": "ps2/brick_dark.png",
+    "embers": "ps2/embers.png",
+    "mantel": "ps2/wood_dark.png",
+    "logs": "ps2/bark.png",
+    "portrait_2": "ps2/portrait_2.png",
+    "painting": "ps2/painting.png",
+    "painting_b": "ps2/painting_b.png"
   },
   "audio": {
     "reverb": "hall",
@@ -24,6 +33,70 @@
     "ambience": "house"
   },
   "door_fit": true,
+  "wainscot": {
+    "texture": "wainscot",
+    "height": 1
+  },
+  "atmosphere": {
+    "ambient": 0.22,
+    "ambient_color": [
+      0.75,
+      0.78,
+      0.92
+    ],
+    "direct": 0.35,
+    "fog_start": 3.5,
+    "fog_end": 22
+  },
+  "lights": [
+    {
+      "position": [
+        -0.8,
+        2.1,
+        0
+      ],
+      "color": [
+        1,
+        0.82,
+        0.58
+      ],
+      "range": 7,
+      "intensity": 0.95,
+      "fixture": "pendant"
+    },
+    {
+      "position": [
+        2.4,
+        2.1,
+        0.4
+      ],
+      "color": [
+        1,
+        0.82,
+        0.58
+      ],
+      "range": 6,
+      "intensity": 0.85,
+      "broken": true,
+      "fixture": "pendant"
+    },
+    {
+      "position": [
+        -2.7,
+        0.45,
+        -2.75
+      ],
+      "color": [
+        1,
+        0.45,
+        0.15
+      ],
+      "range": 4,
+      "intensity": 1.3,
+      "flicker": 0.6,
+      "fixture": "none"
+    }
+  ],
   "walls": [
     {
       "start": [
@@ -35,13 +108,6 @@
         -3.5
       ],
       "openings": [
-        {
-          "kind": "window",
-          "offset": 0.9,
-          "width": 1.6,
-          "height": 1.1,
-          "sill": 0.95
-        },
         {
           "kind": "window",
           "offset": 6,
@@ -69,6 +135,13 @@
           "door": "closed",
           "to": "room_comedor",
           "spawn": "from_salon"
+        },
+        {
+          "kind": "window",
+          "offset": 4.6,
+          "width": 1.4,
+          "height": 1.1,
+          "sill": 0.95
         }
       ]
     },
@@ -80,6 +153,17 @@
       "end": [
         -4.75,
         3.5
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 1.5,
+          "width": 1.2,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_biblioteca",
+          "spawn": "from_salon"
+        }
       ]
     },
     {
@@ -108,50 +192,208 @@
     {
       "kind": "box",
       "position": [
-        -2.7,
-        0.6,
-        -3.05
+        -3.4800000000000004,
+        0.55,
+        -3.155
       ],
       "size": [
-        1.8,
-        1.2,
+        0.34,
+        1.1,
+        0.54
+      ],
+      "texture": "hearth",
+      "tint": 0.85,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.9200000000000002,
+        0.55,
+        -3.155
+      ],
+      "size": [
+        0.34,
+        1.1,
+        0.54
+      ],
+      "texture": "hearth",
+      "tint": 0.85,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.7,
+        0.98,
+        -3.155
+      ],
+      "size": [
+        1.9,
+        0.24,
+        0.54
+      ],
+      "texture": "hearth",
+      "tint": 0.85,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.7,
+        0.43,
+        -3.395
+      ],
+      "size": [
+        1.24,
+        0.86,
+        0.06
+      ],
+      "texture": "firebrick",
+      "tint": 0.35,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.7,
+        0.04,
+        -3.155
+      ],
+      "size": [
+        1.22,
+        0.08,
         0.5
       ],
-      "texture": "wall",
-      "tint": 0.4,
-      "collide": true
+      "texture": "embers",
+      "tint": 0.85,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.7,
+        0.025,
+        -2.645
+      ],
+      "size": [
+        2.1,
+        0.05,
+        0.5
+      ],
+      "texture": "hearth",
+      "tint": 0.8,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.7,
+        1.15,
+        -3.115
+      ],
+      "size": [
+        2.15,
+        0.1,
+        0.64
+      ],
+      "texture": "mantel",
+      "tint": 0.85,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.7,
+        1.9500000000000002,
+        -3.255
+      ],
+      "size": [
+        1.55,
+        1.5000000000000002,
+        0.34
+      ],
+      "texture": "hearth",
+      "tint": 0.75,
+      "collide": false
     },
     {
       "kind": "box",
       "position": [
         -2.7,
         1.85,
-        -3.15
+        -3.07
       ],
       "size": [
-        1,
-        1.3,
-        0.35
+        0.75,
+        0.9,
+        0.02
       ],
-      "texture": "wall",
-      "tint": 0.35,
-      "collide": true
+      "texture": "portrait_2",
+      "tint": 0.95,
+      "collide": false,
+      "fit": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.7800000000000002,
+        0.16,
+        -3.125
+      ],
+      "size": [
+        0.15,
+        0.85,
+        0.15
+      ],
+      "texture": "logs",
+      "tint": 0.55,
+      "collide": false,
+      "shape": "cylinder",
+      "rot": [
+        0,
+        12,
+        90
+      ]
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.6,
+        0.26,
+        -3.185
+      ],
+      "size": [
+        0.13,
+        0.75,
+        0.13
+      ],
+      "texture": "logs",
+      "tint": 0.5,
+      "collide": false,
+      "shape": "cylinder",
+      "rot": [
+        0,
+        -18,
+        90
+      ]
     },
     {
       "kind": "box",
       "position": [
         -2.7,
-        0.05,
-        -2.45
+        0.6,
+        -3.025
       ],
       "size": [
         2,
-        0.1,
-        0.7
+        1.2,
+        0.8
       ],
-      "texture": "wall",
-      "tint": 0.5,
-      "collide": false
+      "texture": "hearth",
+      "tint": 0,
+      "collide": true,
+      "hidden": true
     },
     {
       "kind": "box",
@@ -165,10 +407,11 @@
         0.7,
         0.03
       ],
-      "texture": "door",
-      "tint": 0.45,
+      "texture": "painting",
+      "tint": 0.8,
       "collide": false,
-      "decal": true
+      "decal": true,
+      "fit": true
     },
     {
       "kind": "box",
@@ -182,10 +425,11 @@
         0.7,
         0.03
       ],
-      "texture": "door",
-      "tint": 0.45,
+      "texture": "painting_b",
+      "tint": 0.8,
       "collide": false,
-      "decal": true
+      "decal": true,
+      "fit": true
     }
   ],
   "models": [
@@ -281,6 +525,13 @@
         -0.2
       ],
       "yaw": 90
+    },
+    "from_biblioteca": {
+      "position": [
+        2.65,
+        2.25
+      ],
+      "yaw": 0
     },
     "start": {
       "position": [

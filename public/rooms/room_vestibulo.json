@@ -9,12 +9,19 @@
   "texture_scale": 2,
   "wall_thickness": 0.15,
   "textures": {
-    "wall": "Wall/Horror_Wall_06-128x128.png",
-    "floor": "Floor/Horror_Floor_01-128x128.png",
-    "ceiling": "Misc/Horror_Misc_03-128x128.png",
-    "door": "Custom/WoodenDoor1diffuse.png",
-    "metal": "Metal/Horror_Metal_04-128x128.png",
-    "window": "Custom/TiledWindowdiffuse.png"
+    "wall": "ps2/wp_damask_green.png",
+    "floor": "ps2/floor_oak.png",
+    "ceiling": "ps2/ceiling.png",
+    "door": "ps2/door_wood.png",
+    "metal": "ps2/metal_clean.png",
+    "window": "ps2/window_night.png",
+    "wainscot": "ps2/wainscot.png",
+    "wood": "ps2/wood_dark.png",
+    "portrait_1": "ps2/portrait_1.png",
+    "portrait_2": "ps2/portrait_2.png",
+    "portrait_3": "ps2/portrait_3.png",
+    "painting": "ps2/painting.png",
+    "painting_b": "ps2/painting_b.png"
   },
   "audio": {
     "reverb": "hall",
@@ -22,6 +29,54 @@
     "ambience": "house"
   },
   "door_fit": true,
+  "wainscot": {
+    "texture": "wainscot",
+    "height": 1
+  },
+  "atmosphere": {
+    "ambient": 0.22,
+    "ambient_color": [
+      0.75,
+      0.78,
+      0.92
+    ],
+    "direct": 0.35,
+    "fog_start": 3.5,
+    "fog_end": 22
+  },
+  "lights": [
+    {
+      "position": [
+        0,
+        2.1,
+        -0.4
+      ],
+      "color": [
+        1,
+        0.82,
+        0.58
+      ],
+      "range": 7.5,
+      "intensity": 1.05,
+      "flicker": 0.08,
+      "fixture": "pendant"
+    },
+    {
+      "position": [
+        3.3,
+        1.25,
+        -2.85
+      ],
+      "color": [
+        0.95,
+        0.72,
+        0.48
+      ],
+      "range": 2.6,
+      "intensity": 0.7,
+      "fixture": "none"
+    }
+  ],
   "walls": [
     {
       "start": [
@@ -39,7 +94,6 @@
           "width": 1.2,
           "height": 2.1,
           "door": "closed",
-          "double": true,
           "requires": [
             "poster_1",
             "poster_2",
@@ -48,9 +102,14 @@
             "poster_5",
             "poster_6",
             "poster_7",
-            "poster_8"
+            "poster_8",
+            "poster_9",
+            "poster_10",
+            "poster_11",
+            "poster_12"
           ],
-          "ending": true
+          "ending": true,
+          "double": true
         }
       ]
     },
@@ -102,6 +161,17 @@
       "end": [
         -4,
         -3.25
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 0.45,
+          "width": 1.2,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_garaje",
+          "spawn": "from_vestibulo"
+        }
       ]
     }
   ],
@@ -135,10 +205,115 @@
         0.6,
         0.9
       ],
-      "texture": "metal",
-      "tint": 0.3,
+      "texture": "painting",
+      "tint": 0.8,
       "collide": false,
-      "decal": true
+      "decal": true,
+      "fit": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        2.6,
+        1.6,
+        -3.17
+      ],
+      "size": [
+        0.7,
+        0.9,
+        0.03
+      ],
+      "texture": "painting_b",
+      "tint": 0.8,
+      "collide": false,
+      "decal": true,
+      "fit": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.3,
+        0.45,
+        -2.85
+      ],
+      "size": [
+        0.9,
+        0.9,
+        0.4
+      ],
+      "texture": "wood",
+      "tint": 0.6,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1,
+        1.65,
+        3.2
+      ],
+      "size": [
+        0.56,
+        0.7,
+        0.03
+      ],
+      "texture": "portrait_1",
+      "tint": 0.95,
+      "collide": false,
+      "decal": true,
+      "fit": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2,
+        1.65,
+        3.2
+      ],
+      "size": [
+        0.56,
+        0.7,
+        0.03
+      ],
+      "texture": "portrait_2",
+      "tint": 0.95,
+      "collide": false,
+      "decal": true,
+      "fit": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3,
+        1.65,
+        3.2
+      ],
+      "size": [
+        0.56,
+        0.7,
+        0.03
+      ],
+      "texture": "portrait_3",
+      "tint": 0.95,
+      "collide": false,
+      "decal": true,
+      "fit": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.3,
+        0.93,
+        -2.85
+      ],
+      "size": [
+        0.2,
+        0.06,
+        0.2
+      ],
+      "texture": "metal",
+      "tint": 0.6,
+      "collide": false
     }
   ],
   "models": [
@@ -179,7 +354,7 @@
       "size": [
         0.9,
         0.9,
-        1.0
+        1
       ]
     },
     {
@@ -194,7 +369,7 @@
       "size": [
         0.9,
         0.9,
-        1.0
+        1
       ]
     },
     {
@@ -209,7 +384,7 @@
       "size": [
         0.5,
         1.8,
-        1.0
+        1
       ]
     },
     {
@@ -240,6 +415,13 @@
         -0.05
       ],
       "yaw": 90
+    },
+    "from_garaje": {
+      "position": [
+        -2.75,
+        2.2
+      ],
+      "yaw": 270
     },
     "start": {
       "position": [

@@ -6,9 +6,16 @@ import type { AmbienceType, FloorMaterial, ReverbType } from './config';
 import type { PsxConfig } from './config';
 import { fetchJson } from './fetchJson';
 import type { ItemDef, ItemKind } from './items';
-import { createPsxMaterial, type Atmosphere, type PsxMaterialHandle } from './psxMaterial';
+import {
+  atmosphereLights,
+  createPsxMaterial,
+  type Atmosphere,
+  type PsxMaterialHandle,
+  type SurfaceOptions,
+} from './psxMaterial';
 import { loadPosterTexture } from './proceduralTextures';
-import { loadPixelTexture } from './textures';
+import type { SceneLightDef } from './sceneLights';
+import { applyFiltering, loadNormalMap, loadPixelTexture } from './textures';
 import { addVertexColors } from './vertexColors';
 
 export interface Collider {
@@ -40,10 +47,14 @@ export interface RoomWallRun {
   start: [number, number];
   end: [number, number];
   openings?: RoomOpening[];
+  // Clave de textura propia para este muro (p. ej. fachada de ladrillo).
+  texture?: string;
 }
 
 export interface RoomProp {
   kind: 'box';
+  // Forma: caja (por defecto) o cilindro vertical (barriles, columnas, pantallas).
+  shape?: 'box' | 'cylinder';
   position: [number, number, number];
   size: [number, number, number];
   texture?: string;
@@ -53,6 +64,13 @@ export interface RoomProp {
   // paneles): se dibuja como una sola cara separada de la superficie para que
   // no pelee en el z-buffer con el muro o el suelo (parpadeo al moverse).
   decal?: boolean;
+  // Mapear la textura 1:1 en cada cara (cuadros, ventanas de fachada, libros).
+  fit?: boolean;
+  // Sólo colisión (sin geometría visible).
+  hidden?: boolean;
+  // Giro en grados [X, Y, Z] (se aplica Z, luego X y por último el rumbo Y): troncos tumbados,
+  // ramas, leños. La colisión sigue usando el AABB sin girar.
+  rot?: [number, number, number];
 }
 
 // Modelo GLB opcional (mobiliario). La `position` es el punto donde apoyar el
@@ -80,6 +98,11 @@ export interface RoomItem {
   id: string;
   position: [number, number, number];
   yaw?: number;
+}
+
+// Luz de sala con su luminaria visible (colgante, bombilla desnuda, aplique).
+export interface RoomLightDef extends SceneLightDef {
+  fixture?: 'pendant' | 'bulb' | 'sconce' | 'none';
 }
 
 export interface RoomSpawn {
@@ -122,6 +145,14 @@ export interface RoomData {
   audio?: Partial<RoomAudio>;
   // Override de niebla/ambiente por sala (sótano denso, M9).
   atmosphere?: Atmosphere;
+  // Luces puntuales de la sala (PS2): bombillas y lámparas con luminaria.
+  lights?: RoomLightDef[];
+  // Exterior: sin techo ni molduras, con cielo nocturno.
+  outdoor?: boolean;
+  // Molduras (zócalo y cornisa). Por defecto sí en interiores.
+  trim?: boolean;
+  // Friso de madera en la parte baja del muro (clave de textura + altura).
+  wainscot?: { texture: string; height?: number };
 }
 
 export interface DoorLeaf {
@@ -146,6 +177,17 @@ export interface DoorHandle {
   aimPoint: THREE.Vector3;
   height: number;
   collider: Collider | null;
+  // Candado de las puertas con llave: se quita con la llave antes de abrir.
+  lock: DoorLock | null;
+  // Identificador estable de la cerradura (sala→destino) para los flags.
+  lockId: string;
+}
+
+export interface DoorLock {
+  group: THREE.Group;
+  // Candado colgante (cae al suelo al abrirlo) y su grillete (salta).
+  body: THREE.Group;
+  shackle: THREE.Object3D;
 }
 
 export interface ItemHandle {
@@ -166,11 +208,35 @@ export interface BuiltRoom {
   spawns: Record<string, RoomSpawn>;
   audio: RoomAudio;
   atmosphere: Atmosphere | null;
+  lights: SceneLightDef[];
+  outdoor: boolean;
   sync: (config: PsxConfig) => void;
   triangleCount: number;
 }
 
 const TEXTURES_BASE = `${import.meta.env.BASE_URL}assets/textures/horror_pack/`;
+const TEXTURES_ROOT = `${import.meta.env.BASE_URL}assets/textures/`;
+const DEFAULT_TRIM = 'ps2/wood_dark.png';
+
+// Las texturas "ps2/..." (set propio de 256 px con normal map) viven en
+// assets/textures/ps2; el resto son rutas del Horror Pack heredado.
+function textureUrl(path: string): string {
+  return path.startsWith('ps2/') ? TEXTURES_ROOT + path : TEXTURES_BASE + path;
+}
+
+// Respuesta especular por tipo de superficie (según el nombre del archivo).
+function surfaceFor(path: string): SurfaceOptions {
+  const name = path.toLowerCase();
+  if (name.includes('window')) return { spec: 0.7, gloss: 70, emissive: 0.28 };
+  if (name.includes('embers')) return { spec: 0.0, gloss: 4, emissive: 1.6 };
+  if (name.includes('water')) return { spec: 0.9, gloss: 90 };
+  if (name.includes('tile')) return { spec: 0.55, gloss: 48 };
+  if (name.includes('metal') || name.includes('corrugated')) return { spec: 0.45, gloss: 30 };
+  if (name.includes('floor_') || name.includes('door_') || name.includes('wainscot')) return { spec: 0.25, gloss: 22 };
+  if (name.includes('wood')) return { spec: 0.16, gloss: 18 };
+  if (name.includes('carpet') || name.includes('grass') || name.includes('hedge')) return { spec: 0.0, gloss: 4, normalStrength: 1.2 };
+  return { spec: 0.05, gloss: 10 };
+}
 const MODELS_BASE = `${import.meta.env.BASE_URL}assets/models/furniture/`;
 const REQUIRED_TEXTURES = ['wall', 'floor', 'ceiling', 'door'];
 const DOOR_SWING = 1.66;
@@ -350,24 +416,47 @@ export async function buildRoom(
       throw new Error(`La sala ${data.id} no define la textura "${key}"`);
     }
   }
-  const textureKeys = Object.keys(data.textures);
+  const textureMap: Record<string, string> = { ...data.textures };
+  textureMap.trim ??= DEFAULT_TRIM;
+  textureMap.fixture ??= 'ps2/metal_clean.png';
+  const textureKeys = Object.keys(textureMap);
   const loader = new THREE.TextureLoader();
-  const textures = await Promise.all(
-    textureKeys.map((key) => loadPixelTexture(loader, TEXTURES_BASE + data.textures[key])),
-  );
+  const [textures, normals] = await Promise.all([
+    Promise.all(textureKeys.map((key) => loadPixelTexture(loader, textureUrl(textureMap[key])))),
+    Promise.all(
+      textureKeys.map((key) =>
+        textureMap[key].startsWith('ps2/')
+          ? loadNormalMap(loader, textureUrl(textureMap[key]))
+          : Promise.resolve(null),
+      ),
+    ),
+  ]);
 
+  const outdoor = data.outdoor ?? data.atmosphere?.outdoor ?? false;
   const atmosphere = data.atmosphere ?? null;
   const materials = Object.fromEntries(
-    textureKeys.map((key, index) => [key, createPsxMaterial(config, textures[index], atmosphere)]),
+    textureKeys.map((key, index) => [
+      key,
+      createPsxMaterial(config, textures[index], atmosphere, {
+        ...surfaceFor(textureMap[key]),
+        normalMap: normals[index],
+      }),
+    ]),
   ) as Record<string, PsxMaterialHandle>;
 
-  // El afiche nunca recibe la luz direccional falsa; en salas con atmósfera
-  // propia (sótano a oscuras) tampoco el ambiente: sin linterna es negro y sólo
-  // lo revela el haz. En la casa conserva el ambiente global para poder verlo.
+  // El afiche es el objetivo: en la casa y el jardín el papel blanco se
+  // distingue siempre en la penumbra (leve auto-iluminación + ambiente de la
+  // sala); en el sótano a oscuras apenas se ve y hay que usar la linterna.
+  const darkRoom = (atmosphere?.ambient ?? 0.3) < 0.1;
   const posterAtmosphere: Atmosphere = atmosphere
-    ? { ...atmosphere, ambient: 0, direct: 0 }
+    ? { ...atmosphere, ambient: darkRoom ? atmosphere.ambient : Math.max(atmosphere.ambient ?? 0.3, 0.3), direct: 0 }
     : { direct: 0 };
-  const posterMaterial = createPsxMaterial(config, loadPosterTexture(), posterAtmosphere);
+  const posterMaterial = createPsxMaterial(config, loadPosterTexture(), posterAtmosphere, {
+    spec: 0.18,
+    gloss: 30,
+    noDirect: true,
+    emissive: darkRoom ? 0.05 : 0.3,
+  });
 
   const scene = new THREE.Scene();
   const colliders = computeColliders(data);
@@ -381,22 +470,44 @@ export async function buildRoom(
   const [width, height, depth] = data.size;
   const thickness = data.wall_thickness;
   const texScale = data.texture_scale;
+  const halfW = width / 2 - thickness / 2;
+  const halfD = depth / 2 - thickness / 2;
+
+  // Oclusión ambiental horneada en vértices: rincones, encuentro con el suelo
+  // y con el techo más oscuros (el truco de iluminación de la época).
+  const wallAO = (x: number, y: number, z: number): number => {
+    const dx = Math.max(0, halfW - Math.abs(x));
+    const dz = Math.max(0, halfD - Math.abs(z));
+    const corner = Math.max(dx, dz);
+    const bottom = 1 - 0.42 * Math.exp(-Math.max(0, y) / 0.4);
+    const top = outdoor ? 1 : 1 - 0.28 * Math.exp(-Math.max(0, height - y) / 0.35);
+    const side = 1 - 0.32 * Math.exp(-corner / 0.45);
+    return 0.98 * bottom * top * side;
+  };
+  const floorAO = (x: number, z: number): number => {
+    const dx = Math.max(0, halfW - Math.abs(x));
+    const dz = Math.max(0, halfD - Math.abs(z));
+    const edge = Math.min(dx, dz);
+    const corner = Math.hypot(Math.max(0, 0.9 - dx), Math.max(0, 0.9 - dz));
+    return (1 - 0.4 * Math.exp(-edge / 0.4)) * (1 - 0.2 * THREE.MathUtils.clamp(corner, 0, 1));
+  };
 
   const floor = planeGeometry(width, depth, texScale);
   floor.rotateX(-Math.PI / 2);
   scaleUVs(floor, width / texScale, depth / texScale);
-  paintVertexColors(floor, (x, _y, z) => {
-    const edge = Math.min(width / 2 - Math.abs(x), depth / 2 - Math.abs(z));
-    return 0.85 * (0.7 + 0.3 * THREE.MathUtils.clamp(edge, 0, 1));
-  });
+  paintVertexColors(floor, (x, _y, z) => floorAO(x, z));
   buckets.floor.push(floor);
 
-  const ceiling = planeGeometry(width, depth, texScale);
-  ceiling.rotateX(Math.PI / 2);
-  ceiling.translate(0, height, 0);
-  scaleUVs(ceiling, width / texScale, depth / texScale);
-  paintVertexColors(ceiling, () => 0.5);
-  buckets.ceiling.push(ceiling);
+  if (!outdoor) {
+    const ceiling = planeGeometry(width, depth, texScale);
+    ceiling.rotateX(Math.PI / 2);
+    ceiling.translate(0, height, 0);
+    scaleUVs(ceiling, width / texScale, depth / texScale);
+    paintVertexColors(ceiling, (x, _y, z) => 0.8 * floorAO(x, z));
+    buckets.ceiling.push(ceiling);
+  } else {
+    scene.add(buildSky(Math.max(width, depth)));
+  }
 
   function addBox(
     bucket: string,
@@ -411,6 +522,7 @@ export async function buildRoom(
       y0: number;
       height: number;
       thickness: number;
+      shade?: number;
     },
   ): void {
     const geometry = boxGeometry(params.length, params.height, params.thickness, texScale);
@@ -419,8 +531,37 @@ export async function buildRoom(
     const centerX = params.originX + params.dirX * params.center;
     const centerZ = params.originZ + params.dirZ * params.center;
     geometry.translate(centerX, params.y0 + params.height / 2, centerZ);
-    paintVertexColors(geometry, (_x, y) => 0.85 * (0.72 + 0.28 * THREE.MathUtils.clamp(y / height, 0, 1)));
-    buckets[bucket].push(geometry);
+    paintVertexColors(geometry, (x, y, z) => wallAO(x, y, z) * (params.shade ?? 1));
+    (buckets[bucket] ?? buckets.wall).push(geometry);
+  }
+
+  // Tira pegada a la cara INTERIOR del muro (zócalo, cornisa, friso, alféizar).
+  function addInnerStrip(
+    bucket: string,
+    run: { startX: number; startZ: number; dirX: number; dirZ: number; heading: number; inX: number; inZ: number },
+    from: number,
+    to: number,
+    y0: number,
+    stripHeight: number,
+    stripDepth: number,
+    shade = 1,
+  ): void {
+    const length = to - from;
+    if (length <= 0.01 || stripHeight <= 0.001) {
+      return;
+    }
+    const geometry = boxGeometry(length, stripHeight, stripDepth, texScale);
+    scaleBoxUVs(geometry, length, stripHeight, stripDepth, texScale);
+    geometry.rotateY(run.heading);
+    const center = (from + to) / 2;
+    const offset = thickness / 2 + stripDepth / 2 - 0.002;
+    geometry.translate(
+      run.startX + run.dirX * center + run.inX * offset,
+      y0 + stripHeight / 2,
+      run.startZ + run.dirZ * center + run.inZ * offset,
+    );
+    paintVertexColors(geometry, (x, y, z) => wallAO(x, y, z) * shade);
+    (buckets[bucket] ?? buckets.wall).push(geometry);
   }
 
   function buildDoorLeaf(
@@ -435,34 +576,61 @@ export async function buildRoom(
     faceSign: number,
     doorIndex: number,
   ): THREE.Group {
-    const slab = boxGeometry(leafWidth, opening.height - 0.02, 0.07, texScale);
+    // La hoja es tan ancha como el hueco y se mete 1 cm en el cabecero: sin
+    // rendijas negras entre hoja y marco (antes se veía el vacío detrás).
+    const slabHeight = opening.height + 0.01;
+    const slab = boxGeometry(leafWidth, slabHeight, 0.07, texScale);
     scaleBoxUVs(slab, leafWidth, opening.height, 0.07, texScale);
     if (data.door_fit) {
       scaleUVs(slab, texScale / leafWidth, texScale / opening.height);
     }
-    paintVertexColors(slab, () => 0.9);
+    paintVertexColors(slab, (_x, y) => 0.75 + 0.25 * THREE.MathUtils.clamp((y + opening.height / 2) / 0.6, 0, 1));
+    const mesh = new THREE.Mesh(slab, materials.door.material);
+    mesh.position.set(leafWidth / 2, slabHeight / 2, 0);
 
-    const handle = boxGeometry(0.05, 0.14, 0.08, texScale);
-    scaleBoxUVs(handle, 0.05, 0.14, 0.08, texScale);
-    // La hoja con gozne al final va girada 180°, así que su cara interior
-    // también se invierte para que el picaporte quede del lado de la sala.
-    const handleX = opening.double ? leafWidth - 0.12 : leafWidth / 2 - 0.12;
-    handle.translate(handleX, 0, (hingeAtEnd ? -faceSign : faceSign) * 0.06);
-    paintVertexColors(handle, () => 1);
-
-    const merged = mergeGeometries([slab, handle], false);
-    if (!merged) {
+    // Picaporte de latón a ambos lados: roseta + pomo (cilindros de 10 lados).
+    const knobParts: THREE.BufferGeometry[] = [];
+    const handleX = opening.double ? leafWidth - 0.1 : leafWidth - 0.1;
+    for (const face of [-1, 1]) {
+      const rose = new THREE.CylinderGeometry(0.035, 0.035, 0.012, 12);
+      rose.rotateX(Math.PI / 2);
+      rose.translate(handleX - leafWidth / 2, -0.08, face * 0.041);
+      const neck = new THREE.CylinderGeometry(0.012, 0.012, 0.05, 8);
+      neck.rotateX(Math.PI / 2);
+      neck.translate(handleX - leafWidth / 2, -0.08, face * 0.065);
+      const knob = new THREE.SphereGeometry(0.03, 10, 8);
+      knob.scale(1, 1, 0.8);
+      knob.translate(handleX - leafWidth / 2, -0.08, face * 0.095);
+      knobParts.push(rose, neck, knob);
+    }
+    const knobs = mergeGeometries(knobParts.map((g) => g.toNonIndexed()), false);
+    if (!knobs) {
       throw new Error(`No se pudo construir la puerta ${doorIndex} de ${data.id}`);
     }
-    const mesh = new THREE.Mesh(merged, materials.door.material);
-    mesh.position.set(leafWidth / 2 + 0.01, (opening.height - 0.02) / 2 + 0.01, 0);
+    paintVertexColors(knobs, () => [1.15, 0.92, 0.55]);
+    const knobMesh = new THREE.Mesh(knobs, materials.fixture.material);
+    knobMesh.position.copy(mesh.position);
+    void hingeAtEnd;
+    void faceSign;
 
     const group = new THREE.Group();
     group.name = `door_${data.id}_${doorIndex}${hingeAtEnd ? 'b' : ''}`;
     const hinge = hingeAtEnd ? opening.offset + opening.width : opening.offset;
     group.position.set(originX + dirX * hinge, 0, originZ + dirZ * hinge);
     group.rotation.y = hingeAtEnd ? heading + Math.PI : heading;
-    group.add(mesh);
+    group.add(mesh, knobMesh);
+    if (opening.key) {
+      // Cara de la hoja que mira a esta sala (el candado se ve desde aquí).
+      const toCenterX = -(originX + dirX * (opening.offset + opening.width / 2));
+      const toCenterZ = -(originZ + dirZ * (opening.offset + opening.width / 2));
+      const side = Math.sin(group.rotation.y) * toCenterX + Math.cos(group.rotation.y) * toCenterZ >= 0 ? 1 : -1;
+      const lock = buildPadlock(materials.fixture.material, side);
+      // Candado grande y bien visible, en el canto libre (el pasador cruza al marco).
+      lock.group.position.set(leafWidth - 0.08, mesh.position.y - 0.08 + 0.26, 0);
+      lock.group.scale.setScalar(1.9);
+      group.add(lock.group);
+      group.userData.lock = lock;
+    }
     scene.add(group);
     return group;
   }
@@ -477,6 +645,17 @@ export async function buildRoom(
     const dirZ = dz / length;
     const heading = Math.atan2(-dirZ, dirX);
     const openings = [...(run.openings ?? [])].sort((a, b) => a.offset - b.offset);
+    let inX = -dirZ;
+    let inZ = dirX;
+    const midX = startX + dirX * (length / 2);
+    const midZ = startZ + dirZ * (length / 2);
+    if (inX * -midX + inZ * -midZ < 0) {
+      inX = -inX;
+      inZ = -inZ;
+    }
+    const runInfo = { startX, startZ, dirX, dirZ, heading, inX, inZ };
+    const wallKey = run.texture && buckets[run.texture] ? run.texture : 'wall';
+    const trimEnabled = data.trim ?? !outdoor;
 
     const pieces: Array<{ from: number; to: number }> = [];
     let cursor = 0;
@@ -492,7 +671,7 @@ export async function buildRoom(
 
     for (const piece of pieces) {
       addBox(
-        'wall',
+        wallKey,
         {
           originX: startX,
           originZ: startZ,
@@ -508,14 +687,45 @@ export async function buildRoom(
       );
     }
 
+    if (trimEnabled) {
+      const spans = [
+        ...pieces.map((piece) => ({ ...piece, cap: Infinity })),
+        ...openings
+          .filter((opening) => opening.kind === 'window')
+          .map((opening) => ({ from: opening.offset, to: opening.offset + opening.width, cap: opening.sill ?? 0 })),
+      ];
+      const wainscotHeight = data.wainscot ? (data.wainscot.height ?? 1.0) : 0;
+      for (const span of spans) {
+        addInnerStrip('trim', runInfo, span.from, span.to, 0, 0.14, 0.028, 0.8);
+        if (data.wainscot && wainscotHeight > 0.2) {
+          const top = Math.min(wainscotHeight, span.cap - 0.05);
+          if (top > 0.25) {
+            addInnerStrip(data.wainscot.texture, runInfo, span.from, span.to, 0.14, top - 0.14, 0.018);
+            addInnerStrip('trim', runInfo, span.from, span.to, top - 0.015, 0.05, 0.034, 0.95);
+          }
+        }
+      }
+      addInnerStrip('trim', runInfo, 0, length, height - 0.11, 0.11, 0.05, 0.85);
+      addInnerStrip('trim', runInfo, 0, length, height - 0.16, 0.05, 0.025, 0.85);
+    }
+
     for (const opening of openings) {
       const sill = opening.sill ?? 0;
       const top = sill + opening.height;
       const openingCenter = opening.offset + opening.width / 2;
 
+      if (opening.kind === 'window' && trimEnabled) {
+        const a = opening.offset;
+        const b = opening.offset + opening.width;
+        addInnerStrip('trim', runInfo, a - 0.08, b + 0.08, sill - 0.05, 0.05, 0.1, 0.9);
+        addInnerStrip('trim', runInfo, a - 0.08, a, sill, opening.height, 0.03, 0.9);
+        addInnerStrip('trim', runInfo, b, b + 0.08, sill, opening.height, 0.03, 0.9);
+        addInnerStrip('trim', runInfo, a - 0.08, b + 0.08, top, 0.08, 0.03, 0.9);
+      }
+
       if (top < height) {
         addBox(
-          'wall',
+          wallKey,
           {
             originX: startX,
             originZ: startZ,
@@ -533,7 +743,7 @@ export async function buildRoom(
 
       if (sill > 0) {
         addBox(
-          'wall',
+          wallKey,
           {
             originX: startX,
             originZ: startZ,
@@ -555,7 +765,7 @@ export async function buildRoom(
         for (const side of [-1, 1]) {
           const jamb = openingCenter + side * (opening.width / 2 + 0.04);
           addBox(
-            'door',
+            'trim',
             {
               originX: startX,
               originZ: startZ,
@@ -571,7 +781,7 @@ export async function buildRoom(
           );
         }
         addBox(
-          'door',
+          'trim',
           {
             originX: startX,
             originZ: startZ,
@@ -599,7 +809,7 @@ export async function buildRoom(
         let aimX = centerX;
         let aimZ = centerZ;
         if (opening.double) {
-          const leafWidth = opening.width / 2 - 0.02;
+          const leafWidth = opening.width / 2;
           const left = buildDoorLeaf(
             startX, startZ, dirX, dirZ, heading, opening, leafWidth, false, faceSign, doorIndex,
           );
@@ -614,7 +824,7 @@ export async function buildRoom(
           aimZ = startZ + dirZ * (opening.offset + leafWidth / 2);
         } else {
           const group = buildDoorLeaf(
-            startX, startZ, dirX, dirZ, heading, opening, opening.width - 0.02, false, faceSign, doorIndex,
+            startX, startZ, dirX, dirZ, heading, opening, opening.width, false, faceSign, doorIndex,
           );
           leaves.push({ group, baseRotation: heading, openAngle });
         }
@@ -632,6 +842,8 @@ export async function buildRoom(
           aimPoint: new THREE.Vector3(aimX, 0, aimZ),
           height: opening.height,
           collider: findCollider(colliders, centerX, centerZ, heading, opening.width, DOOR_THICKNESS),
+          lock: (leaves[0].group.userData.lock as DoorLock | undefined) ?? null,
+          lockId: `${data.id}>${opening.to ?? 'exit'}`,
         });
       } else if (opening.kind === 'passage') {
         if (!opening.blocked && opening.to) {
@@ -649,6 +861,8 @@ export async function buildRoom(
             aimPoint: new THREE.Vector3(centerX, 0, centerZ),
             height: opening.height,
             collider: null,
+            lock: null,
+            lockId: `${data.id}>${opening.to}`,
           });
         }
       } else {
@@ -674,20 +888,63 @@ export async function buildRoom(
   const decalBuckets: Record<string, THREE.BufferGeometry[]> = {};
 
   for (const prop of data.props ?? []) {
+    if (prop.hidden) {
+      continue;
+    }
     if (prop.decal) {
       const key = prop.texture && buckets[prop.texture] ? prop.texture : 'wall';
-      const geometry = decalGeometry(prop, width, height, depth, thickness, texScale);
-      paintVertexColors(geometry, () => prop.tint ?? 1);
+      // Alfombras, caminos y azulejos se repiten; manchas y cuadros van 1:1.
+      const tile = !prop.fit && !(textureMap[key] ?? '').includes('Stain');
+      const geometry = decalGeometry(prop, width, height, depth, thickness, texScale, tile);
+      const stain = (textureMap[key] ?? '').includes('Stain');
+      const decalTint = stain ? 0.55 + 0.45 * (prop.tint ?? 1) : 0.35 + 0.65 * (prop.tint ?? 1);
+      paintVertexColors(geometry, () => decalTint);
       (decalBuckets[key] ??= []).push(geometry);
       continue;
     }
     const [px, py, pz] = prop.position;
     const [sx, sy, sz] = prop.size;
-    const geometry = boxGeometry(sx, sy, sz, texScale);
-    scaleBoxUVs(geometry, sx, sy, sz, texScale);
+    let geometry: THREE.BufferGeometry;
+    if (prop.shape === 'cylinder') {
+      const radius = Math.max(sx, sz) / 2;
+      geometry = new THREE.CylinderGeometry(radius, radius, sy, 14, Math.max(1, Math.round(sy * 2)));
+      // Lateral: perímetro × alto; tapas: diámetro (antes se estiraban).
+      const uv = geometry.getAttribute('uv');
+      const side = geometry.groups[0];
+      const index = geometry.getIndex();
+      const sideVertices = new Set<number>();
+      if (side && index) {
+        for (let k = side.start; k < side.start + side.count; k += 1) sideVertices.add(index.getX(k));
+      }
+      for (let v = 0; v < uv.count; v += 1) {
+        if (sideVertices.has(v)) {
+          uv.setXY(v, uv.getX(v) * ((Math.PI * 2 * radius) / texScale), uv.getY(v) * (sy / texScale));
+        } else {
+          uv.setXY(v, uv.getX(v) * ((radius * 2) / texScale), uv.getY(v) * ((radius * 2) / texScale));
+        }
+      }
+      uv.needsUpdate = true;
+    } else {
+      geometry = boxGeometry(sx, sy, sz, texScale);
+      if (!prop.fit) {
+        scaleBoxUVs(geometry as THREE.BoxGeometry, sx, sy, sz, texScale);
+      }
+    }
+    if (prop.rot) {
+      // Orden: inclinación (Z, X) y luego rumbo (Y).
+      geometry.rotateZ(THREE.MathUtils.degToRad(prop.rot[2]));
+      geometry.rotateX(THREE.MathUtils.degToRad(prop.rot[0]));
+      geometry.rotateY(THREE.MathUtils.degToRad(prop.rot[1]));
+    }
     geometry.translate(px, py, pz);
-    const tint = prop.tint ?? 1;
-    paintVertexColors(geometry, () => tint);
+    // Las tintas venían pensadas para la luz plana del PSX; con luz por píxel
+    // se comprimen hacia arriba y se añade sombra de contacto en la base.
+    const tint = 0.3 + 0.7 * (prop.tint ?? 1);
+    const base = py - sy / 2;
+    paintVertexColors(
+      geometry,
+      (_x, y) => tint * (0.7 + 0.3 * THREE.MathUtils.clamp((y - base) / 0.45, 0, 1)),
+    );
     const bucket = buckets[prop.texture ?? 'wall'] ?? buckets.wall;
     bucket.push(geometry);
   }
@@ -701,13 +958,20 @@ export async function buildRoom(
     }
   }
 
+  let foodMaterials: { chipa: THREE.Material; plate: THREE.Material } | null = null;
   for (const item of data.items ?? []) {
     const def = catalog.get(item.id);
     if (!def) {
       throw new Error(`La sala ${data.id} referencia un ítem desconocido: ${item.id}`);
     }
-    const material = def.kind === 'poster' ? posterMaterial.material : materials.door.material;
-    const object = buildItemModel(def.kind, material);
+    let object: THREE.Object3D;
+    if (def.kind === 'food') {
+      foodMaterials ??= await createFoodMaterials(config, loader, atmosphere, extraMaterials);
+      object = buildChipaModel(foodMaterials.chipa, foodMaterials.plate);
+    } else {
+      const material = def.kind === 'poster' ? posterMaterial.material : materials.door.material;
+      object = buildItemModel(def.kind, material);
+    }
     object.position.set(item.position[0], item.position[1], item.position[2]);
     object.rotation.y = THREE.MathUtils.degToRad(item.yaw ?? 0);
     object.name = `item_${item.id}`;
@@ -719,6 +983,68 @@ export async function buildRoom(
       position: new THREE.Vector3(item.position[0], item.position[1], item.position[2]),
       taken: false,
     });
+  }
+
+  // Luminarias visibles de las luces de sala (la luz real va por uniforms).
+  const lights: SceneLightDef[] = [...atmosphereLights(atmosphere), ...(data.lights ?? [])];
+  const bulbParts: THREE.BufferGeometry[] = [];
+  for (const light of data.lights ?? []) {
+    const fixture = light.fixture ?? 'pendant';
+    if (fixture === 'none') {
+      continue;
+    }
+    const [lx, ly, lz] = light.position;
+    const cordTop = outdoor ? ly + 0.3 : height;
+    if (fixture === 'pendant' || fixture === 'bulb') {
+      const cordLength = Math.max(0.02, cordTop - (ly + 0.08));
+      const cord = new THREE.BoxGeometry(0.012, cordLength, 0.012);
+      cord.translate(lx, ly + 0.08 + cordLength / 2, lz);
+      paintVertexColors(cord, () => 0.25);
+      buckets.fixture.push(cord);
+      const socket = new THREE.CylinderGeometry(0.022, 0.026, 0.07, 10);
+      socket.translate(lx, ly + 0.06, lz);
+      paintVertexColors(socket, () => 0.45);
+      buckets.fixture.push(socket);
+      if (!outdoor) {
+        const rose = new THREE.CylinderGeometry(0.06, 0.06, 0.03, 12);
+        rose.translate(lx, height - 0.015, lz);
+        paintVertexColors(rose, () => 0.7);
+        buckets.fixture.push(rose);
+      }
+    }
+    if (fixture === 'pendant') {
+      const shade = new THREE.CylinderGeometry(0.06, 0.25, 0.22, 16, 1, true);
+      shade.translate(lx, ly + 0.02, lz);
+      scaleUVs(shade, 1.2, 0.2);
+      paintVertexColors(shade, (_x, y) => 0.55 + 0.45 * THREE.MathUtils.clamp((ly + 0.13 - y) / 0.22, 0, 1));
+      buckets.fixture.push(shade);
+    }
+    if (fixture === 'sconce') {
+      const plate = new THREE.BoxGeometry(0.12, 0.2, 0.12);
+      plate.translate(lx, ly - 0.05, lz);
+      paintVertexColors(plate, () => 0.6);
+      buckets.fixture.push(plate);
+    }
+    const bulb = new THREE.SphereGeometry(fixture === 'bulb' ? 0.045 : 0.055, 10, 8);
+    bulb.scale(1, 1.25, 1);
+    bulb.translate(lx, ly - 0.02, lz);
+    const glow = light.color ?? [1, 0.85, 0.65];
+    paintVertexColors(bulb, () => [glow[0], glow[1], glow[2]]);
+    bulbParts.push(bulb);
+  }
+  if (bulbParts.length > 0) {
+    const merged = mergeGeometries(bulbParts, false);
+    if (merged) {
+      const bulbMaterial = createPsxMaterial(config, whitePixelTexture(), atmosphere, {
+        emissive: 1.7,
+        spec: 0,
+        noDirect: true,
+      });
+      extraMaterials.push(bulbMaterial);
+      const mesh = new THREE.Mesh(merged, bulbMaterial.material);
+      mesh.name = `${data.id}_bulbs`;
+      scene.add(mesh);
+    }
   }
 
   for (const key of textureKeys) {
@@ -736,7 +1062,12 @@ export async function buildRoom(
   }
 
   for (const [key, list] of Object.entries(decalBuckets)) {
-    const handle = createPsxMaterial(config, textures[textureKeys.indexOf(key)], atmosphere);
+    const index = textureKeys.indexOf(key);
+    const handle = createPsxMaterial(config, textures[index], atmosphere, {
+      ...surfaceFor(textureMap[key]),
+      normalMap: normals[index],
+      blend: textureMap[key].includes('Stain'),
+    });
     // Una sola cara + polygon offset: el decal gana siempre el test de profundidad
     // contra la superficie que lo soporta, sin z-fighting al caminar.
     handle.material.side = THREE.FrontSide;
@@ -763,6 +1094,8 @@ export async function buildRoom(
     spawns: data.spawns,
     audio: { ...FALLBACK_ROOM_AUDIO, ...ROOM_AUDIO_DEFAULTS[data.id], ...data.audio },
     atmosphere,
+    lights,
+    outdoor,
     sync: (next) => {
       textureKeys.forEach((key) => materials[key].sync(next, atmosphere));
       posterMaterial.sync(next, posterAtmosphere);
@@ -770,6 +1103,127 @@ export async function buildRoom(
     },
     triangleCount: countTriangles(scene),
   };
+}
+
+// Candado de hierro con grillete: armella atornillada a la hoja + candado
+// colgando. `side` indica la cara de la hoja (±Z local) que mira a la sala.
+function buildPadlock(material: THREE.Material, side: number): DoorLock {
+  const group = new THREE.Group();
+  group.name = 'padlock';
+  const z = side * 0.035;
+  const parts: THREE.BufferGeometry[] = [];
+  const steel = (geometry: THREE.BufferGeometry, shade: [number, number, number]): void => {
+    const flat = geometry.index ? geometry.toNonIndexed() : geometry;
+    paintVertexColors(flat, () => shade);
+    parts.push(flat);
+  };
+  // Pletina del pasador sobre la hoja y armella.
+  const plate = new THREE.BoxGeometry(0.16, 0.05, 0.008);
+  plate.translate(-0.02, 0, z + side * 0.004);
+  steel(plate, [0.55, 0.55, 0.58]);
+  for (const x of [-0.085, 0.045]) {
+    const bolt = new THREE.CylinderGeometry(0.006, 0.006, 0.006, 8);
+    bolt.rotateX(Math.PI / 2);
+    bolt.translate(x, 0, z + side * 0.01);
+    steel(bolt, [0.75, 0.75, 0.78]);
+  }
+  const staple = new THREE.TorusGeometry(0.014, 0.004, 6, 10, Math.PI);
+  staple.rotateY(Math.PI / 2);
+  staple.translate(0.03, 0, z + side * 0.012);
+  steel(staple, [0.6, 0.6, 0.62]);
+  const base = mergeGeometries(parts, false);
+  if (base) {
+    group.add(new THREE.Mesh(base, material));
+  }
+  // Candado (cuerpo + grillete), colgando de la armella.
+  const lockParts: THREE.BufferGeometry[] = [];
+  const body = new THREE.BoxGeometry(0.06, 0.055, 0.026, 1, 1, 1);
+  body.translate(0, -0.05, 0);
+  const bodyFlat = body.toNonIndexed();
+  paintVertexColors(bodyFlat, (_x, y) => (y < -0.06 ? [0.85, 0.66, 0.32] : [1.05, 0.82, 0.42]));
+  lockParts.push(bodyFlat);
+  const keyhole = new THREE.CylinderGeometry(0.005, 0.005, 0.004, 8);
+  keyhole.rotateX(Math.PI / 2);
+  keyhole.translate(0, -0.055, side * 0.014);
+  const keyholeFlat = keyhole.toNonIndexed();
+  paintVertexColors(keyholeFlat, () => [0.08, 0.08, 0.08]);
+  lockParts.push(keyholeFlat);
+  const lockBody = mergeGeometries(lockParts, false);
+  const hanging = new THREE.Group();
+  hanging.position.set(0.03, -0.004, z + side * 0.02);
+  if (lockBody) {
+    hanging.add(new THREE.Mesh(lockBody, material));
+  }
+  const shackleGeometry = new THREE.TorusGeometry(0.019, 0.0045, 6, 12, Math.PI).toNonIndexed();
+  shackleGeometry.translate(0, -0.022, 0);
+  paintVertexColors(shackleGeometry, () => [0.7, 0.7, 0.74]);
+  const shackle = new THREE.Mesh(shackleGeometry, material);
+  hanging.add(shackle);
+  hanging.name = 'padlock_body';
+  group.add(hanging);
+  return { group, body: hanging, shackle };
+}
+
+// Cielo nocturno para salas exteriores: cúpula con degradado, luna y
+// estrellas, sin niebla (queda detrás de la niebla densa del jardín).
+function buildSky(size: number): THREE.Object3D {
+  const group = new THREE.Group();
+  group.name = 'sky';
+  const radius = Math.min(26, Math.max(14, size * 1.4));
+  const dome = new THREE.SphereGeometry(radius, 24, 12, 0, Math.PI * 2, 0, Math.PI * 0.62);
+  const position = dome.getAttribute('position');
+  const colors = new Float32Array(position.count * 3);
+  for (let i = 0; i < position.count; i += 1) {
+    const t = THREE.MathUtils.clamp(position.getY(i) / radius, 0, 1);
+    const horizon = [0.09, 0.1, 0.13];
+    const zenith = [0.015, 0.02, 0.045];
+    for (let c = 0; c < 3; c += 1) {
+      colors[i * 3 + c] = horizon[c] + (zenith[c] - horizon[c]) * Math.pow(t, 0.6);
+    }
+  }
+  dome.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  const domeMaterial = new THREE.MeshBasicMaterial({
+    vertexColors: true,
+    side: THREE.BackSide,
+    depthWrite: false,
+    fog: false,
+  });
+  const domeMesh = new THREE.Mesh(dome, domeMaterial);
+  domeMesh.renderOrder = -10;
+  group.add(domeMesh);
+
+  const moon = new THREE.Mesh(
+    new THREE.CircleGeometry(radius * 0.035, 20),
+    new THREE.MeshBasicMaterial({ color: 0xc9cfd8, depthWrite: false, fog: false }),
+  );
+  moon.position.set(-radius * 0.45, radius * 0.55, -radius * 0.55);
+  moon.lookAt(0, 0, 0);
+  moon.renderOrder = -9;
+  group.add(moon);
+
+  const starCount = 260;
+  const stars = new Float32Array(starCount * 3);
+  let seed = 1337;
+  const random = (): number => {
+    seed = (seed * 16807) % 2147483647;
+    return seed / 2147483647;
+  };
+  for (let i = 0; i < starCount; i += 1) {
+    const theta = random() * Math.PI * 2;
+    const phi = Math.acos(0.15 + random() * 0.85);
+    stars[i * 3] = Math.sin(phi) * Math.cos(theta) * radius * 0.97;
+    stars[i * 3 + 1] = Math.cos(phi) * radius * 0.97;
+    stars[i * 3 + 2] = Math.sin(phi) * Math.sin(theta) * radius * 0.97;
+  }
+  const starGeometry = new THREE.BufferGeometry();
+  starGeometry.setAttribute('position', new THREE.BufferAttribute(stars, 3));
+  const starPoints = new THREE.Points(
+    starGeometry,
+    new THREE.PointsMaterial({ color: 0x8a92a8, size: 1.5, sizeAttenuation: false, depthWrite: false, fog: false }),
+  );
+  starPoints.renderOrder = -9;
+  group.add(starPoints);
+  return group;
 }
 
 let fallbackTexture: THREE.DataTexture | null = null;
@@ -818,18 +1272,21 @@ async function loadRoomModel(
     }
     root = wrapper;
   }
-  const tint = model.tint ?? 0.95;
+  // Las texturas de los GLB ya no se decodifican como sRGB (pipeline gamma):
+  // salen más claras que antes, así que la tinta se compensa.
+  const tint = Math.min(model.tint ?? 0.95, 1.15) * 0.72;
   root.traverse((object) => {
     if (!(object instanceof THREE.Mesh)) {
       return;
     }
     const source = Array.isArray(object.material) ? object.material[0] : object.material;
     const texture = (source as THREE.MeshStandardMaterial).map ?? whitePixelTexture();
-    texture.magFilter = THREE.NearestFilter;
-    texture.minFilter = THREE.NearestFilter;
-    texture.generateMipmaps = false;
-    texture.anisotropy = 1;
-    const handle = createPsxMaterial(config, texture, atmosphere);
+    if (texture !== fallbackTexture) {
+      applyFiltering(texture, { repeat: false });
+      // Pipeline en espacio gamma: sin decodificar sRGB (como el resto de texturas).
+      texture.colorSpace = THREE.NoColorSpace;
+    }
+    const handle = createPsxMaterial(config, texture, atmosphere, { spec: 0.12, gloss: 18 });
     materials.push(handle);
     object.material = handle.material;
   });
@@ -844,7 +1301,11 @@ async function loadRoomModel(
   root.position.z += model.position[2] - center.z;
   root.position.y += model.position[1] - box.min.y;
   root.updateMatrixWorld(true);
-  prepareModelGeometry(root, model.subdivision ?? MODEL_MAX_EDGE, tint);
+  prepareModelGeometry(
+    root,
+    config.effects.affine_mapping ? (model.subdivision ?? MODEL_MAX_EDGE) : 0,
+    tint,
+  );
   const size = new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3());
   console.info(
     `[M10] ${model.file}${wanted.length > 0 ? ` (${wanted.join(', ')})` : ''} → ${size.x.toFixed(2)}x${size.y.toFixed(2)}x${size.z.toFixed(2)} m`,
@@ -908,7 +1369,15 @@ function decalGeometry(
   roomDepth: number,
   wallThickness: number,
   texScale: number,
+  tile = false,
 ): THREE.PlaneGeometry {
+  const plane = (a: number, b: number): THREE.PlaneGeometry => {
+    const geometry = planeGeometry(a, b, texScale);
+    if (tile) {
+      scaleUVs(geometry, a / texScale, b / texScale);
+    }
+    return geometry;
+  };
   const [px, py, pz] = prop.position;
   const [sx, sy, sz] = prop.size;
   const innerX = roomWidth / 2 - wallThickness / 2;
@@ -916,7 +1385,7 @@ function decalGeometry(
   const minAxis = Math.min(sx, sy, sz);
 
   if (minAxis === sy) {
-    const geometry = planeGeometry(sx, sz, texScale);
+    const geometry = plane(sx, sz);
     const cx = THREE.MathUtils.clamp(px, -innerX + sx / 2, innerX - sx / 2);
     const cz = THREE.MathUtils.clamp(pz, -innerZ + sz / 2, innerZ - sz / 2);
     if (py < roomHeight / 2) {
@@ -933,7 +1402,7 @@ function decalGeometry(
 
   const cy = THREE.MathUtils.clamp(py, sy / 2 + 0.01, roomHeight - sy / 2 - 0.01);
   if (minAxis === sx) {
-    const geometry = planeGeometry(sz, sy, texScale);
+    const geometry = plane(sz, sy);
     const cz = THREE.MathUtils.clamp(pz, -innerZ + sz / 2, innerZ - sz / 2);
     if (px >= 0) {
       geometry.rotateY(-Math.PI / 2);
@@ -945,7 +1414,7 @@ function decalGeometry(
     return geometry;
   }
 
-  const geometry = planeGeometry(sx, sy, texScale);
+  const geometry = plane(sx, sy);
   const cx = THREE.MathUtils.clamp(px, -innerX + sx / 2, innerX - sx / 2);
   if (pz >= 0) {
     geometry.rotateY(Math.PI);
@@ -954,6 +1423,61 @@ function decalGeometry(
     geometry.translate(cx, cy, -innerZ + DECAL_LIFT);
   }
   return geometry;
+}
+
+async function createFoodMaterials(
+  config: PsxConfig,
+  loader: THREE.TextureLoader,
+  atmosphere: Atmosphere | null,
+  handles: PsxMaterialHandle[],
+): Promise<{ chipa: THREE.Material; plate: THREE.Material }> {
+  const [chipaTex, chipaNormal, plateTex] = await Promise.all([
+    loadPixelTexture(loader, textureUrl('ps2/chipa.png')),
+    loadNormalMap(loader, textureUrl('ps2/chipa.png')),
+    loadPixelTexture(loader, textureUrl('ps2/ceramic.png')),
+  ]);
+  const chipa = createPsxMaterial(config, chipaTex, atmosphere, { normalMap: chipaNormal, spec: 0.18, gloss: 16 });
+  const plate = createPsxMaterial(config, plateTex, atmosphere, { spec: 0.6, gloss: 60 });
+  handles.push(chipa, plate);
+  return { chipa: chipa.material, plate: plate.material };
+}
+
+// Chipas en un platito: anillos de masa algo aplastados e irregulares.
+function buildChipaModel(chipaMaterial: THREE.Material, plateMaterial: THREE.Material): THREE.Object3D {
+  const group = new THREE.Group();
+  const plate = new THREE.CylinderGeometry(0.12, 0.09, 0.014, 20);
+  plate.translate(0, 0.007, 0);
+  paintVertexColors(plate, () => 0.95);
+  group.add(new THREE.Mesh(plate, plateMaterial));
+  const rings: Array<[number, number, number, number, number]> = [
+    [-0.035, 0.03, 0.01, 0.0, 0.1],
+    [0.045, 0.03, -0.02, 0.4, -0.05],
+    [0.0, 0.065, 0.025, 1.1, 0.35],
+  ];
+  const parts: THREE.BufferGeometry[] = [];
+  rings.forEach(([x, y, z, yaw, tilt], index) => {
+    const ring = new THREE.TorusGeometry(0.042, 0.021, 10, 18);
+    ring.rotateX(Math.PI / 2 + tilt);
+    ring.scale(1, 0.75, 1);
+    const position = ring.getAttribute('position');
+    for (let i = 0; i < position.count; i += 1) {
+      const px = position.getX(i);
+      const pz = position.getZ(i);
+      const bump = 1 + 0.08 * Math.sin(px * 90 + index) * Math.cos(pz * 80 - index);
+      position.setXYZ(i, px * bump, position.getY(i) * bump, pz * bump);
+    }
+    ring.computeVertexNormals();
+    ring.rotateY(yaw);
+    ring.translate(x, y, z);
+    paintVertexColors(ring, (_px, py) => 0.85 + 0.25 * THREE.MathUtils.clamp((py - y + 0.02) / 0.04, 0, 1));
+    parts.push(ring);
+  });
+  const merged = mergeGeometries(parts, false);
+  if (merged) {
+    group.add(new THREE.Mesh(merged, chipaMaterial));
+  }
+  group.scale.setScalar(1.35);
+  return group;
 }
 
 function buildItemModel(kind: ItemKind, material: THREE.Material): THREE.Object3D {
@@ -1057,7 +1581,7 @@ function scaleUVs(geometry: THREE.BufferGeometry, scaleU: number, scaleV: number
 
 // Subdivisión de la geometría: con texScale 2 una arista por metro (el
 // affine warping del PSX se nota y el presupuesto de triángulos no se dispara).
-const SUB_QUADS = 2;
+const SUB_QUADS = 4;
 
 function segments(length: number, texScale: number): number {
   return Math.max(1, Math.round((length / texScale) * SUB_QUADS));

@@ -9,13 +9,18 @@
   "texture_scale": 2,
   "wall_thickness": 0.15,
   "textures": {
-    "wall": "Wall/Horror_Wall_05-128x128.png",
-    "floor": "Floor/Horror_Floor_11-128x128.png",
-    "ceiling": "Misc/Horror_Misc_06-128x128.png",
-    "door": "Custom/WoodenDoor1diffuse.png",
-    "wood": "Floor/Horror_Floor_03-128x128.png",
-    "metal": "Metal/Horror_Metal_11-128x128.png",
-    "stain": "Stains/Horror_Stain_09-128x128.png"
+    "wall": "ps2/wp_stripes_blue.png",
+    "floor": "ps2/floor_walnut.png",
+    "ceiling": "ps2/ceiling.png",
+    "door": "ps2/door_wood.png",
+    "wood": "ps2/wood_dark.png",
+    "metal": "ps2/metal_clean.png",
+    "stain": "Stains/Horror_Stain_09-128x128.png",
+    "window": "ps2/window_night.png",
+    "wainscot": "ps2/wainscot.png",
+    "portrait_3": "ps2/portrait_3.png",
+    "painting": "ps2/painting.png",
+    "painting_b": "ps2/painting_b.png"
   },
   "audio": {
     "reverb": "small",
@@ -23,6 +28,53 @@
     "ambience": "house"
   },
   "door_fit": true,
+  "wainscot": {
+    "texture": "wainscot",
+    "height": 1
+  },
+  "atmosphere": {
+    "ambient": 0.22,
+    "ambient_color": [
+      0.75,
+      0.78,
+      0.92
+    ],
+    "direct": 0.35,
+    "fog_start": 3.5,
+    "fog_end": 22
+  },
+  "lights": [
+    {
+      "position": [
+        0,
+        2.1,
+        0
+      ],
+      "color": [
+        0.95,
+        0.72,
+        0.48
+      ],
+      "range": 5,
+      "intensity": 0.6,
+      "fixture": "pendant"
+    },
+    {
+      "position": [
+        0,
+        1.25,
+        -2
+      ],
+      "color": [
+        1,
+        0.85,
+        0.55
+      ],
+      "range": 2.8,
+      "intensity": 0.9,
+      "fixture": "none"
+    }
+  ],
   "walls": [
     {
       "start": [
@@ -114,7 +166,7 @@
         0.6,
         0.45
       ],
-      "texture": "wall",
+      "texture": "wood",
       "tint": 0.45,
       "collide": true
     },
@@ -178,7 +230,7 @@
         0.6,
         0.6
       ],
-      "texture": "wall",
+      "texture": "wood",
       "tint": 0.5,
       "collide": true
     },
@@ -190,14 +242,15 @@
         -2.22
       ],
       "size": [
-        0.5,
+        0.52,
         0.65,
         0.03
       ],
-      "texture": "door",
-      "tint": 0.4,
+      "texture": "portrait_3",
+      "tint": 0.95,
       "collide": false,
-      "decal": true
+      "decal": true,
+      "fit": true
     },
     {
       "kind": "box",

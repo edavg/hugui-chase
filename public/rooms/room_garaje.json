@@ -1,0 +1,488 @@
+{
+  "id": "room_garaje",
+  "name": "Garaje",
+  "size": [
+    9,
+    3,
+    7
+  ],
+  "texture_scale": 2,
+  "wall_thickness": 0.15,
+  "textures": {
+    "wall": "ps2/corrugated.png",
+    "floor": "ps2/concrete_oil.png",
+    "ceiling": "ps2/ceiling_dark.png",
+    "door": "ps2/door_white.png",
+    "metal": "ps2/metal_rust.png",
+    "car": "ps2/metal_clean.png",
+    "tarp": "ps2/plaster_green.png",
+    "wood": "ps2/wood_light.png",
+    "boards": "ps2/boards.png",
+    "glass": "ps2/window_bars.png",
+    "stain": "Stains/Horror_Stain_14-128x128.png",
+    "painting": "ps2/painting.png",
+    "painting_b": "ps2/painting_b.png"
+  },
+  "audio": {
+    "reverb": "hall",
+    "floor_material": "stone",
+    "ambience": "basement"
+  },
+  "door_fit": true,
+  "trim": false,
+  "atmosphere": {
+    "ambient": 0.15,
+    "ambient_color": [
+      0.7,
+      0.75,
+      0.9
+    ],
+    "direct": 0.2,
+    "fog_start": 3,
+    "fog_end": 16
+  },
+  "lights": [
+    {
+      "position": [
+        -2.4,
+        2.75,
+        0
+      ],
+      "color": [
+        0.78,
+        0.86,
+        1
+      ],
+      "range": 7,
+      "intensity": 1.15,
+      "flicker": 0.4,
+      "fixture": "bulb"
+    },
+    {
+      "position": [
+        2.6,
+        2.75,
+        0
+      ],
+      "color": [
+        0.78,
+        0.86,
+        1
+      ],
+      "range": 6,
+      "intensity": 0.8,
+      "broken": true,
+      "fixture": "bulb"
+    }
+  ],
+  "walls": [
+    {
+      "start": [
+        -4.5,
+        -3.5
+      ],
+      "end": [
+        4.5,
+        -3.5
+      ],
+      "openings": [
+        {
+          "kind": "window",
+          "offset": 6,
+          "width": 1.4,
+          "height": 0.7,
+          "sill": 1.8
+        }
+      ]
+    },
+    {
+      "start": [
+        4.5,
+        -3.5
+      ],
+      "end": [
+        4.5,
+        3.5
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 2.9,
+          "width": 1.2,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_vestibulo",
+          "spawn": "from_garaje"
+        }
+      ]
+    },
+    {
+      "start": [
+        4.5,
+        3.5
+      ],
+      "end": [
+        -4.5,
+        3.5
+      ]
+    },
+    {
+      "start": [
+        -4.5,
+        3.5
+      ],
+      "end": [
+        -4.5,
+        -3.5
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 2.9,
+          "width": 1.1,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_jardin",
+          "spawn": "from_garaje"
+        }
+      ]
+    }
+  ],
+  "props": [
+    {
+      "kind": "box",
+      "position": [
+        0.3,
+        1.25,
+        3.42
+      ],
+      "size": [
+        3.6,
+        2.5,
+        0.06
+      ],
+      "texture": "metal",
+      "tint": 0.75,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.3,
+        0.5,
+        0.6
+      ],
+      "size": [
+        1.9,
+        0.62,
+        4.3
+      ],
+      "texture": "tarp",
+      "tint": 0.6,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.3,
+        1.08,
+        0.9
+      ],
+      "size": [
+        1.7,
+        0.56,
+        2.3
+      ],
+      "texture": "tarp",
+      "tint": 0.55,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.3,
+        0.83,
+        -1.6
+      ],
+      "size": [
+        1.95,
+        0.08,
+        0.1
+      ],
+      "texture": "car",
+      "tint": 0.5,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -0.62,
+        0.3,
+        -0.9
+      ],
+      "size": [
+        0.22,
+        0.6,
+        0.6
+      ],
+      "texture": "metal",
+      "tint": 0.2,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.22,
+        0.3,
+        -0.9
+      ],
+      "size": [
+        0.22,
+        0.6,
+        0.6
+      ],
+      "texture": "metal",
+      "tint": 0.2,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -0.62,
+        0.3,
+        2.1
+      ],
+      "size": [
+        0.22,
+        0.6,
+        0.6
+      ],
+      "texture": "metal",
+      "tint": 0.2,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.22,
+        0.3,
+        2.1
+      ],
+      "size": [
+        0.22,
+        0.6,
+        0.6
+      ],
+      "texture": "metal",
+      "tint": 0.2,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.6,
+        0.45,
+        -3.1
+      ],
+      "size": [
+        2.6,
+        0.9,
+        0.65
+      ],
+      "texture": "wood",
+      "tint": 0.75,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.6,
+        1.6,
+        -3.38
+      ],
+      "size": [
+        2.4,
+        1,
+        0.04
+      ],
+      "texture": "boards",
+      "tint": 0.6,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.15,
+        1.1,
+        2.2
+      ],
+      "size": [
+        0.6,
+        2.2,
+        2.4
+      ],
+      "texture": "boards",
+      "tint": 0.6,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.1,
+        0.55,
+        1.6
+      ],
+      "size": [
+        0.5,
+        0.4,
+        0.55
+      ],
+      "texture": "wood",
+      "tint": 0.85,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.1,
+        1.25,
+        2.6
+      ],
+      "size": [
+        0.5,
+        0.4,
+        0.6
+      ],
+      "texture": "wood",
+      "tint": 0.8,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.1,
+        1.95,
+        1.9
+      ],
+      "size": [
+        0.5,
+        0.35,
+        0.5
+      ],
+      "texture": "wood",
+      "tint": 0.85,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.6,
+        0.45,
+        -2.6
+      ],
+      "size": [
+        0.6,
+        0.9,
+        0.6
+      ],
+      "texture": "metal",
+      "tint": 0.7,
+      "collide": true,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        3,
+        0.45,
+        -2.9
+      ],
+      "size": [
+        0.6,
+        0.9,
+        0.6
+      ],
+      "texture": "metal",
+      "tint": 0.6,
+      "collide": true,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.7,
+        0.45,
+        2.7
+      ],
+      "size": [
+        0.6,
+        0.9,
+        0.6
+      ],
+      "texture": "metal",
+      "tint": 0.65,
+      "collide": true,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.8,
+        0.006,
+        -1.4
+      ],
+      "size": [
+        1.6,
+        0.01,
+        1.4
+      ],
+      "texture": "stain",
+      "tint": 0.4,
+      "collide": false,
+      "decal": true
+    }
+  ],
+  "items": [
+    {
+      "id": "poster_11",
+      "position": [
+        -2.6,
+        1.55,
+        -3.33
+      ],
+      "yaw": 0
+    },
+    {
+      "id": "chipa_4",
+      "position": [
+        -3.3,
+        0.91,
+        -3
+      ],
+      "yaw": 0
+    }
+  ],
+  "spawns": {
+    "from_vestibulo": {
+      "position": [
+        3.25,
+        0
+      ],
+      "yaw": 90
+    },
+    "from_jardin": {
+      "position": [
+        -3.25,
+        0.05
+      ],
+      "yaw": 270
+    },
+    "start": {
+      "position": [
+        3,
+        0
+      ],
+      "yaw": 90
+    }
+  }
+}

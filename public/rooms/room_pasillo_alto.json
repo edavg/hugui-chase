@@ -9,12 +9,16 @@
   "texture_scale": 2,
   "wall_thickness": 0.15,
   "textures": {
-    "wall": "Wall/Horror_Wall_09-128x128.png",
-    "floor": "Floor/Horror_Floor_04-128x128.png",
-    "ceiling": "Misc/Horror_Misc_03-128x128.png",
-    "door": "Custom/WoodenDoor1diffuse.png",
+    "wall": "ps2/wp_floral.png",
+    "floor": "ps2/floor_oak.png",
+    "ceiling": "ps2/ceiling.png",
+    "door": "ps2/door_wood.png",
     "stain": "Stains/Horror_Stain_04-128x128.png",
-    "window": "Custom/TiledWindowdiffuse.png"
+    "window": "ps2/window_night.png",
+    "carpet": "ps2/carpet_blue.png",
+    "wood": "ps2/wood_dark.png",
+    "painting": "ps2/painting.png",
+    "painting_b": "ps2/painting_b.png"
   },
   "audio": {
     "reverb": "corridor",
@@ -22,6 +26,50 @@
     "ambience": "house"
   },
   "door_fit": true,
+  "atmosphere": {
+    "ambient": 0.22,
+    "ambient_color": [
+      0.75,
+      0.78,
+      0.92
+    ],
+    "direct": 0.35,
+    "fog_start": 3.5,
+    "fog_end": 22
+  },
+  "lights": [
+    {
+      "position": [
+        -3.8,
+        2.15,
+        0
+      ],
+      "color": [
+        1,
+        0.82,
+        0.58
+      ],
+      "range": 5.5,
+      "intensity": 0.85,
+      "fixture": "pendant"
+    },
+    {
+      "position": [
+        3.2,
+        2.15,
+        0
+      ],
+      "color": [
+        1,
+        0.82,
+        0.58
+      ],
+      "range": 5.5,
+      "intensity": 0.8,
+      "flicker": 0.3,
+      "fixture": "pendant"
+    }
+  ],
   "walls": [
     {
       "start": [
@@ -49,7 +97,8 @@
           "height": 2.1,
           "door": "closed",
           "to": "room_cuarto",
-          "spawn": "from_pasillo_alto"
+          "spawn": "from_pasillo_alto",
+          "key": "key_kids"
         },
         {
           "kind": "door",
@@ -70,6 +119,19 @@
       "end": [
         6.75,
         1.2
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 0.6,
+          "width": 1.2,
+          "height": 2.1,
+          "door": "closed",
+          "to": "room_atico",
+          "spawn": "from_pasillo_alto",
+          "key": "key_attic",
+          "action": "up"
+        }
       ]
     },
     {
@@ -153,25 +215,25 @@
     {
       "kind": "box",
       "position": [
-        -5.7,
+        -3,
         0.3,
-        0.6
+        0.85
       ],
       "size": [
         0.7,
         0.6,
         0.4
       ],
-      "texture": "wall",
+      "texture": "wood",
       "tint": 0.5,
       "collide": true
     },
     {
       "kind": "box",
       "position": [
-        -5.7,
+        -3,
         0.72,
-        0.6
+        0.85
       ],
       "size": [
         0.16,
@@ -194,10 +256,11 @@
         0.7,
         0.05
       ],
-      "texture": "door",
-      "tint": 0.5,
+      "texture": "painting",
+      "tint": 0.8,
       "collide": false,
-      "decal": true
+      "decal": true,
+      "fit": true
     },
     {
       "kind": "box",
@@ -211,10 +274,11 @@
         0.6,
         0.05
       ],
-      "texture": "door",
-      "tint": 0.45,
+      "texture": "painting_b",
+      "tint": 0.8,
       "collide": false,
-      "decal": true
+      "decal": true,
+      "fit": true
     },
     {
       "kind": "box",
@@ -228,10 +292,11 @@
         0.5,
         0.05
       ],
-      "texture": "door",
-      "tint": 0.4,
+      "texture": "painting",
+      "tint": 0.8,
       "collide": false,
-      "decal": true
+      "decal": true,
+      "fit": true
     },
     {
       "kind": "box",
@@ -253,34 +318,51 @@
     {
       "kind": "box",
       "position": [
-        4.6,
+        -1.5,
         0.22,
-        0.55
+        0.95
       ],
       "size": [
         0.9,
         0.44,
         0.35
       ],
-      "texture": "wall",
+      "texture": "wood",
       "tint": 0.45,
       "collide": true
     },
     {
       "kind": "box",
       "position": [
-        5.9,
+        3,
         0.2,
-        0.5
+        0.9
       ],
       "size": [
         0.3,
         0.4,
         0.3
       ],
-      "texture": "wall",
+      "texture": "wood",
       "tint": 0.4,
       "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.2,
+        0.006,
+        0
+      ],
+      "size": [
+        11.5,
+        0.01,
+        1
+      ],
+      "texture": "carpet",
+      "tint": 0.8,
+      "collide": false,
+      "decal": true
     }
   ],
   "spawns": {
@@ -325,6 +407,13 @@
         -0.05
       ],
       "yaw": 0
+    },
+    "from_atico": {
+      "position": [
+        5.5,
+        0
+      ],
+      "yaw": 90
     },
     "start": {
       "position": [
