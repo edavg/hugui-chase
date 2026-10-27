@@ -42,19 +42,19 @@ interface Section {
 // desplazamiento del centro en Z; -Z es la cara).
 const PROFILE: Section[] = [
   { y: 0.5, rx: 0.0, rzFront: 0.0, rzBack: 0.0, cz: 0.04 },
-  { y: 0.47, rx: 0.2, rzFront: 0.2, rzBack: 0.22, cz: 0.04 },
-  { y: 0.4, rx: 0.33, rzFront: 0.32, rzBack: 0.36, cz: 0.04 },
-  { y: 0.28, rx: 0.42, rzFront: 0.4, rzBack: 0.44, cz: 0.03 },
-  { y: 0.12, rx: 0.46, rzFront: 0.44, rzBack: 0.46, cz: 0.02 },
-  { y: -0.02, rx: 0.47, rzFront: 0.46, rzBack: 0.44, cz: 0.01 },
-  { y: -0.16, rx: 0.47, rzFront: 0.47, rzBack: 0.4, cz: 0.0 },
-  { y: -0.28, rx: 0.44, rzFront: 0.46, rzBack: 0.34, cz: 0.0 },
-  { y: -0.38, rx: 0.38, rzFront: 0.43, rzBack: 0.28, cz: 0.01 },
-  { y: -0.46, rx: 0.3, rzFront: 0.38, rzBack: 0.24, cz: 0.03 },
-  { y: -0.52, rx: 0.3, rzFront: 0.28, rzBack: 0.28, cz: 0.07 },
-  { y: -0.6, rx: 0.31, rzFront: 0.25, rzBack: 0.29, cz: 0.08 },
-  { y: -0.75, rx: 0.34, rzFront: 0.27, rzBack: 0.3, cz: 0.08 },
-  { y: -0.92, rx: 0.5, rzFront: 0.38, rzBack: 0.38, cz: 0.08 },
+  { y: 0.47, rx: 0.16, rzFront: 0.2, rzBack: 0.22, cz: 0.04 },
+  { y: 0.4, rx: 0.28, rzFront: 0.32, rzBack: 0.36, cz: 0.04 },
+  { y: 0.28, rx: 0.36, rzFront: 0.4, rzBack: 0.44, cz: 0.03 },
+  { y: 0.12, rx: 0.39, rzFront: 0.42, rzBack: 0.46, cz: 0.02 },
+  { y: -0.02, rx: 0.4, rzFront: 0.43, rzBack: 0.44, cz: 0.01 },
+  { y: -0.16, rx: 0.4, rzFront: 0.43, rzBack: 0.4, cz: 0.0 },
+  { y: -0.28, rx: 0.36, rzFront: 0.42, rzBack: 0.34, cz: 0.0 },
+  { y: -0.38, rx: 0.3, rzFront: 0.4, rzBack: 0.28, cz: 0.01 },
+  { y: -0.46, rx: 0.22, rzFront: 0.34, rzBack: 0.24, cz: 0.03 },
+  { y: -0.52, rx: 0.19, rzFront: 0.2, rzBack: 0.26, cz: 0.12 },
+  { y: -0.6, rx: 0.2, rzFront: 0.22, rzBack: 0.27, cz: 0.24 },
+  { y: -0.75, rx: 0.24, rzFront: 0.25, rzBack: 0.3, cz: 0.48 },
+  { y: -0.92, rx: 0.3, rzFront: 0.28, rzBack: 0.32, cz: 0.64 },
 ];
 
 function section(y: number): Section {
@@ -90,14 +90,14 @@ function surfacePoint(phi: number, y: number, out: THREE.Vector3): THREE.Vector3
   let z = sec.cz - front * rz;
   // Nariz, pómulos y barbilla (relieve suave sobre el frente).
   const faceMask = Math.max(0, front) ** 2;
-  const nose = 0.07 * gauss(phi, 0.16) * gauss(y + 0.1, 0.11);
-  const brow = 0.025 * gauss(y - 0.04, 0.06) * gauss(phi, 0.7);
-  const cheeks = 0.03 * gauss(y + 0.2, 0.1) * (gauss(phi - 0.75, 0.3) + gauss(phi + 0.75, 0.3));
+  const nose = 0.09 * gauss(phi, 0.16) * gauss(y, 0.11);
+  const brow = 0.025 * gauss(y - 0.18, 0.06) * gauss(phi, 0.7);
+  const cheeks = 0.025 * gauss(y + 0.1, 0.1) * (gauss(phi - 0.75, 0.3) + gauss(phi + 0.75, 0.3));
   const chin = 0.03 * gauss(phi, 0.35) * gauss(y + 0.44, 0.06);
-  const eyeSocket = -0.02 * gauss(y + 0.0, 0.05) * (gauss(phi - 0.32, 0.14) + gauss(phi + 0.32, 0.14));
+  const eyeSocket = -0.02 * gauss(y - 0.12, 0.05) * (gauss(phi - 0.4, 0.14) + gauss(phi + 0.4, 0.14));
   z -= faceMask * (nose + brow + cheeks + chin + eyeSocket);
   // Orejas: bulto lateral a la altura de los ojos.
-  const ear = 0.035 * gauss(y + 0.06, 0.1) * (gauss(phi - 1.62, 0.12) + gauss(phi + 1.62, 0.12));
+  const ear = 0.035 * gauss(y, 0.12) * (gauss(phi - 1.62, 0.12) + gauss(phi + 1.62, 0.12));
   x += Math.sign(Math.sin(phi)) * ear;
   return out.set(x, y, z);
 }
@@ -149,13 +149,17 @@ function createSampler(atlas: HeadAtlas): TileSampler {
       const y1 = Math.min(tile - 1, y0 + 1);
       const tx = px - x0;
       const ty = py - y0;
-      for (let c = 0; c < 3; c += 1) {
+      const sampleChannel = (c: number): number => {
         const a = texel(ox + x0, oy + y0, c) * (1 - tx) + texel(ox + x1, oy + y0, c) * tx;
         const b = texel(ox + x0, oy + y1, c) * (1 - tx) + texel(ox + x1, oy + y1, c) * tx;
-        out[c] = (a * (1 - ty) + b * ty) / 255;
+        return (a * (1 - ty) + b * ty) / 255;
+      };
+      for (let c = 0; c < 3; c += 1) {
+        out[c] = sampleChannel(c);
       }
+      const alpha = sampleChannel(3);
       if (face === 'top' || face === 'back' || face === 'bottom') {
-        return 1;
+        return alpha;
       }
       // Recorte del fondo gris (no del pelo oscuro ni de la piel saturada).
       const dr = out[0] * 255 - bg[0];
@@ -164,9 +168,9 @@ function createSampler(atlas: HeadAtlas): TileSampler {
       const distance = Math.sqrt(dr * dr + dg * dg + db * db);
       const chroma = (Math.max(out[0], out[1], out[2]) - Math.min(out[0], out[1], out[2])) * 255;
       if (chroma > bgChroma + 30) {
-        return 1;
+        return alpha;
       }
-      return THREE.MathUtils.smoothstep(distance, 14, 34);
+      return alpha * THREE.MathUtils.smoothstep(distance, 14, 34);
     },
   };
 }
@@ -272,7 +276,7 @@ function bakeHeadTexture(atlas: HeadAtlas): THREE.CanvasTexture {
         b = acc[2] / total;
       }
       // El cuello se oscurece hacia el torso para fundirse con el cuerpo.
-      const shade = 0.55 + 0.45 * THREE.MathUtils.smoothstep(y, Y_NECK_BOTTOM + 0.05, Y_CHIN - 0.05);
+      const shade = 0.2 + 0.8 * THREE.MathUtils.smoothstep(y, Y_NECK_BOTTOM + 0.05, Y_CHIN - 0.05);
       const i = (row * BAKE_W + col) * 4;
       image.data[i] = Math.round(THREE.MathUtils.clamp(r * shade, 0, 1) * 255);
       image.data[i + 1] = Math.round(THREE.MathUtils.clamp(g * shade, 0, 1) * 255);
@@ -315,7 +319,7 @@ function buildHeadGeometry(): THREE.BufferGeometry {
     for (let seg = 0; seg < SEGMENTS; seg += 1) {
       const a = ring * stride + seg;
       const b = a + stride;
-      indices.push(a, b, a + 1, b, b + 1, a + 1);
+      indices.push(a, a + 1, b, b, a + 1, b + 1);
     }
   }
   const geometry = new THREE.BufferGeometry();

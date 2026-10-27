@@ -1,0 +1,600 @@
+{
+  "id": "room_luque_aquino_este",
+  "name": "Av. Gral. Aquino — Este",
+  "size": [
+    55,
+    5,
+    18
+  ],
+  "texture_scale": 6,
+  "wall_thickness": 0.3,
+  "open_sky": true,
+  "door_fit": true,
+  "atmosphere": {
+    "fog_start": 5,
+    "fog_end": 32,
+    "fog_color": [
+      0.02,
+      0.02,
+      0.03
+    ],
+    "ambient": 0.17,
+    "direct": 0.22,
+    "lamp": {
+      "position": [
+        8,
+        4.5,
+        0
+      ],
+      "color": [
+        1,
+        0.8,
+        0.55
+      ],
+      "range": 13,
+      "intensity": 1.6
+    }
+  },
+  "textures": {
+    "wall": "Brick/Horror_Brick_08-128x128.png",
+    "floor": "Custom/asphalt.png",
+    "door": "Custom/WoodenDoor2diffuse.png",
+    "sidewalk": "Custom/street_sidewalk.png",
+    "wood": "Floor/Horror_Floor_03-128x128.png",
+    "metal": "Metal/Horror_Metal_01-128x128.png",
+    "stain": "Stains/Horror_Stain_08-128x128.png",
+    "window": "Custom/MetalCageWindow.png",
+    "stone": "Custom/church_stone.png",
+    "tile": "Custom/plaza_tile.png",
+    "marble": "Custom/shop_marble.png"
+  },
+  "audio": {
+    "reverb": "hall",
+    "floor_material": "stone",
+    "ambience": "house"
+  },
+  "walls": [
+    {
+      "start": [
+        27.5,
+        -9
+      ],
+      "end": [
+        27.5,
+        9
+      ],
+      "openings": [
+        {
+          "kind": "passage",
+          "offset": 2.5,
+          "width": 7,
+          "height": 4.6,
+          "door": "closed",
+          "to": "room_luque_cerro_cora",
+          "spawn": "from_luque_aquino_este"
+        }
+      ]
+    },
+    {
+      "start": [
+        27.5,
+        9
+      ],
+      "end": [
+        22.3,
+        9
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 1.6,
+          "width": 1.4,
+          "height": 2.3,
+          "door": "closed",
+          "to": "room_joyeria_bambu",
+          "spawn": "from_luque_aquino_este"
+        }
+      ]
+    },
+    {
+      "start": [
+        23.1,
+        9
+      ],
+      "end": [
+        17.3,
+        9
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 2.2,
+          "width": 1.4,
+          "height": 2.3,
+          "door": "closed",
+          "to": "room_joyeria_diamante",
+          "spawn": "from_luque_aquino_este"
+        }
+      ]
+    },
+    {
+      "start": [
+        -27.5,
+        9
+      ],
+      "end": [
+        -27.5,
+        -9
+      ],
+      "openings": [
+        {
+          "kind": "passage",
+          "offset": 2.5,
+          "width": 7,
+          "height": 4.6,
+          "door": "closed",
+          "to": "room_luque_aquino_municipal",
+          "spawn": "from_luque_aquino_este"
+        }
+      ]
+    }
+  ],
+  "props": [
+    {
+      "kind": "box",
+      "position": [
+        0,
+        0.06,
+        -6.5
+      ],
+      "size": [
+        55,
+        0.12,
+        2.6
+      ],
+      "texture": "sidewalk",
+      "tint": 0.55,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        0.06,
+        6.5
+      ],
+      "size": [
+        55,
+        0.12,
+        2.6
+      ],
+      "texture": "sidewalk",
+      "tint": 0.55,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -22,
+        0.005,
+        0
+      ],
+      "size": [
+        2.2,
+        0.01,
+        0.3
+      ],
+      "texture": "sidewalk",
+      "tint": 0.95,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -12,
+        0.005,
+        0
+      ],
+      "size": [
+        2.2,
+        0.01,
+        0.3
+      ],
+      "texture": "sidewalk",
+      "tint": 0.95,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2,
+        0.005,
+        0
+      ],
+      "size": [
+        2.2,
+        0.01,
+        0.3
+      ],
+      "texture": "sidewalk",
+      "tint": 0.95,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        8,
+        0.005,
+        0
+      ],
+      "size": [
+        2.2,
+        0.01,
+        0.3
+      ],
+      "texture": "sidewalk",
+      "tint": 0.95,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        18,
+        0.005,
+        0
+      ],
+      "size": [
+        2.2,
+        0.01,
+        0.3
+      ],
+      "texture": "sidewalk",
+      "tint": 0.95,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "sign",
+      "position": [
+        25.2,
+        3.15,
+        8.78
+      ],
+      "size": [
+        2.8,
+        0.7,
+        0.02
+      ],
+      "text": "BAMBÚ JOYA",
+      "yaw": 180
+    },
+    {
+      "kind": "sign",
+      "position": [
+        20.2,
+        3.15,
+        8.78
+      ],
+      "size": [
+        2.8,
+        0.7,
+        0.02
+      ],
+      "text": "JOYERÍA DIAMANTE",
+      "yaw": 180
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        -0.02,
+        -12
+      ],
+      "size": [
+        59,
+        0.1,
+        7
+      ],
+      "texture": "sidewalk",
+      "tint": 0.5,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        -0.02,
+        12
+      ],
+      "size": [
+        59,
+        0.1,
+        7
+      ],
+      "texture": "sidewalk",
+      "tint": 0.5,
+      "collide": false
+    }
+  ],
+  "models": [
+    {
+      "file": "street/streetlights_traffic.glb",
+      "position": [
+        -19.5,
+        0,
+        -6.2
+      ],
+      "yaw": 0,
+      "scale": 0.12,
+      "tint": 0.8,
+      "subdivision": 0
+    },
+    {
+      "file": "street/streetlights_traffic.glb",
+      "position": [
+        19.5,
+        0,
+        6.2
+      ],
+      "yaw": 180,
+      "scale": 0.12,
+      "tint": 0.8,
+      "subdivision": 0
+    },
+    {
+      "file": "street/manhole.glb",
+      "position": [
+        11,
+        0.02,
+        1
+      ],
+      "yaw": 0,
+      "scale": 0.3,
+      "tint": 0.6,
+      "subdivision": 0
+    },
+    {
+      "file": "street/trash_bag.glb",
+      "position": [
+        17,
+        0,
+        6.4
+      ],
+      "yaw": 45,
+      "tint": 0.7,
+      "subdivision": 0
+    },
+    {
+      "file": "street/house_type05.glb",
+      "position": [
+        -22,
+        0,
+        -11.025
+      ],
+      "yaw": 180,
+      "scale": 6,
+      "tint": 0.8,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        5.85
+      ]
+    },
+    {
+      "file": "street/house_type14.glb",
+      "position": [
+        -11,
+        0,
+        -11.2
+      ],
+      "yaw": 180,
+      "scale": 6.4,
+      "tint": 0.89,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        6.199999999999999
+      ]
+    },
+    {
+      "file": "street/house_type19.glb",
+      "position": [
+        0,
+        0,
+        -11.375
+      ],
+      "yaw": 180,
+      "scale": 6.8,
+      "tint": 0.62,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        6.549999999999999
+      ]
+    },
+    {
+      "file": "street/house_type01.glb",
+      "position": [
+        11,
+        0,
+        -11.025
+      ],
+      "yaw": 180,
+      "scale": 6,
+      "tint": 0.71,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        5.85
+      ]
+    },
+    {
+      "file": "street/house_type07.glb",
+      "position": [
+        22,
+        0,
+        -11.2
+      ],
+      "yaw": 180,
+      "scale": 6.4,
+      "tint": 0.8,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        6.199999999999999
+      ]
+    },
+    {
+      "file": "street/house_type16.glb",
+      "position": [
+        -22,
+        0,
+        11.025
+      ],
+      "yaw": 0,
+      "scale": 6,
+      "tint": 0.8,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        5.85
+      ]
+    },
+    {
+      "file": "street/house_type21.glb",
+      "position": [
+        -11,
+        0,
+        11.2
+      ],
+      "yaw": 0,
+      "scale": 6.4,
+      "tint": 0.89,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        6.199999999999999
+      ]
+    },
+    {
+      "file": "street/house_type05.glb",
+      "position": [
+        0,
+        0,
+        11.375
+      ],
+      "yaw": 0,
+      "scale": 6.8,
+      "tint": 0.62,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        6.549999999999999
+      ]
+    },
+    {
+      "file": "street/house_type14.glb",
+      "position": [
+        11,
+        0,
+        11.025
+      ],
+      "yaw": 0,
+      "scale": 6,
+      "tint": 0.71,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        5.85
+      ]
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        16.8,
+        0,
+        10.2
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "collide": true,
+      "size": [
+        2.2,
+        1.2,
+        0.5
+      ],
+      "subdivision": 0
+    }
+  ],
+  "items": [
+    {
+      "id": "poster_6",
+      "position": [
+        20.2,
+        1.8,
+        8.78
+      ],
+      "yaw": 180
+    }
+  ],
+  "spawns": {
+    "from_luque_aquino_municipal": {
+      "position": [
+        -26.25,
+        3
+      ],
+      "yaw": 270
+    },
+    "from_luque_cerro_cora": {
+      "position": [
+        26.25,
+        -3
+      ],
+      "yaw": 90
+    },
+    "from_joyeria_bambu": {
+      "position": [
+        25.2,
+        7.75
+      ],
+      "yaw": 0
+    },
+    "from_joyeria_diamante": {
+      "position": [
+        20.2,
+        7.75
+      ],
+      "yaw": 0
+    },
+    "start": {
+      "position": [
+        0,
+        -4
+      ],
+      "yaw": 90
+    }
+  }
+}

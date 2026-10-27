@@ -408,6 +408,62 @@
       "yaw": 90
     }
   ],
+  "events": [
+    {
+      "id": "vestibulo_telefono",
+      "kind": "sound",
+      "sound": "phone_ring",
+      "position": [
+        3.3,
+        0.95,
+        -2.85
+      ],
+      "repeat": 4,
+      "interval": 3,
+      "when": {
+        "posters": 6,
+        "visits": 2
+      }
+    },
+    {
+      "id": "vestibulo_sillon",
+      "kind": "moved",
+      "model": 3,
+      "yaw": 90,
+      "when": {
+        "posters": 3,
+        "visits": 3
+      }
+    },
+    {
+      "id": "vestibulo_cuadro",
+      "kind": "defaced",
+      "texture": "ps2/painting_b.png",
+      "position": [
+        2.6,
+        1.6,
+        -3.17
+      ],
+      "size": [
+        0.7,
+        0.9,
+        0.03
+      ],
+      "eyes": [
+        [
+          0.441,
+          0.371
+        ],
+        [
+          0.559,
+          0.371
+        ]
+      ],
+      "when": {
+        "posters": 9
+      }
+    }
+  ],
   "spawns": {
     "from_salon": {
       "position": [

@@ -365,6 +365,31 @@
       "decal": true
     }
   ],
+  "hides": [
+    {
+      "id": "pasillo_alto_ropero",
+      "kind": "wardrobe",
+      "position": [
+        -4.3,
+        0.8
+      ],
+      "yaw": 0
+    }
+  ],
+  "events": [
+    {
+      "id": "pasillo_alto_silueta",
+      "kind": "apparition",
+      "position": [
+        6.1,
+        0
+      ],
+      "when": {
+        "posters": 5,
+        "chance": 0.6
+      }
+    }
+  ],
   "spawns": {
     "from_escalera": {
       "position": [

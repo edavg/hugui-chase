@@ -66,6 +66,13 @@ export interface PsxConfig {
     // recibir un golpe. Opcionales: si faltan se usan los valores por defecto.
     hearts?: number;
     hit_invuln_seconds?: number;
+    // Aguante (M13): segundos de carrera con el aguante lleno, segundos para
+    // recuperarlo entero, nivel al que se puede volver a correr tras agotarse
+    // y factor de velocidad al caminar agotado. Opcionales.
+    stamina_seconds?: number;
+    stamina_recover_seconds?: number;
+    stamina_resume?: number;
+    exhausted_speed?: number;
   };
   enemy: {
     chase_speed: number;
@@ -103,6 +110,32 @@ export interface PsxConfig {
     // base) hasta un tope acumulado. Opcionales (0.05 por afiche, tope 1.35).
     poster_speed_step?: number;
     poster_speed_max?: number;
+    // Percepción (M13): la linterna encendida alarga la vista, en salas oscuras
+    // sin linterna se acorta, y el haz apuntado al stalker lo delata aunque
+    // esté de espaldas. Jadear (agotado) se oye a pant_hearing metros.
+    flashlight_sight_scale?: number;
+    dark_sight_scale?: number;
+    beam_notice_range?: number;
+    beam_notice_deg?: number;
+    pant_hearing?: number;
+    // Escondites: usos de un mismo escondite a partir de los que lo revisa por
+    // su cuenta, segundos que tarda en revisarlo y radio en que ve la linterna
+    // encendida dentro de un escondite.
+    hide_check_uses?: number;
+    inspect_seconds?: number;
+    hide_light_radius?: number;
+    // Memoria: segundos que recuerda las salas donde te vio u oyó y
+    // probabilidad de elegir una de ellas como siguiente destino de patrulla.
+    memory_seconds?: number;
+    memory_chance?: number;
+    // Trampas: intervalo aleatorio entre señuelos (portazo o silbido lejos de
+    // por donde viene).
+    lure_min_seconds?: number;
+    lure_max_seconds?: number;
+    // Ruido de quemar un afiche: lo oye a esta distancia en salas.
+    burn_noise_hops?: number;
+    // Rastros (huellas y puertas entornadas): segundos que duran.
+    trace_seconds?: number;
   };
   loading: {
     authentic: boolean;

@@ -292,6 +292,17 @@
       ]
     }
   ],
+  "hides": [
+    {
+      "id": "invitados_ropero",
+      "kind": "wardrobe",
+      "position": [
+        -2.85,
+        0.7
+      ],
+      "yaw": 270
+    }
+  ],
   "spawns": {
     "from_pasillo_alto": {
       "position": [

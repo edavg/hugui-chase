@@ -115,200 +115,6 @@
       ]
     }
   ],
-  "props": [
-    {
-      "kind": "box",
-      "position": [
-        -1.35,
-        0.11,
-        1.9
-      ],
-      "size": [
-        1.1,
-        0.22,
-        0.3
-      ],
-      "texture": "stone",
-      "tint": 0.46,
-      "collide": true
-    },
-    {
-      "kind": "box",
-      "position": [
-        -1.35,
-        0.22,
-        1.64
-      ],
-      "size": [
-        1.1,
-        0.44,
-        0.3
-      ],
-      "texture": "stone",
-      "tint": 0.46,
-      "collide": true
-    },
-    {
-      "kind": "box",
-      "position": [
-        -1.35,
-        0.33,
-        1.38
-      ],
-      "size": [
-        1.1,
-        0.66,
-        0.3
-      ],
-      "texture": "stone",
-      "tint": 0.46,
-      "collide": true
-    },
-    {
-      "kind": "box",
-      "position": [
-        -1.35,
-        0.44,
-        1.12
-      ],
-      "size": [
-        1.1,
-        0.88,
-        0.3
-      ],
-      "texture": "stone",
-      "tint": 0.46,
-      "collide": true
-    },
-    {
-      "kind": "box",
-      "position": [
-        -1.35,
-        0.55,
-        0.86
-      ],
-      "size": [
-        1.1,
-        1.1,
-        0.3
-      ],
-      "texture": "stone",
-      "tint": 0.46,
-      "collide": true
-    },
-    {
-      "kind": "box",
-      "position": [
-        -1.35,
-        0.66,
-        0.6
-      ],
-      "size": [
-        1.1,
-        1.32,
-        0.3
-      ],
-      "texture": "stone",
-      "tint": 0.46,
-      "collide": true
-    },
-    {
-      "kind": "box",
-      "position": [
-        -1.35,
-        0.77,
-        0.34
-      ],
-      "size": [
-        1.1,
-        1.54,
-        0.3
-      ],
-      "texture": "stone",
-      "tint": 0.46,
-      "collide": true
-    },
-    {
-      "kind": "box",
-      "position": [
-        -1.35,
-        0.88,
-        0.08
-      ],
-      "size": [
-        1.1,
-        1.76,
-        0.3
-      ],
-      "texture": "stone",
-      "tint": 0.46,
-      "collide": true
-    },
-    {
-      "kind": "box",
-      "position": [
-        -1.35,
-        0.99,
-        -0.18
-      ],
-      "size": [
-        1.1,
-        1.98,
-        0.3
-      ],
-      "texture": "stone",
-      "tint": 0.46,
-      "collide": true
-    },
-    {
-      "kind": "box",
-      "position": [
-        -1.35,
-        1.1,
-        -0.44
-      ],
-      "size": [
-        1.1,
-        2.2,
-        0.3
-      ],
-      "texture": "stone",
-      "tint": 0.46,
-      "collide": true
-    },
-    {
-      "kind": "box",
-      "position": [
-        -1.35,
-        1.21,
-        -0.7
-      ],
-      "size": [
-        1.1,
-        2.42,
-        0.3
-      ],
-      "texture": "stone",
-      "tint": 0.46,
-      "collide": true
-    },
-    {
-      "kind": "box",
-      "position": [
-        -1.35,
-        1.32,
-        -0.96
-      ],
-      "size": [
-        1.1,
-        2.64,
-        0.3
-      ],
-      "texture": "stone",
-      "tint": 0.46,
-      "collide": true
-    }
-  ],
   "models": [
     {
       "file": "bedroom/room_furniture.glb",
@@ -337,6 +143,17 @@
         0.9
       ],
       "yaw": 35
+    }
+  ],
+  "hides": [
+    {
+      "id": "sotano_taquilla",
+      "kind": "locker",
+      "position": [
+        1.85,
+        2.2
+      ],
+      "yaw": 90
     }
   ],
   "spawns": {

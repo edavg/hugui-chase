@@ -1,0 +1,955 @@
+{
+  "id": "room_luque_plaza",
+  "name": "Plaza Mariscal López",
+  "size": [
+    36,
+    5,
+    30
+  ],
+  "texture_scale": 6,
+  "wall_thickness": 0.3,
+  "open_sky": true,
+  "door_fit": true,
+  "atmosphere": {
+    "fog_start": 4,
+    "fog_end": 28,
+    "fog_color": [
+      0.02,
+      0.02,
+      0.03
+    ],
+    "ambient": 0.17,
+    "direct": 0.22,
+    "lamp": {
+      "position": [
+        0,
+        4.5,
+        0
+      ],
+      "color": [
+        1,
+        0.82,
+        0.58
+      ],
+      "range": 16,
+      "intensity": 1.8
+    }
+  },
+  "textures": {
+    "wall": "Custom/street_brickwall.png",
+    "floor": "Custom/plaza_tile.png",
+    "door": "Custom/WoodenDoor2diffuse.png",
+    "sidewalk": "Custom/street_sidewalk.png",
+    "wood": "Floor/Horror_Floor_03-128x128.png",
+    "metal": "Metal/Horror_Metal_01-128x128.png",
+    "stain": "Stains/Horror_Stain_08-128x128.png",
+    "window": "Custom/MetalCageWindow.png",
+    "stone": "Custom/church_stone.png"
+  },
+  "audio": {
+    "reverb": "hall",
+    "floor_material": "stone",
+    "ambience": "house"
+  },
+  "walls": [
+    {
+      "start": [
+        18,
+        -15
+      ],
+      "end": [
+        18,
+        15
+      ],
+      "openings": [
+        {
+          "kind": "passage",
+          "offset": 2.5,
+          "width": 7,
+          "height": 4.6,
+          "door": "closed",
+          "to": "room_luque_aquino_centro",
+          "spawn": "from_luque_plaza"
+        }
+      ]
+    },
+    {
+      "start": [
+        -18,
+        15
+      ],
+      "end": [
+        -18,
+        -15
+      ],
+      "openings": [
+        {
+          "kind": "passage",
+          "offset": 2.5,
+          "width": 7,
+          "height": 4.6,
+          "door": "closed",
+          "to": "room_luque_aquino_joyeros",
+          "spawn": "from_luque_plaza"
+        }
+      ]
+    }
+  ],
+  "props": [
+    {
+      "kind": "cylinder",
+      "position": [
+        0,
+        0.18,
+        0
+      ],
+      "size": [
+        7,
+        0.36,
+        7
+      ],
+      "texture": "stone",
+      "tint": 0.85,
+      "collide": true,
+      "segments": 16
+    },
+    {
+      "kind": "cylinder",
+      "position": [
+        0,
+        1.4,
+        0
+      ],
+      "size": [
+        1,
+        2.2,
+        1
+      ],
+      "texture": "stone",
+      "tint": 0.9,
+      "collide": true,
+      "segments": 10
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        2.95,
+        0
+      ],
+      "size": [
+        1.1,
+        0.9,
+        1.1
+      ],
+      "texture": "stone",
+      "tint": 0.95,
+      "collide": true
+    },
+    {
+      "kind": "sign",
+      "position": [
+        0,
+        3.6,
+        -0.62
+      ],
+      "size": [
+        2.6,
+        0.6,
+        0.02
+      ],
+      "text": "PLZA. MARISCAL LÓPEZ",
+      "yaw": 0
+    },
+    {
+      "kind": "cylinder",
+      "position": [
+        10,
+        0.3,
+        8
+      ],
+      "size": [
+        3.2,
+        0.6,
+        3.2
+      ],
+      "texture": "stone",
+      "tint": 0.8,
+      "collide": true,
+      "segments": 14
+    },
+    {
+      "kind": "cylinder",
+      "position": [
+        10,
+        1.05,
+        8
+      ],
+      "size": [
+        0.8,
+        1.5,
+        0.8
+      ],
+      "texture": "stone",
+      "tint": 0.85,
+      "collide": true,
+      "segments": 10
+    },
+    {
+      "kind": "box",
+      "position": [
+        -6,
+        0.42,
+        -7
+      ],
+      "size": [
+        1.9,
+        0.09,
+        0.55
+      ],
+      "texture": "wood",
+      "tint": 0.75
+    },
+    {
+      "kind": "box",
+      "position": [
+        6,
+        0.42,
+        -7
+      ],
+      "size": [
+        1.9,
+        0.09,
+        0.55
+      ],
+      "texture": "wood",
+      "tint": 0.75
+    },
+    {
+      "kind": "box",
+      "position": [
+        -6,
+        0.42,
+        7
+      ],
+      "size": [
+        1.9,
+        0.09,
+        0.55
+      ],
+      "texture": "wood",
+      "tint": 0.75
+    },
+    {
+      "kind": "box",
+      "position": [
+        6,
+        0.42,
+        7
+      ],
+      "size": [
+        1.9,
+        0.09,
+        0.55
+      ],
+      "texture": "wood",
+      "tint": 0.75
+    },
+    {
+      "kind": "box",
+      "position": [
+        -6,
+        0.21,
+        -7
+      ],
+      "size": [
+        1.7,
+        0.42,
+        0.16
+      ],
+      "texture": "metal",
+      "tint": 0.6
+    },
+    {
+      "kind": "box",
+      "position": [
+        6,
+        0.21,
+        -7
+      ],
+      "size": [
+        1.7,
+        0.42,
+        0.16
+      ],
+      "texture": "metal",
+      "tint": 0.6
+    },
+    {
+      "kind": "box",
+      "position": [
+        -6,
+        0.21,
+        7
+      ],
+      "size": [
+        1.7,
+        0.42,
+        0.16
+      ],
+      "texture": "metal",
+      "tint": 0.6
+    },
+    {
+      "kind": "box",
+      "position": [
+        6,
+        0.21,
+        7
+      ],
+      "size": [
+        1.7,
+        0.42,
+        0.16
+      ],
+      "texture": "metal",
+      "tint": 0.6
+    },
+    {
+      "kind": "box",
+      "position": [
+        -12,
+        0.07,
+        -10
+      ],
+      "size": [
+        5,
+        0.14,
+        4
+      ],
+      "texture": "stain",
+      "tint": 0.35,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        12,
+        0.07,
+        -10
+      ],
+      "size": [
+        5,
+        0.14,
+        4
+      ],
+      "texture": "stain",
+      "tint": 0.35,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -12,
+        0.07,
+        10
+      ],
+      "size": [
+        5,
+        0.14,
+        4
+      ],
+      "texture": "stain",
+      "tint": 0.35,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        12,
+        0.07,
+        10
+      ],
+      "size": [
+        5,
+        0.14,
+        4
+      ],
+      "texture": "stain",
+      "tint": 0.35,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        -0.02,
+        -18
+      ],
+      "size": [
+        40,
+        0.1,
+        7
+      ],
+      "texture": "sidewalk",
+      "tint": 0.5,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        -0.02,
+        18
+      ],
+      "size": [
+        40,
+        0.1,
+        7
+      ],
+      "texture": "sidewalk",
+      "tint": 0.5,
+      "collide": false
+    }
+  ],
+  "models": [
+    {
+      "file": "street/tree_small.glb",
+      "position": [
+        -12,
+        0,
+        -10
+      ],
+      "yaw": -94,
+      "scale": 3,
+      "tint": 0.4,
+      "collide": true,
+      "size": [
+        1.2,
+        2.5,
+        1.2
+      ],
+      "subdivision": 0
+    },
+    {
+      "file": "street/tree_large.glb",
+      "position": [
+        12,
+        0,
+        -10
+      ],
+      "yaw": 74,
+      "scale": 4,
+      "tint": 0.4,
+      "collide": true,
+      "size": [
+        1.2,
+        2.5,
+        1.2
+      ],
+      "subdivision": 0
+    },
+    {
+      "file": "street/tree_small.glb",
+      "position": [
+        -12,
+        0,
+        10
+      ],
+      "yaw": -74,
+      "scale": 3,
+      "tint": 0.4,
+      "collide": true,
+      "size": [
+        1.2,
+        2.5,
+        1.2
+      ],
+      "subdivision": 0
+    },
+    {
+      "file": "street/tree_large.glb",
+      "position": [
+        12,
+        0,
+        10
+      ],
+      "yaw": 94,
+      "scale": 4,
+      "tint": 0.4,
+      "collide": true,
+      "size": [
+        1.2,
+        2.5,
+        1.2
+      ],
+      "subdivision": 0
+    },
+    {
+      "file": "street/tree_small.glb",
+      "position": [
+        -15,
+        0,
+        0
+      ],
+      "yaw": -105,
+      "scale": 3,
+      "tint": 0.4,
+      "collide": true,
+      "size": [
+        1.2,
+        2.5,
+        1.2
+      ],
+      "subdivision": 0
+    },
+    {
+      "file": "street/tree_large.glb",
+      "position": [
+        15,
+        0,
+        0
+      ],
+      "yaw": 105,
+      "scale": 4,
+      "tint": 0.4,
+      "collide": true,
+      "size": [
+        1.2,
+        2.5,
+        1.2
+      ],
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        -13.25,
+        0,
+        -12
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        -10.75,
+        0,
+        -12
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        -13.25,
+        0,
+        -8
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        -10.75,
+        0,
+        -8
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        10.75,
+        0,
+        -12
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        13.25,
+        0,
+        -12
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        10.75,
+        0,
+        -8
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        13.25,
+        0,
+        -8
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        -13.25,
+        0,
+        8
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        -10.75,
+        0,
+        8
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        -13.25,
+        0,
+        12
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        -10.75,
+        0,
+        12
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        10.75,
+        0,
+        8
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        13.25,
+        0,
+        8
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        10.75,
+        0,
+        12
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        13.25,
+        0,
+        12
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "subdivision": 0
+    },
+    {
+      "file": "street/streetlights_traffic.glb",
+      "position": [
+        -14,
+        0,
+        -11
+      ],
+      "yaw": 0,
+      "scale": 0.12,
+      "tint": 0.8,
+      "subdivision": 0
+    },
+    {
+      "file": "street/streetlights_traffic.glb",
+      "position": [
+        14,
+        0,
+        11
+      ],
+      "yaw": 180,
+      "scale": 0.12,
+      "tint": 0.8,
+      "subdivision": 0
+    },
+    {
+      "file": "street/trash_bag.glb",
+      "position": [
+        -13,
+        0,
+        8
+      ],
+      "yaw": 50,
+      "tint": 0.65,
+      "subdivision": 0
+    },
+    {
+      "file": "street/house_type07.glb",
+      "position": [
+        -13.5,
+        0,
+        -17.025
+      ],
+      "yaw": 180,
+      "scale": 6,
+      "tint": 0.89,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        5.85
+      ]
+    },
+    {
+      "file": "street/house_type15.glb",
+      "position": [
+        -4.5,
+        0,
+        -17.2
+      ],
+      "yaw": 180,
+      "scale": 6.4,
+      "tint": 0.62,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        6.199999999999999
+      ]
+    },
+    {
+      "file": "street/house_type20.glb",
+      "position": [
+        4.5,
+        0,
+        -17.375
+      ],
+      "yaw": 180,
+      "scale": 6.8,
+      "tint": 0.71,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        6.549999999999999
+      ]
+    },
+    {
+      "file": "street/house_type04.glb",
+      "position": [
+        13.5,
+        0,
+        -17.025
+      ],
+      "yaw": 180,
+      "scale": 6,
+      "tint": 0.8,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        5.85
+      ]
+    },
+    {
+      "file": "street/house_type19.glb",
+      "position": [
+        -13.5,
+        0,
+        17.025
+      ],
+      "yaw": 0,
+      "scale": 6,
+      "tint": 0.89,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        5.85
+      ]
+    },
+    {
+      "file": "street/house_type01.glb",
+      "position": [
+        -4.5,
+        0,
+        17.2
+      ],
+      "yaw": 0,
+      "scale": 6.4,
+      "tint": 0.62,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        6.199999999999999
+      ]
+    },
+    {
+      "file": "street/house_type07.glb",
+      "position": [
+        4.5,
+        0,
+        17.375
+      ],
+      "yaw": 0,
+      "scale": 6.8,
+      "tint": 0.71,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        6.549999999999999
+      ]
+    },
+    {
+      "file": "street/house_type15.glb",
+      "position": [
+        13.5,
+        0,
+        17.025
+      ],
+      "yaw": 0,
+      "scale": 6,
+      "tint": 0.8,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        5.85
+      ]
+    },
+    {
+      "file": "street/house_type16.glb",
+      "position": [
+        -20.375,
+        0,
+        3.3
+      ],
+      "yaw": 270,
+      "scale": 6.8,
+      "tint": 0.62,
+      "subdivision": 0,
+      "collide": false,
+      "size": [
+        7.6,
+        4.5,
+        6.549999999999999
+      ]
+    },
+    {
+      "file": "street/house_type04.glb",
+      "position": [
+        20.375,
+        0,
+        -2.2
+      ],
+      "yaw": 90,
+      "scale": 6.8,
+      "tint": 0.62,
+      "subdivision": 0,
+      "collide": false,
+      "size": [
+        7.6,
+        4.5,
+        6.549999999999999
+      ]
+    }
+  ],
+  "spawns": {
+    "from_luque_aquino_joyeros": {
+      "position": [
+        -16.75,
+        9
+      ],
+      "yaw": 270
+    },
+    "from_luque_aquino_centro": {
+      "position": [
+        16.75,
+        -9
+      ],
+      "yaw": 90
+    },
+    "start": {
+      "position": [
+        -12,
+        13
+      ],
+      "yaw": 0
+    }
+  }
+}

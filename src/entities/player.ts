@@ -21,9 +21,23 @@ const WAKE_FLOOR_HEIGHT = 0.18;
 const WAKE_PITCH = 0.4;
 const WAKE_ROLL = 0.12;
 
+// Aguante (valores por defecto si el config no los trae).
+const DEFAULT_STAMINA_SECONDS = 6;
+const DEFAULT_STAMINA_RECOVER = 8;
+const DEFAULT_STAMINA_RESUME = 0.4;
+const DEFAULT_EXHAUSTED_SPEED = 0.85;
+// Recuperar caminando cuesta más que quieto.
+const WALK_RECOVER_FACTOR = 0.6;
+
+// Escondido: la mirada queda limitada a lo que deja ver la rejilla.
+const HIDE_YAW_LIMIT = 0.55;
+const HIDE_PITCH_LIMIT = 0.3;
+
 export class Player {
   readonly camera: THREE.PerspectiveCamera;
   readonly position = new THREE.Vector3();
+  // Desplazamiento real en X/Z, después de resolver las colisiones.
+  readonly movement = new THREE.Vector2();
   onFootstep: ((running: boolean) => void) | null = null;
 
   private yaw: number;
@@ -32,6 +46,9 @@ export class Player {
   private locomotionBlend = 0;
   private running = false;
   private wakeAmount = 0;
+  private stamina = 1;
+  private exhausted = false;
+  private hideYaw: number | null = null;
 
   constructor(
     private readonly config: PsxConfig,
@@ -72,6 +89,43 @@ export class Player {
     return this.wakeAmount > 0.001;
   }
 
+  get staminaLevel(): number {
+    return this.stamina;
+  }
+
+  // Agotado: no puede correr hasta recuperar stamina_resume y jadea (se oye).
+  get isExhausted(): boolean {
+    return this.exhausted;
+  }
+
+  // El jugador se recrea al cambiar de sala: cruzar una puerta no recupera aliento.
+  inheritStamina(previous: Player): void {
+    this.stamina = previous.stamina;
+    this.exhausted = previous.exhausted;
+  }
+
+  get hidden(): boolean {
+    return this.hideYaw !== null;
+  }
+
+  // Dentro de un escondite: ojo en la rejilla, mirando hacia fuera.
+  enterHide(eyeX: number, eyeZ: number, yaw: number): void {
+    this.hideYaw = yaw;
+    this.yaw = yaw;
+    this.pitch = 0;
+    this.running = false;
+    this.locomotionBlend = 0;
+    this.movement.set(0, 0);
+    this.position.set(eyeX, 0, eyeZ);
+    this.placeCamera(this.config, 0);
+  }
+
+  exitHide(x: number, z: number): void {
+    this.hideYaw = null;
+    this.position.set(x, 0, z);
+    this.placeCamera(this.config, 0);
+  }
+
   knockback(fromX: number, fromZ: number, distance: number): void {
     const dx = this.position.x - fromX;
     const dz = this.position.z - fromZ;
@@ -101,6 +155,8 @@ export class Player {
   }
 
   update(dt: number, config: PsxConfig, input: Input): void {
+    const previousX = this.position.x;
+    const previousZ = this.position.z;
     const mouse = input.consumeMouseDelta();
     const look = input.padLookAxis();
     const sensitivity = config.player.look_sensitivity;
@@ -109,6 +165,16 @@ export class Player {
     this.yaw -= lookX * sensitivity;
     const pitchSign = config.player.invert_look ? 1 : -1;
     this.pitch = THREE.MathUtils.clamp(this.pitch + pitchSign * lookY * sensitivity, -1.5, 1.5);
+
+    if (this.hideYaw !== null) {
+      this.yaw = this.hideYaw + THREE.MathUtils.clamp(this.yaw - this.hideYaw, -HIDE_YAW_LIMIT, HIDE_YAW_LIMIT);
+      this.pitch = THREE.MathUtils.clamp(this.pitch, -HIDE_PITCH_LIMIT, HIDE_PITCH_LIMIT);
+      this.updateStamina(dt, config, false, false);
+      this.movement.set(0, 0);
+      this.locomotionBlend = 0;
+      this.placeCamera(config, 0);
+      return;
+    }
 
     const stick = input.moveAxis();
     let forward = stick.y;
@@ -125,16 +191,19 @@ export class Player {
       if (input.isDown('KeyD') || input.isDown('ArrowRight')) strafe += 1;
     }
 
-    const running = input.isDown('ShiftLeft') || input.isDown('ShiftRight') || input.padDown('run');
-    this.running = running;
-    const speed = running ? config.player.run : config.player.walk;
-
     const sinYaw = Math.sin(this.yaw);
     const cosYaw = Math.cos(this.yaw);
     let moveX = -sinYaw * forward + cosYaw * strafe;
     let moveZ = -cosYaw * forward - sinYaw * strafe;
 
     const moveLength = Math.hypot(moveX, moveZ);
+    const wantsRun = input.isDown('ShiftLeft') || input.isDown('ShiftRight') || input.padDown('run');
+    const running = wantsRun && moveLength > 0 && !this.exhausted;
+    this.running = running;
+    this.updateStamina(dt, config, running, moveLength > 0);
+    const speed = running
+      ? config.player.run
+      : config.player.walk * (this.exhausted ? config.player.exhausted_speed ?? DEFAULT_EXHAUSTED_SPEED : 1);
     let distance = 0;
     if (moveLength > 0) {
       moveX /= moveLength;
@@ -151,6 +220,7 @@ export class Player {
       }
     }
 
+    this.movement.set(this.position.x - previousX, this.position.z - previousZ);
     const targetBlend = moveLength > 0 ? 1 : 0;
     this.locomotionBlend += (targetBlend - this.locomotionBlend) * Math.min(1, dt * 10);
 
@@ -159,6 +229,21 @@ export class Player {
     const bobY = Math.sin(this.bobPhase) * bobAmplitude;
 
     this.placeCamera(config, bobY);
+  }
+
+  private updateStamina(dt: number, config: PsxConfig, running: boolean, moving: boolean): void {
+    if (running) {
+      this.stamina -= dt / (config.player.stamina_seconds ?? DEFAULT_STAMINA_SECONDS);
+    } else {
+      const recover = dt / (config.player.stamina_recover_seconds ?? DEFAULT_STAMINA_RECOVER);
+      this.stamina += moving ? recover * WALK_RECOVER_FACTOR : recover;
+    }
+    this.stamina = THREE.MathUtils.clamp(this.stamina, 0, 1);
+    if (this.stamina <= 0) {
+      this.exhausted = true;
+    } else if (this.exhausted && this.stamina >= (config.player.stamina_resume ?? DEFAULT_STAMINA_RESUME)) {
+      this.exhausted = false;
+    }
   }
 
   private moveWithCollisions(dx: number, dz: number, radius: number): void {

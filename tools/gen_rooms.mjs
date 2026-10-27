@@ -116,22 +116,6 @@ function round(value) {
   return Math.round(value * 1000) / 1000;
 }
 
-const STEP = (x, width, zStart, count, pitchZ, heightStep, texture, tint) => {
-  const steps = [];
-  for (let i = 0; i < count; i += 1) {
-    const height = heightStep * (i + 1);
-    steps.push({
-      kind: 'box',
-      position: [x, round(height / 2), round(zStart - pitchZ * i)],
-      size: [width, round(height), 0.3],
-      texture,
-      tint,
-      collide: true,
-    });
-  }
-  return steps;
-};
-
 // Chimenea completa contra un muro (x centrado; wallZ = cara interior del muro;
 // dir = +1 si la sala queda hacia +Z, -1 si hacia -Z). Jambas y dintel de
 // piedra, hogar ennegrecido con brasas y leños, repisa de madera, campana de
@@ -699,9 +683,6 @@ const rooms = [
       { file: 'bedroom/room_furniture.glb', node: 'Mesa_Cabeceira_*', position: [1.85, 0.0, 0.9], yaw: 180, tint: 1.2, collide: true, size: [0.5, 0.45, 0.5] },
     ],
     items: [{ id: 'flashlight', position: [1.85, 0.46, 0.9], yaw: 35 }],
-    props: [
-      ...STEP(-1.35, 1.1, 1.9, 12, 0.26, 0.22, 'stone', 0.46),
-    ],
   },
   {
     id: 'room_lavanderia',
@@ -1204,6 +1185,60 @@ const SKINS = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// M13 — Escondites y sustos con guion
+// ---------------------------------------------------------------------------
+// Escondites: centro [x, z] apoyado contra un muro y `yaw` hacia donde mira el
+// frente (0 = -Z, 90 = -X, 180 = +Z, 270 = +X). Posiciones elegidas con paso
+// libre delante y lejos de puertas, ventanas, afiches y cuadros
+// (`node tools/check_access.mjs` lo verifica).
+const HIDES = {
+  room_salon: [{ id: 'salon_ropero', kind: 'wardrobe', position: [-1.3, 3.1], yaw: 0 }],
+  room_comedor: [{ id: 'comedor_aparador', kind: 'wardrobe', position: [-2.3, -2.35], yaw: 180 }],
+  room_pasillo: [{ id: 'pasillo_ropero', kind: 'wardrobe', position: [-1.5, 0.8], yaw: 0 }],
+  room_pasillo_alto: [{ id: 'pasillo_alto_ropero', kind: 'wardrobe', position: [-4.3, 0.8], yaw: 0 }],
+  room_dormitorio: [{ id: 'dormitorio_ropero', kind: 'wardrobe', position: [3.35, -0.6], yaw: 90 }],
+  room_cuarto: [{ id: 'cuarto_ropero', kind: 'wardrobe', position: [2.6, -1.0], yaw: 90 }],
+  room_invitados: [{ id: 'invitados_ropero', kind: 'wardrobe', position: [-2.85, 0.7], yaw: 270 }],
+  room_garaje: [{ id: 'garaje_taquilla', kind: 'locker', position: [-2.0, 3.1], yaw: 0 }],
+  room_sotano: [{ id: 'sotano_taquilla', kind: 'locker', position: [1.85, 2.2], yaw: 90 }],
+  room_lavanderia: [{ id: 'lavanderia_taquilla', kind: 'locker', position: [-2.5, -2.35], yaw: 180 }],
+  room_calderas: [{ id: 'calderas_taquilla', kind: 'locker', position: [0, 2.85], yaw: 0 }],
+  room_bodega: [{ id: 'bodega_taquilla', kind: 'locker', position: [-1.8, 2.1], yaw: 0 }],
+};
+
+// Sustos (ver src/systems/roomEvents.ts). `when.posters` = afiches quemados,
+// `when.visits` = a partir de qué visita a la sala, `when.chance` por visita.
+const EVENTS = {
+  room_pasillo: [
+    { id: 'pasillo_silueta', kind: 'apparition', position: [-5.6, 0.1], when: { posters: 2, chance: 0.6 } },
+  ],
+  room_pasillo_alto: [
+    { id: 'pasillo_alto_silueta', kind: 'apparition', position: [6.1, 0.0], when: { posters: 5, chance: 0.6 } },
+  ],
+  room_jardin: [
+    { id: 'jardin_silueta', kind: 'apparition', position: [0.0, 4.6], when: { posters: 7, chance: 0.7 } },
+  ],
+  room_salon: [
+    // El televisor del mueble se enciende solo: estática y parpadeo azul.
+    { id: 'salon_tele', kind: 'sound', sound: 'tv_static', position: [-0.5, 0.95, -2.95], repeat: 3, interval: 3.2, light: [0.55, 0.7, 1.0], when: { posters: 1, visits: 2 } },
+  ],
+  room_despacho: [
+    // La radio del escritorio.
+    { id: 'despacho_radio', kind: 'sound', sound: 'radio', position: [0.0, 0.9, -1.9], repeat: 2, interval: 3.8, when: { posters: 4 } },
+    // El sillón aparece mirando a la pared.
+    { id: 'despacho_sillon', kind: 'moved', model: 1, yaw: 180, when: { posters: 2, visits: 2 } },
+  ],
+  room_vestibulo: [
+    // El teléfono de la mesita.
+    { id: 'vestibulo_telefono', kind: 'sound', sound: 'phone_ring', position: [3.3, 0.95, -2.85], repeat: 4, interval: 3.0, when: { posters: 6, visits: 2 } },
+    // Un sillón girado hacia la puerta del Salón, como si alguien esperase.
+    { id: 'vestibulo_sillon', kind: 'moved', model: 3, yaw: 90, when: { posters: 3, visits: 3 } },
+    // El cuadro junto a la salida, con los ojos rayados (painting_b, ojos en UV).
+    { id: 'vestibulo_cuadro', kind: 'defaced', texture: 'ps2/painting_b.png', position: [2.6, 1.6, -3.17], size: [0.7, 0.9, 0.03], eyes: [[0.441, 0.371], [0.559, 0.371]], when: { posters: 9 } },
+  ],
+};
+
 const WALL_FURNITURE_DEFAULT = 'wood';
 const props_use_fireplace = (room) => (room.props ?? []).some((prop) => prop.texture === 'embers');
 let paintingFlip = 0;
@@ -1274,6 +1309,8 @@ const outputs = rooms.map((room) => {
   if (room.items && room.items.length > 0) {
     data.items = room.items;
   }
+  if (HIDES[room.id]) data.hides = HIDES[room.id];
+  if (EVENTS[room.id]) data.events = EVENTS[room.id];
   data.spawns = spawnsByRoom.get(room.id);
   return data;
 });

@@ -1,7 +1,8 @@
 import type { Language } from './i18n';
 import { TEXTS } from './i18n';
 import type { UiCanvas } from './uiCanvas';
-import { PALETTE, UI_WIDTH } from './uiCanvas';
+import { PALETTE } from './uiCanvas';
+import { Minimap, type MinimapBounds, type MinimapState } from './minimap';
 
 const TYPE_SPEED = 55;
 const TOAST_SECONDS = 2.6;
@@ -58,6 +59,15 @@ const HEART_ALPHA = 0.85;
 const HEART_EMPTY_ALPHA = 0.32;
 const DAMAGE_FLASH_DECAY = 1.4;
 
+const STAMINA_WIDTH = 84;
+const STAMINA_HEIGHT = 4;
+const STAMINA_GAP = 6;
+const STAMINA_COLOR = '#a9b8a2';
+const STAMINA_EXHAUSTED = '#c0392b';
+// Escondido: bandas oscuras arriba y abajo (la rejilla) y pulso rojo si hay peligro.
+const HIDE_BAND = 0.16;
+const HIDE_ALPHA = 0.5;
+
 const POSTER_MARGIN = 14;
 const POSTER_ICON_SIZE = 10;
 
@@ -74,6 +84,8 @@ export interface UiVisibility {
 
 export class Ui {
   private readonly ui: UiCanvas;
+  private readonly minimap: Minimap;
+  private minimapBounds: MinimapBounds | null = null;
   private readonly lang: () => Language;
   private options: UiOptions = {
     showSubtitles: true,
@@ -100,12 +112,19 @@ export class Ui {
   private maxHearts = 3;
   private damageFlash = 0;
 
+  private stamina = 1;
+  private exhausted = false;
+  private hidden = false;
+  private hideDanger = 0;
+  private time = 0;
+
   private posterHave = 0;
   private posterTotal = 12;
   private posterVisible = false;
 
   constructor(ui: UiCanvas, lang: () => Language) {
     this.ui = ui;
+    this.minimap = new Minimap(ui);
     this.lang = lang;
   }
 
@@ -155,6 +174,16 @@ export class Ui {
     return this.hearts;
   }
 
+  setStamina(level: number, exhausted: boolean): void {
+    this.stamina = Math.max(0, Math.min(1, level));
+    this.exhausted = exhausted;
+  }
+
+  setHidden(hidden: boolean, danger: number): void {
+    this.hidden = hidden;
+    this.hideDanger = Math.max(0, Math.min(1, danger));
+  }
+
   flashDamage(): void {
     this.damageFlash = 1;
   }
@@ -166,6 +195,7 @@ export class Ui {
 
   update(dt: number): void {
     this.ui.update(dt);
+    this.time += dt;
     if (this.damageFlash > 0) {
       this.damageFlash = Math.max(0, this.damageFlash - dt * DAMAGE_FLASH_DECAY);
     }
@@ -218,8 +248,12 @@ export class Ui {
     this.endingVisible = false;
   }
 
-  draw(): void {
+  draw(minimap?: MinimapState): void {
     this.ui.begin();
+    this.minimapBounds = null;
+    if (this.hidden && minimap === undefined && !this.noteVisible && !this.endingVisible) {
+      this.drawHidden();
+    }
     if (this.damageFlash > 0) {
       this.ui.rect(0, 0, this.ui.width, this.ui.height, PALETTE.accent, 0.3 * this.damageFlash);
     }
@@ -231,8 +265,12 @@ export class Ui {
       this.drawNote();
       return;
     }
+    if (minimap) {
+      this.minimapBounds = this.minimap.draw(minimap, this.lang(), this.options.touchControls);
+    }
     if (this.heartsVisible) {
       this.drawHearts();
+      this.drawStamina();
     }
     if (this.posterVisible) {
       this.drawPosterCount();
@@ -248,16 +286,60 @@ export class Ui {
     }
   }
 
+  private get heartsPerRow(): number {
+    return this.portrait ? Math.min(4, this.maxHearts) : this.maxHearts;
+  }
+
   private drawHearts(): void {
     for (let index = 0; index < this.maxHearts; index += 1) {
-      this.drawHeart(HEART_MARGIN + index * (HEART_WIDTH + HEART_GAP), HEART_MARGIN, index < this.hearts);
+      this.drawHeart(
+        this.ui.safeArea.left + HEART_MARGIN + (index % this.heartsPerRow) * (HEART_WIDTH + HEART_GAP),
+        this.ui.safeArea.top + HEART_MARGIN + Math.floor(index / this.heartsPerRow) * (HEART_WIDTH + HEART_GAP),
+        index < this.hearts,
+      );
+    }
+  }
+
+  private get heartsBottom(): number {
+    return HEART_MARGIN + Math.ceil(this.maxHearts / this.heartsPerRow) * (HEART_WIDTH + HEART_GAP);
+  }
+
+  // Sólo aparece mientras falta aliento; agotado parpadea en rojo.
+  private drawStamina(): void {
+    if (this.stamina >= 0.999 && !this.exhausted) {
+      return;
+    }
+    const x = this.ui.safeArea.left + HEART_MARGIN;
+    const y = this.ui.safeArea.top + this.heartsBottom + STAMINA_GAP - HEART_GAP;
+    const blink = this.exhausted ? 0.55 + 0.45 * Math.abs(Math.sin(this.time * 6)) : 0.85;
+    this.ui.rect(x - 1, y - 1, STAMINA_WIDTH + 2, STAMINA_HEIGHT + 2, PALETTE.void, 0.7);
+    this.ui.rect(
+      x,
+      y,
+      Math.round(STAMINA_WIDTH * this.stamina),
+      STAMINA_HEIGHT,
+      this.exhausted ? STAMINA_EXHAUSTED : STAMINA_COLOR,
+      blink,
+    );
+  }
+
+  private drawHidden(): void {
+    const ui = this.ui;
+    const band = Math.round(ui.height * HIDE_BAND);
+    ui.rect(0, 0, ui.width, band, PALETTE.void, HIDE_ALPHA);
+    ui.rect(0, ui.height - band, ui.width, band, PALETTE.void, HIDE_ALPHA);
+    if (this.hideDanger > 0) {
+      const pulse = 0.5 + 0.5 * Math.sin(this.time * (4 + this.hideDanger * 6));
+      ui.rect(0, 0, ui.width, ui.height, PALETTE.accent, 0.12 * this.hideDanger * pulse);
     }
   }
 
   private drawPosterCount(): void {
     const ui = this.ui;
-    const x = UI_WIDTH - POSTER_MARGIN - 72;
-    const y = POSTER_MARGIN;
+    const x = this.options.touchControls
+      ? ui.safeArea.left + HEART_MARGIN + this.heartsPerRow * (HEART_WIDTH + HEART_GAP) + 8
+      : ui.width - ui.safeArea.right - POSTER_MARGIN - 72;
+    const y = ui.safeArea.top + POSTER_MARGIN;
     ui.panel(x, y, 72, POSTER_ICON_SIZE + 10, {
       fill: PALETTE.void,
       border: PALETTE.border,
@@ -291,18 +373,25 @@ export class Ui {
 
   private drawPrompt(): void {
     const bottom = this.portrait ? PROMPT_BOTTOM_PORTRAIT : PROMPT_BOTTOM;
-    const y = this.ui.height - bottom - STRIP_HEIGHT;
+    const y = this.ui.height - this.ui.safeArea.bottom - bottom - STRIP_HEIGHT;
     this.drawStrip(this.promptText, y);
     this.ui.textCentered(this.promptText, y + STRIP_TEXT_Y, { color: PALETTE.text });
   }
 
   private drawToast(): void {
     const ui = this.ui;
-    this.drawStrip(this.toastText, TOAST_TOP);
-    const textY = TOAST_TOP + STRIP_TEXT_Y;
-    const width = ui.font.measure(this.toastText, LINE_SCALE);
-    ui.textCentered(this.toastText, textY, { color: PALETTE.text });
-    ui.cursor(Math.round(ui.width / 2 + width / 2), textY, PALETTE.accent, LINE_SCALE);
+    const left = ui.safeArea.left + 8;
+    const maxWidth = (this.minimapBounds?.x ?? (ui.width - ui.safeArea.right)) - left - 8;
+    const lines = this.splitLines(this.toastText, maxWidth - 16);
+    const width = Math.min(maxWidth, Math.max(...lines.map((line) => ui.font.measure(line))) + 16);
+    const x = Math.round(left + (maxWidth - width) / 2);
+    const hudBottom = this.heartsBottom + STAMINA_GAP + STAMINA_HEIGHT + 8;
+    const y = ui.safeArea.top + (this.minimapBounds ? Math.max(54, hudBottom) : TOAST_TOP);
+    const lineHeight = ui.font.lineHeight(LINE_SCALE) + BODY_LINE_SPACING;
+    ui.panel(x, y, width, lines.length * lineHeight + 14, { fill: PALETTE.void, alpha: 0.82 });
+    lines.forEach((line, index) => {
+      ui.textCenteredIn(line, x + width / 2, y + 8 + index * lineHeight, { color: PALETTE.text });
+    });
   }
 
   private drawStrip(text: string, y: number): void {

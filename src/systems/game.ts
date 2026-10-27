@@ -16,7 +16,7 @@ import {
   type ItemDef,
 } from './items';
 import { Ui } from './ui';
-import { UiCanvas } from './uiCanvas';
+import { UI_HEIGHT, UiCanvas } from './uiCanvas';
 import { loadPosterTexture } from './proceduralTextures';
 import { BURN_SECONDS, PosterBurn } from './burnFx';
 import { createBitmapFont } from './font';
@@ -28,6 +28,9 @@ import { AudioSystem } from './audio';
 import { Flashlight } from './flashlight';
 import { RoomGraph } from './roomGraph';
 import { setSceneLights, updateSceneLights } from './sceneLights';
+import { setHideOpen, type HideHandle } from './hides';
+import { ScareDirector, type ScareContext } from './roomEvents';
+import { Traces } from './traces';
 import { Stalker, type StalkerHooks, type StalkerSense } from '../entities/stalker';
 import { Player } from '../entities/player';
 
@@ -46,6 +49,16 @@ const AIM_FOV_FALLBACK = 32;
 // Sala donde termina la partida (puerta con `ending: true`): al quemar los 8
 // afiches aparece ahí un 2º stalker vigilando la salida.
 const ENDING_ROOM_ID = 'room_vestibulo';
+// M13: escondites, aguante, rastros y sustos.
+const HIDE_DOOR_SECONDS = 0.35;
+const INSPECT_OPEN_SECONDS = 1.2;
+const HIDE_DANGER_RADIUS = 5;
+const PANT_INTERVAL = 1.5;
+const SEEN_CHECK_INTERVAL = 0.25;
+const SEEN_RANGE = 9;
+const DOOR_AJAR = 0.28;
+const DEFAULT_HIDE_CHECK_USES = 3;
+const DEFAULT_BURN_NOISE_HOPS = 1;
 
 type State = 'playing' | 'transition' | 'reading' | 'ending';
 
@@ -60,6 +73,7 @@ interface Waiter {
 interface Interactable {
   door: DoorHandle | null;
   item: ItemHandle | null;
+  hide: HideHandle | null;
   label: string;
 }
 
@@ -113,6 +127,16 @@ export class Game {
   private readonly aimFlatView = new THREE.Vector3();
   private readonly aimDoorPoint = new THREE.Vector3();
   private readonly aimItem = new THREE.Vector3();
+  private readonly aimHide = new THREE.Vector3();
+  private readonly seenFrustum = new THREE.Frustum();
+  private readonly seenProjection = new THREE.Matrix4();
+  private readonly traces: Traces;
+  private readonly scares = new ScareDirector();
+  private readonly roomVisits = new Map<string, number>();
+  private hidden: HideHandle | null = null;
+  private pantTimer = 0;
+  private hiddenHeartTimer = 0;
+  private seenTimer = 0;
 
   constructor(
     private readonly config: PsxConfig,
@@ -166,6 +190,7 @@ export class Game {
 
     this.audio = new AudioSystem(config.audio);
     this.flashlight = new Flashlight(config);
+    this.traces = new Traces(config);
     this.loop = new FixedLoop(
       config.fps,
       (dt) => this.update(dt),
@@ -180,13 +205,12 @@ export class Game {
     }
   }
 
-  // Resolución activa del render (4:3 en horizontal, vertical dinámico en
-  // móvil): propaga el nuevo tamaño a cámaras, materiales (snap de vértices),
-  // y canvas de interfaz.
+  // Propaga el aspecto del render a la cámara, los materiales y el HUD.
   private handleResolutionChange(width: number, height: number): void {
     this.config.resolution = [width, height];
     const portrait = height > width;
     this.room?.sync(this.config);
+    this.traces.sync();
     this.stalker?.syncConfig(this.config);
     this.stalkerSecond?.syncConfig(this.config);
     if (this.player) {
@@ -194,7 +218,11 @@ export class Game {
       this.player.camera.fov = this.fovFor(portrait);
       this.player.camera.updateProjectionMatrix();
     }
-    this.uiCanvas.setLogicalSize(width, height);
+    // El HUD conserva su escala legible aunque el render 3D use más píxeles.
+    this.uiCanvas.setLogicalSize(
+      portrait ? 360 : Math.round(UI_HEIGHT * width / height),
+      portrait ? Math.round(360 * height / width) : UI_HEIGHT,
+    );
   }
 
   private fovFor(portrait: boolean): number {
@@ -239,7 +267,11 @@ export class Game {
       this.flashlight.on = true;
       this.flashlight.update(0, this.player.camera, true);
     }
-    this.beginIntro();
+    if (import.meta.env.DEV && params.get('preview') === 'ending') {
+      this.showEnding();
+    } else {
+      this.beginIntro();
+    }
     console.info(
       `[M3] ${this.config.title} | sala "${this.room.name}" | tris: ${this.room.triangleCount} | colisiones: ${this.room.colliders.length} | puertas: ${this.room.doors.length} | ítems: ${this.room.items.length}`,
     );
@@ -469,6 +501,11 @@ export class Game {
       playerMoving: speed > 0.2,
       playerRunning: speed > (this.config.player.walk + this.config.player.run) * 0.45,
       playerInvulnerable: this.clock < this.invulnUntil,
+      playerYaw: this.player.camera.rotation.y,
+      flashlightOn: this.flashlight.owned && this.flashlight.on,
+      playerPanting: this.player.isExhausted,
+      roomDark: (this.room.atmosphere?.ambient ?? 0.3) < 0.1,
+      hiddenIn: this.hidden?.spot.id ?? null,
     };
 
     const listenerYaw = this.player.camera.rotation.y;
@@ -483,12 +520,26 @@ export class Game {
         this.audio.play('stinger');
         this.ui.toast(TEXTS[this.config.language].toastStalkerSeen);
       },
-      onRoomChange: (room) => {
+      onRoomChange: (from, room) => {
         const hops = this.graph ? this.graph.hops(room, this.room.id) : 2;
         const volume = 0.6 / (1 + hops);
         const basement = this.room.audio.ambience === 'basement';
         this.audio.play(basement ? 'door_open_metal' : 'door_open_wood', volume);
+        // Deja la puerta entornada; si es de esta sala se ve al momento.
+        this.traces.markDoor(from, room, this.clock);
+        const other = from === this.room.id ? room : room === this.room.id ? from : null;
+        const door = other ? this.room.doors.find((candidate) => candidate.to === other) : null;
+        if (door && this.canStandAjar(door)) {
+          void this.wait(0.5, (progress) => this.setDoorOpen(door, DOOR_AJAR * easeInOut(progress)));
+        }
       },
+      onStride: (room, x, z, yaw) => {
+        this.traces.addPrint(room, x, z, yaw, this.clock);
+      },
+      onLure: (approachRoom) => {
+        this.playLure(approachRoom);
+      },
+      onInspect: (hideId) => this.resolveInspect(hideId),
       onFootstep: (x, z, running) => {
         this.audio.playAt('stalker_step', x, z, position.x, position.z, listenerYaw, running ? 1 : 0.8);
       },
@@ -506,7 +557,9 @@ export class Game {
     this.syncStalkerPresence();
     this.syncSecondStalkerPresence();
 
-    const anyChase = stalkers.some((stalker) => stalker.state === 'chase');
+    const anyChase = stalkers.some(
+      (stalker) => stalker.state === 'chase' || (stalker.state === 'inspect' && stalker.roomId === this.room.id),
+    );
     const anySameRoom = stalkers.some((stalker) => stalker.roomId === this.room.id);
     this.setMusicLevel(
       anyChase ? 2 : anySameRoom ? 1 : this.flags.has('stalker_active') ? 1 : 0,
@@ -584,6 +637,274 @@ export class Game {
     await this.wait(1.1, (progress) => this.psx.setFade(progress * 0.9));
     await this.wait(0.5, (progress) => this.psx.setFade(0.9 + progress * 0.1));
     this.showGameOver();
+  }
+
+  private activeStalkers(): Stalker[] {
+    return [this.stalker, this.stalkerSecond].filter(
+      (candidate): candidate is Stalker => !!candidate && candidate.active,
+    );
+  }
+
+  // --- M13: escondites ----------------------------------------------------
+
+  private enterHide(handle: HideHandle): void {
+    if (this.hidden) {
+      return;
+    }
+    const position = this.player.position;
+    for (const stalker of this.activeStalkers()) {
+      stalker.noteHideEntered(handle.spot.id, this.room.id, position.x, position.z);
+    }
+    this.hidden = handle;
+    this.player.enterHide(handle.spot.eyeX, handle.spot.eyeZ, handle.spot.yaw);
+    this.lastPlayerX = this.player.position.x;
+    this.lastPlayerZ = this.player.position.z;
+    this.audio.play('cabinet', 0.8);
+    this.animateHide(handle, 0.5, 0);
+    const uses = this.stalker?.hideUseCount(handle.spot.id) ?? 0;
+    if (uses === (this.config.enemy.hide_check_uses ?? DEFAULT_HIDE_CHECK_USES)) {
+      this.ui.toast(TEXTS[this.config.language].toastHideOveruse);
+    }
+  }
+
+  private exitHide(x?: number, z?: number): void {
+    const handle = this.hidden;
+    if (!handle) {
+      return;
+    }
+    this.hidden = null;
+    this.player.exitHide(x ?? handle.spot.frontX, z ?? handle.spot.frontZ);
+    this.lastPlayerX = this.player.position.x;
+    this.lastPlayerZ = this.player.position.z;
+    this.audio.play('cabinet', 0.8);
+    this.animateHide(handle, 0.7, 0);
+  }
+
+  // Abre las puertas del escondite hasta `amount`, las mantiene `hold` s y las cierra.
+  private animateHide(handle: HideHandle, amount: number, hold: number): void {
+    const total = HIDE_DOOR_SECONDS * 2 + hold;
+    void this.wait(total, (progress) => {
+      const t = progress * total;
+      const open =
+        t < HIDE_DOOR_SECONDS ? t / HIDE_DOOR_SECONDS : t < HIDE_DOOR_SECONDS + hold ? 1 : 1 - (t - HIDE_DOOR_SECONDS - hold) / HIDE_DOOR_SECONDS;
+      setHideOpen(handle, amount * easeInOut(THREE.MathUtils.clamp(open, 0, 1)));
+    });
+  }
+
+  // El stalker abre un escondite: si estabas dentro te saca de un tirón.
+  private resolveInspect(hideId: string): boolean {
+    const handle = this.room.hides.find((candidate) => candidate.spot.id === hideId);
+    if (!handle) {
+      return false;
+    }
+    const camera = this.player.camera;
+    this.audio.playAt('cabinet', handle.spot.x, handle.spot.z, camera.position.x, camera.position.z, camera.rotation.y, 1);
+    if (this.hidden !== handle) {
+      this.animateHide(handle, 1, INSPECT_OPEN_SECONDS);
+      return false;
+    }
+    const stalker = this.activeStalkers()
+      .filter((candidate) => candidate.roomId === this.room.id)
+      .sort((a, b) => a.distanceTo(handle.spot.x, handle.spot.z) - b.distanceTo(handle.spot.x, handle.spot.z))[0];
+    // Sale por un costado del frente para que el empujón lo aparte del stalker.
+    const { spot } = handle;
+    const sideX = Math.cos(spot.yaw);
+    const sideZ = -Math.sin(spot.yaw);
+    const exits = [1, -1]
+      .map((sign) => ({ x: spot.frontX + sideX * 0.7 * sign, z: spot.frontZ + sideZ * 0.7 * sign }))
+      .filter((point) => !this.pointBlocked(point.x, point.z, this.config.player.radius));
+    const exit = exits[0] ?? { x: spot.frontX, z: spot.frontZ };
+    this.exitHide(exit.x, exit.z);
+    this.animateHide(handle, 1, INSPECT_OPEN_SECONDS);
+    this.ui.toast(TEXTS[this.config.language].toastFoundHiding);
+    this.takeHit(stalker?.position.x ?? spot.x, stalker?.position.z ?? spot.z);
+    return true;
+  }
+
+  // --- M13: trampas, ruido, aguante y rastros ------------------------------
+
+  // Señuelo del stalker: portazo o silbido en una puerta que no es la suya.
+  private playLure(approachRoom: string | null): void {
+    if (this.state !== 'playing') {
+      return;
+    }
+    const doors = this.room.doors.filter((door) => door.to && !door.ending && door.to !== approachRoom);
+    const camera = this.player.camera;
+    const door = doors[Math.floor(Math.random() * doors.length)];
+    if (!door) {
+      this.audio.play('whistle', 0.35);
+      return;
+    }
+    const slam = door.leaves.length > 0 && this.canStandAjar(door) && Math.random() < 0.6;
+    console.info(`[M13] Señuelo: ${slam ? 'portazo' : 'silbido'} en la puerta a ${door.to} (llega por ${approachRoom ?? '?'})`);
+    this.audio.playAt(
+      slam ? 'door_slam' : 'whistle',
+      door.center.x,
+      door.center.z,
+      camera.position.x,
+      camera.position.z,
+      camera.rotation.y,
+      slam ? 1 : 0.7,
+    );
+    if (slam) {
+      const start = this.doorOpenAmount(door);
+      void this.wait(0.45, (progress) => this.setDoorOpen(door, start + 0.18 * Math.sin(progress * Math.PI)));
+    }
+  }
+
+  // Quemar un afiche hace ruido: los stalkers cercanos vienen a ver.
+  private alertStalkers(x: number, z: number): void {
+    const hops = this.config.enemy.burn_noise_hops ?? DEFAULT_BURN_NOISE_HOPS;
+    for (const stalker of this.activeStalkers()) {
+      stalker.alertNoise(this.room.id, x, z, hops);
+    }
+  }
+
+  private updateSurvival(dt: number): void {
+    if (this.player.isExhausted) {
+      this.pantTimer -= dt;
+      if (this.pantTimer <= 0) {
+        this.audio.play('pant', 0.75);
+        this.pantTimer = PANT_INTERVAL;
+      }
+    } else {
+      this.pantTimer = 0;
+    }
+    let danger = 0;
+    if (this.hidden) {
+      for (const stalker of this.activeStalkers()) {
+        if (stalker.roomId === this.room.id) {
+          const distance = stalker.distanceTo(this.hidden.spot.x, this.hidden.spot.z);
+          danger = Math.max(danger, 1 - distance / HIDE_DANGER_RADIUS);
+        }
+      }
+      this.hiddenHeartTimer -= dt;
+      if (danger > 0 && this.hiddenHeartTimer <= 0) {
+        this.audio.play('heartbeat', 0.35 + 0.5 * danger);
+        this.hiddenHeartTimer = 1.1 - 0.5 * danger;
+      }
+    }
+    this.ui.setHidden(this.hidden !== null, danger);
+    this.ui.setStamina(this.player.staminaLevel, this.player.isExhausted);
+  }
+
+  // Los afiches sólo aparecen en el minimapa después de haberlos visto.
+  private markSeenPosters(dt: number): void {
+    this.seenTimer -= dt;
+    if (this.seenTimer > 0 || this.hidden) {
+      return;
+    }
+    this.seenTimer = SEEN_CHECK_INTERVAL;
+    const camera = this.player.camera;
+    camera.updateMatrixWorld();
+    this.seenProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    this.seenFrustum.setFromProjectionMatrix(this.seenProjection);
+    for (const item of this.room.items) {
+      if (item.kind !== 'poster' || item.taken || this.flags.has(`seen:${item.id}`)) {
+        continue;
+      }
+      const point = this.aimItemPoint(item);
+      if (this.inReach(point, SEEN_RANGE) && this.seenFrustum.containsPoint(point) && this.aimVisible(point, item.object)) {
+        this.flags.set(`seen:${item.id}`);
+      }
+    }
+  }
+
+  // Al entrar en una sala: visitas, rastros del stalker y sustos.
+  private enterRoomEffects(room: BuiltRoom): void {
+    this.roomVisits.set(room.id, (this.roomVisits.get(room.id) ?? 0) + 1);
+    this.traces.attach(room);
+    for (const door of room.doors) {
+      if (door.to && this.canStandAjar(door) && this.traces.doorAjar(room.id, door.to, this.clock)) {
+        this.setDoorOpen(door, DOOR_AJAR);
+      }
+    }
+    this.scares.enterRoom(this.scareContext());
+  }
+
+  private scareContext(): ScareContext {
+    return {
+      room: this.room,
+      flags: this.flags,
+      posters: this.burnedPosters(),
+      visits: this.roomVisits.get(this.room.id) ?? 1,
+      camera: this.player.camera,
+      flashlightOn: this.flashlight.owned && this.flashlight.on,
+      flashlightRange: this.config.flashlight.range,
+      audio: this.audio,
+    };
+  }
+
+  debugHides(): Array<{ id: string; x: number; z: number; front: [number, number] }> {
+    return this.room.hides.map((hide) => ({
+      id: hide.spot.id,
+      x: hide.spot.x,
+      z: hide.spot.z,
+      front: [hide.spot.frontX, hide.spot.frontZ],
+    }));
+  }
+
+  debugEnterHide(id: string): boolean {
+    const handle = this.room.hides.find((hide) => hide.spot.id === id);
+    if (!handle) {
+      return false;
+    }
+    this.enterHide(handle);
+    return true;
+  }
+
+  debugHidden(): string | null {
+    return this.hidden?.spot.id ?? null;
+  }
+
+  debugStamina(): { level: number; exhausted: boolean } {
+    return { level: this.player.staminaLevel, exhausted: this.player.isExhausted };
+  }
+
+  debugFootprints(room = this.room.id): number {
+    return this.traces.printCount(room);
+  }
+
+  debugFlags(prefix = ''): string[] {
+    return this.flags.list().filter((flag) => flag.startsWith(prefix));
+  }
+
+  debugTeleportStalker(room: string, x: number, z: number, state?: 'patrol' | 'chase' | 'search'): void {
+    if (!this.stalker) {
+      return;
+    }
+    this.stalker.teleportTo(room, x, z, 0);
+    if (state) {
+      this.stalker.forceState(state);
+    }
+    this.syncStalkerPresence();
+  }
+
+  debugLureNow(): void {
+    this.stalker?.forceLure();
+  }
+
+  debugDoorOpen(to: string): number {
+    const door = this.room.doors.find((candidate) => candidate.to === to);
+    return door && door.leaves.length > 0 ? this.doorOpenAmount(door) : -1;
+  }
+
+  debugSetFlag(flag: string): void {
+    this.flags.set(flag);
+  }
+
+  // Simula volver a entrar en la sala actual (visitas, rastros y sustos).
+  debugReenterRoom(): void {
+    this.scares.leaveRoom();
+    this.applyRoomState(this.room);
+  }
+
+  debugScares(): Array<{ id: string; kind: string; visible: boolean | null }> {
+    return this.room.events.map((handle) => ({
+      id: handle.def.id,
+      kind: handle.def.kind,
+      visible: handle.object ? handle.object.visible : null,
+    }));
   }
 
   debugWakeStalker(): void {
@@ -888,6 +1209,7 @@ export class Game {
     this.gamepad.setEnabled(this.settings.get('gamepad'));
     this.psx.syncEffects(this.config);
     this.room?.sync(this.config);
+    this.traces.sync();
     this.audio.setVolumes(this.config.audio);
     this.ui.setOptions({
       showSubtitles: this.settings.get('subtitles'),
@@ -906,6 +1228,7 @@ export class Game {
 
   syncConfig(): void {
     this.room.sync(this.config);
+    this.traces.sync();
     this.stalker?.syncConfig(this.config);
     this.stalker?.setBurnedPosters(this.burnedPosters());
     this.stalkerSecond?.syncConfig(this.config);
@@ -949,12 +1272,17 @@ export class Game {
       this.inventory.slots[index] = null;
     }
     this.flashlight.reset();
+    this.hidden = null;
+    this.pantTimer = 0;
+    this.traces.reset();
+    this.scares.reset();
+    this.roomVisits.clear();
     this.deactivateStalker();
     this.secondStalkerSpawned = false;
     this.stalkerSecondLoading = false;
     this.roomCache.clear();
     this.room = await this.getRoom(this.introRoom);
-    this.player = this.createPlayer(this.room, this.introSpawn);
+    this.player = this.createPlayer(this.room, this.introSpawn, false);
     this.lastPlayerX = this.player.position.x;
     this.lastPlayerZ = this.player.position.z;
     this.applyRoomState(this.room);
@@ -1005,12 +1333,20 @@ export class Game {
       case 'playing':
         this.player.update(dt, this.config, this.input);
         this.updateStalker(dt);
+        this.traces.update(this.clock);
+        this.scares.update(dt, this.scareContext());
+        this.markSeenPosters(dt);
+        this.updateSurvival(dt);
         this.preloadNearbyDoors();
         if (this.input.consumePress('KeyF') || this.input.padPress('combine')) {
           this.toggleFlashlight();
         }
         if (this.input.consumePress('KeyE') || this.input.padPress('interact')) {
-          this.tryInteract();
+          if (this.hidden) {
+            this.exitHide();
+          } else {
+            this.tryInteract();
+          }
         }
         if (this.state === 'playing') {
           this.updatePrompt();
@@ -1030,7 +1366,9 @@ export class Game {
   private render(): void {
     this.psx.setShadowCaster(this.flashlight.shadowCaster());
     this.psx.render(this.room.scene, this.player.camera);
-    this.ui.draw();
+    this.ui.draw(this.state === 'playing' && !this.menu.active && !this.hidden
+      ? { room: this.room, player: this.player, flags: this.flags }
+      : undefined);
     if (this.menu.active) {
       this.menu.draw();
     }
@@ -1041,7 +1379,7 @@ export class Game {
     return this.input.consumePress(code) || this.input.padPress(action);
   }
 
-  private createPlayer(room: BuiltRoom, spawnName: string): Player {
+  private createPlayer(room: BuiltRoom, spawnName: string, inherit = true): Player {
     const spawn = room.spawns[spawnName] ?? room.spawns.start ?? Object.values(room.spawns)[0];
     if (!spawn) {
       throw new Error(`La sala ${room.id} no tiene ningún spawn`);
@@ -1055,6 +1393,9 @@ export class Game {
     );
     player.camera.fov = this.fovFor(resHeight > resWidth);
     player.camera.updateProjectionMatrix();
+    if (inherit && this.player) {
+      player.inheritStamina(this.player);
+    }
     player.onFootstep = (running) => {
       this.audio.footstep(running);
     };
@@ -1078,6 +1419,7 @@ export class Game {
 
   private applyRoomState(room: BuiltRoom): void {
     setSceneLights(room.lights);
+    this.syncEndingLocks(room);
     for (const door of room.doors) {
       if (door.lock && this.flags.has(`unlocked:${door.lockId}`) && door.lock.body.parent !== room.scene) {
         door.lock.body.visible = false;
@@ -1090,6 +1432,15 @@ export class Game {
       if (this.flags.has(`taken:${item.id}`) || this.flags.has(`burned:${item.id}`)) {
         item.taken = true;
         item.object.removeFromParent();
+      }
+    }
+    this.enterRoomEffects(room);
+  }
+
+  private syncEndingLocks(room: BuiltRoom): void {
+    for (const door of room.doors) {
+      if (door.posterLock) {
+        door.posterLock.visible = !door.requires.every((id) => this.flags.has(`burned:${id}`));
       }
     }
   }
@@ -1121,7 +1472,7 @@ export class Game {
       } else if (def?.kind === 'food') {
         label = texts.promptEat;
       }
-      best = { door: null, item, label };
+      best = { door: null, item, hide: null, label };
     }
 
     for (const door of this.room.doors) {
@@ -1134,7 +1485,20 @@ export class Game {
         continue;
       }
       bestScore = score;
-      best = { door, item: null, label: this.doorPrompt(door) };
+      best = { door, item: null, hide: null, label: this.doorPrompt(door) };
+    }
+
+    for (const hide of this.room.hides) {
+      const point = this.aimHide.set(hide.spot.x, Math.min(1.2, hide.spot.height - 0.3), hide.spot.z);
+      if (!this.inReach(point, radius + hide.spot.depth / 2)) {
+        continue;
+      }
+      const score = this.facingScore(point, true);
+      if (score === null || score >= bestScore || !this.aimVisible(point, hide.group)) {
+        continue;
+      }
+      bestScore = score;
+      best = { door: null, item: null, hide, label: texts.promptHide };
     }
 
     return best;
@@ -1245,6 +1609,10 @@ export class Game {
     if (!target) {
       return;
     }
+    if (target.hide) {
+      this.enterHide(target.hide);
+      return;
+    }
     if (target.item) {
       const def = this.catalog.get(target.item.id);
       if (def?.kind === 'poster') {
@@ -1282,6 +1650,7 @@ export class Game {
     if (door.ending) {
       if (!door.requires.every((id) => this.flags.has(`burned:${id}`))) {
         this.audio.play('door_locked', 0.9);
+        this.ui.toast(TEXTS[this.config.language].endingDoorHint);
         return;
       }
       void this.runEnding(door);
@@ -1333,8 +1702,8 @@ export class Game {
   private async burnPoster(item: ItemHandle): Promise<void> {
     const texts = TEXTS[this.config.language];
     item.taken = true;
-    this.flags.set(`burned:${item.id}`);
     this.audio.play('burn');
+    this.alertStalkers(item.position.x, item.position.z);
 
     const mesh = item.object.children[0] as THREE.Mesh;
     const brightness = this.room.audio.ambience === 'basement' ? 0.45 : 0.85;
@@ -1349,6 +1718,8 @@ export class Game {
     fx.update(0, 1, this.room.scene === burnScene);
     fx.leaveScorch();
     item.object.removeFromParent();
+    this.flags.set(`burned:${item.id}`);
+    this.syncEndingLocks(this.room);
     // El humo y la ceniza siguen un rato sin bloquear al jugador.
     let tailPrevious = 0;
     void this.wait(3, (progress) => {
@@ -1362,8 +1733,9 @@ export class Game {
     this.stalkerSecond?.setBurnedPosters(have);
     this.ui.toast(texts.toastPoster(have, POSTER_IDS.length));
     this.updatePosterHud();
-    // Al completar los 8 afiches aparece un 2º stalker en la zona final.
+    // Al completar todos los afiches desaparece el candado y aparece el guardián.
     if (have >= POSTER_IDS.length) {
+      this.audio.play('padlock_unlock', 0.8);
       void this.activateSecondStalker();
     }
   }
@@ -1492,6 +1864,8 @@ export class Game {
     this.removeDoorCollider(door);
     this.audio.play(this.room.audio.ambience === 'basement' ? 'door_open_metal' : 'door_open_wood');
     this.transitionStart = performance.now();
+    this.traces.clearDoor(this.room.id, target);
+    this.scares.leaveRoom();
 
     const { authentic, door_anim_seconds, fade_seconds, min_seconds } = this.config.loading;
     const doorDuration = authentic ? door_anim_seconds : 0.4;
@@ -1501,9 +1875,11 @@ export class Game {
     const roomPromise = this.getRoom(target);
     const previousRoom = this.room.id;
 
+    // Parte de la apertura actual: una puerta entornada no se cierra de golpe antes de abrirse.
+    const start = this.doorOpenAmount(door);
     if (door.leaves.length > 0) {
       await this.wait(doorDuration, (progress) => {
-        this.setDoorOpen(door, easeInOut(progress));
+        this.setDoorOpen(door, start + (1 - start) * easeInOut(progress));
       });
     }
     await this.wait(fadeDuration, (progress) => {
@@ -1587,6 +1963,11 @@ export class Game {
     });
     await this.wait(1.0, (progress) => this.psx.setFade(0.55 + progress * 0.45));
 
+    this.showEnding();
+  }
+
+  private showEnding(): void {
+    this.psx.setFade(1);
     this.audio.play('ending_stinger');
     this.state = 'ending';
     this.openMenu('ending');
@@ -1608,6 +1989,17 @@ export class Game {
     for (const leaf of door.leaves) {
       leaf.group.rotation.y = leaf.baseRotation + leaf.openAngle * progress;
     }
+  }
+
+  // Una puerta con candado sin abrir (o la salida) sigue cerrada aunque el stalker la cruce.
+  private canStandAjar(door: DoorHandle): boolean {
+    return !door.ending && (!door.key || this.flags.has(`unlocked:${door.lockId}`));
+  }
+
+  // Grado de apertura actual (0 cerrada, 1 abierta), inverso de setDoorOpen.
+  private doorOpenAmount(door: DoorHandle): number {
+    const leaf = door.leaves[0];
+    return leaf ? THREE.MathUtils.clamp((leaf.group.rotation.y - leaf.baseRotation) / leaf.openAngle, 0, 1) : 0;
   }
 
   private closeDoor(room: BuiltRoom, door: DoorHandle): void {
@@ -1643,6 +2035,10 @@ export class Game {
   private updatePrompt(): void {
     const texts = TEXTS[this.config.language];
     let text = '';
+    if (this.hidden) {
+      this.ui.setPrompt(this.touchActive ? this.touchPrompt(texts.promptLeaveHide) : texts.promptLeaveHide);
+      return;
+    }
     if (this.touchActive) {
       if (!this.input.touchPlayed) {
         text = texts.touchToPlay;

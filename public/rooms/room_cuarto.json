@@ -337,6 +337,17 @@
       "yaw": -90
     }
   ],
+  "hides": [
+    {
+      "id": "cuarto_ropero",
+      "kind": "wardrobe",
+      "position": [
+        2.6,
+        -1
+      ],
+      "yaw": 90
+    }
+  ],
   "spawns": {
     "from_pasillo_alto": {
       "position": [

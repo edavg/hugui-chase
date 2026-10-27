@@ -782,6 +782,20 @@
       "yaw": 180
     }
   ],
+  "events": [
+    {
+      "id": "jardin_silueta",
+      "kind": "apparition",
+      "position": [
+        0,
+        4.6
+      ],
+      "when": {
+        "posters": 7,
+        "chance": 0.7
+      }
+    }
+  ],
   "spawns": {
     "from_cocina": {
       "position": [

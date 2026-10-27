@@ -79,6 +79,31 @@ Los ítems recogibles se definen en la sala y se resuelven contra `public/config
 }
 ```
 
+## Escondites y sustos (M13)
+
+```json
+"hides": [
+  { "id": "dormitorio_ropero", "kind": "wardrobe", "position": [3.35, -0.6], "yaw": 90 }
+],
+"events": [
+  { "id": "pasillo_silueta", "kind": "apparition", "position": [-5.6, 0.1], "when": { "posters": 2, "chance": 0.6 } },
+  { "id": "salon_tele", "kind": "sound", "sound": "tv_static", "position": [-0.5, 0.95, -2.95],
+    "repeat": 3, "interval": 3.2, "light": [0.55, 0.7, 1.0], "when": { "posters": 1, "visits": 2 } },
+  { "id": "despacho_sillon", "kind": "moved", "model": 1, "yaw": 180, "when": { "visits": 2 } },
+  { "id": "vestibulo_cuadro", "kind": "defaced", "texture": "ps2/painting_b.png",
+    "position": [2.6, 1.6, -3.17], "size": [0.7, 0.9, 0.03], "eyes": [[0.441, 0.371], [0.559, 0.371]] }
+]
+```
+
+- **hides**: `kind` `wardrobe` (1.0×0.6), `locker` (0.8×0.55) o `confessional` (1.0×1.0); `position` es
+  el centro en XZ contra un muro y `yaw` hacia dónde mira el frente (convención de spawns, múltiplos de
+  90). Colisionan como un mueble; el jugador sale y el stalker se planta 0.55 m delante del frente.
+- **events**: `when.posters` (afiches quemados mínimos), `when.visits` (desde qué visita a la sala) y
+  `when.chance` (por visita). `sound` admite `radio`, `phone_ring` y `tv_static`. `moved` gira el modelo
+  `models[model]` sobre su centro: sólo giros que conservan la huella (180°, o 90° si es cuadrado).
+  `defaced` debe coincidir con un decal de cuadro de la sala (misma posición y textura); `eyes` en UV
+  con v desde arriba.
+
 ## Reglas
 
 - `walls`: recorridos de muro en planta (x, z). `offset` se mide desde `start` a lo largo del muro. Debe caber `offset + width <= longitud` del muro.
@@ -88,7 +113,7 @@ Los ítems recogibles se definen en la sala y se resuelven contra `public/config
     - `key`: id de ítem requerido; sin él la puerta no abre y el prompt indica "CERRADA CON LLAVE". Las llaves no se consumen.
     - `action`: `up`/`down` cambian el texto del prompt (SUBIR/BAJAR) para escaleras; por defecto `open`.
     - `requires`: lista de ids (p. ej. `["note_1","note_2","note_3"]`) que se comprueban contra el inventario; el prompt muestra el progreso `(n/total)`.
-    - `ending: true`: al cumplir `requires`, la puerta gira, funde a negro y muestra la pantalla de final (solo la puerta principal del Vestíbulo).
+    - `ending: true`: añade carteles y papeles desgarrados con sangre alrededor de la puerta, con instrucciones ES/EN. Usa el candado del estilo PS2 actual; desaparece al terminar de quemar todos los afiches de `requires` (12 en la casa), conservando el estado al volver a la sala. Al interactuar con la salida desbloqueada, la puerta gira, funde a negro y muestra la pantalla de final (puerta principal del Vestíbulo).
   - `passage`: hueco sin hoja. `blocked: true` añade colisión invisible. Con `to`/`spawn` funciona como paso transitable sin animación (no se usa en M3).
   - `window`: hueco con antepecho (`sill`) y cristal oscuro orientado al interior.
 - `textures`: `wall`, `floor`, `ceiling` y `door` son obligatorias; se admiten claves extra (`metal`, `stone`, `stain`, `brick`, `rust`, `wood`, `window`…) referenciables desde `props` y `models`. Con `window` las vidrieras de las ventanas usan esa textura (foto 1:1 del hueco); sin ella, vidrio oscuro tintado. Las rutas son relativas a `assets/textures/horror_pack/`; los packs externos van a `Custom/` (PanelkaPack ya vive ahí).

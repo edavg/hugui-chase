@@ -1,0 +1,583 @@
+{
+  "id": "room_luque_iturbe",
+  "name": "Vicente Ignacio Iturbe",
+  "size": [
+    52,
+    5,
+    16
+  ],
+  "texture_scale": 6,
+  "wall_thickness": 0.3,
+  "open_sky": true,
+  "door_fit": true,
+  "atmosphere": {
+    "fog_start": 4,
+    "fog_end": 28,
+    "fog_color": [
+      0.02,
+      0.02,
+      0.03
+    ],
+    "ambient": 0.17,
+    "direct": 0.22,
+    "lamp": {
+      "position": [
+        0,
+        4.5,
+        0
+      ],
+      "color": [
+        1,
+        0.8,
+        0.55
+      ],
+      "range": 12,
+      "intensity": 1.6
+    }
+  },
+  "textures": {
+    "wall": "Custom/street_brickwall.png",
+    "floor": "Custom/asphalt.png",
+    "door": "Custom/WoodenDoor2diffuse.png",
+    "sidewalk": "Custom/street_sidewalk.png",
+    "wood": "Floor/Horror_Floor_03-128x128.png",
+    "metal": "Metal/Horror_Metal_01-128x128.png",
+    "stain": "Stains/Horror_Stain_03-128x128.png",
+    "window": "Custom/MetalCageWindow.png",
+    "tile": "Custom/plaza_tile.png"
+  },
+  "audio": {
+    "reverb": "hall",
+    "floor_material": "stone",
+    "ambience": "house"
+  },
+  "walls": [
+    {
+      "start": [
+        -26,
+        -8
+      ],
+      "end": [
+        -20.4,
+        -8
+      ],
+      "openings": [
+        {
+          "kind": "door",
+          "offset": 1.6,
+          "width": 1.8,
+          "height": 2.5,
+          "door": "closed",
+          "to": "room_restaurante_real",
+          "spawn": "from_luque_iturbe"
+        }
+      ]
+    },
+    {
+      "start": [
+        26,
+        -8
+      ],
+      "end": [
+        26,
+        8
+      ]
+    },
+    {
+      "start": [
+        26,
+        8
+      ],
+      "end": [
+        14,
+        8
+      ],
+      "openings": [
+        {
+          "kind": "passage",
+          "offset": 2.5,
+          "width": 7,
+          "height": 4.6,
+          "door": "closed",
+          "to": "room_luque_aquino_galeria",
+          "spawn": "from_luque_iturbe"
+        }
+      ]
+    },
+    {
+      "start": [
+        16,
+        8
+      ],
+      "end": [
+        4,
+        8
+      ],
+      "openings": [
+        {
+          "kind": "passage",
+          "offset": 2.5,
+          "width": 7,
+          "height": 4.6,
+          "door": "closed",
+          "to": "room_luque_aquino_municipal",
+          "spawn": "from_luque_iturbe"
+        }
+      ]
+    },
+    {
+      "start": [
+        -26,
+        8
+      ],
+      "end": [
+        -26,
+        -8
+      ]
+    }
+  ],
+  "props": [
+    {
+      "kind": "box",
+      "position": [
+        0,
+        0.06,
+        -5.6
+      ],
+      "size": [
+        52,
+        0.12,
+        2.4
+      ],
+      "texture": "sidewalk",
+      "tint": 0.55,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        0.06,
+        5.6
+      ],
+      "size": [
+        52,
+        0.12,
+        2.4
+      ],
+      "texture": "sidewalk",
+      "tint": 0.55,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -16,
+        0.005,
+        0
+      ],
+      "size": [
+        1.4,
+        0.01,
+        3
+      ],
+      "texture": "sidewalk",
+      "tint": 0.95,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4,
+        0.005,
+        0
+      ],
+      "size": [
+        1.4,
+        0.01,
+        3
+      ],
+      "texture": "sidewalk",
+      "tint": 0.95,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        8,
+        0.005,
+        0
+      ],
+      "size": [
+        1.4,
+        0.01,
+        3
+      ],
+      "texture": "sidewalk",
+      "tint": 0.95,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        16,
+        0.005,
+        0
+      ],
+      "size": [
+        1.4,
+        0.01,
+        3
+      ],
+      "texture": "sidewalk",
+      "tint": 0.95,
+      "collide": false,
+      "decal": true
+    },
+    {
+      "kind": "sign",
+      "position": [
+        -23.5,
+        3.15,
+        -7.78
+      ],
+      "size": [
+        2.8,
+        0.7,
+        0.02
+      ],
+      "text": "RESTAURANTE REAL",
+      "yaw": 0
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        -0.02,
+        -11
+      ],
+      "size": [
+        56,
+        0.1,
+        7
+      ],
+      "texture": "sidewalk",
+      "tint": 0.5,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        -0.02,
+        11
+      ],
+      "size": [
+        56,
+        0.1,
+        7
+      ],
+      "texture": "sidewalk",
+      "tint": 0.5,
+      "collide": false
+    }
+  ],
+  "models": [
+    {
+      "file": "street/streetlights_traffic.glb",
+      "position": [
+        -18,
+        0,
+        -6.2
+      ],
+      "yaw": 0,
+      "scale": 0.12,
+      "tint": 0.8,
+      "subdivision": 0
+    },
+    {
+      "file": "street/streetlights_traffic.glb",
+      "position": [
+        18,
+        0,
+        6.2
+      ],
+      "yaw": 180,
+      "scale": 0.12,
+      "tint": 0.8,
+      "subdivision": 0
+    },
+    {
+      "file": "street/manhole.glb",
+      "position": [
+        0,
+        0.02,
+        1
+      ],
+      "yaw": 0,
+      "scale": 0.3,
+      "tint": 0.6,
+      "subdivision": 0
+    },
+    {
+      "file": "street/trash_bag.glb",
+      "position": [
+        6,
+        0,
+        6.4
+      ],
+      "yaw": 34,
+      "tint": 0.7,
+      "subdivision": 0
+    },
+    {
+      "file": "street/house_type05.glb",
+      "position": [
+        -10.4,
+        0,
+        -10.025
+      ],
+      "yaw": 180,
+      "scale": 6,
+      "tint": 0.71,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        5.85
+      ]
+    },
+    {
+      "file": "street/house_type14.glb",
+      "position": [
+        0,
+        0,
+        -10.2
+      ],
+      "yaw": 180,
+      "scale": 6.4,
+      "tint": 0.8,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        6.199999999999999
+      ]
+    },
+    {
+      "file": "street/house_type19.glb",
+      "position": [
+        10.4,
+        0,
+        -10.375
+      ],
+      "yaw": 180,
+      "scale": 6.8,
+      "tint": 0.89,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        6.549999999999999
+      ]
+    },
+    {
+      "file": "street/house_type01.glb",
+      "position": [
+        20.8,
+        0,
+        -10.025
+      ],
+      "yaw": 180,
+      "scale": 6,
+      "tint": 0.62,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        5.85
+      ]
+    },
+    {
+      "file": "street/house_type09.glb",
+      "position": [
+        -20.8,
+        0,
+        10.375
+      ],
+      "yaw": 0,
+      "scale": 6.8,
+      "tint": 0.62,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        6.549999999999999
+      ]
+    },
+    {
+      "file": "street/house_type16.glb",
+      "position": [
+        -10.4,
+        0,
+        10.025
+      ],
+      "yaw": 0,
+      "scale": 6,
+      "tint": 0.71,
+      "subdivision": 0,
+      "collide": true,
+      "size": [
+        10.6,
+        4.5,
+        5.85
+      ]
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        -19.225,
+        0,
+        -9.2
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "collide": true,
+      "size": [
+        2.2,
+        1.2,
+        0.5
+      ],
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        -16.875,
+        0,
+        -9.2
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "collide": true,
+      "size": [
+        2.2,
+        1.2,
+        0.5
+      ],
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        -3.963,
+        0,
+        9.2
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "collide": true,
+      "size": [
+        2.2,
+        1.2,
+        0.5
+      ],
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        -1.687,
+        0,
+        9.2
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "collide": true,
+      "size": [
+        2.2,
+        1.2,
+        0.5
+      ],
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        0.588,
+        0,
+        9.2
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "collide": true,
+      "size": [
+        2.2,
+        1.2,
+        0.5
+      ],
+      "subdivision": 0
+    },
+    {
+      "file": "street/fence_small.glb",
+      "position": [
+        2.863,
+        0,
+        9.2
+      ],
+      "yaw": 0,
+      "scale": 3,
+      "tint": 0.65,
+      "collide": true,
+      "size": [
+        2.2,
+        1.2,
+        0.5
+      ],
+      "subdivision": 0
+    }
+  ],
+  "spawns": {
+    "from_luque_aquino_galeria": {
+      "position": [
+        20,
+        6.75
+      ],
+      "yaw": 0
+    },
+    "from_luque_aquino_municipal": {
+      "position": [
+        10,
+        6.75
+      ],
+      "yaw": 0
+    },
+    "from_restaurante_real": {
+      "position": [
+        -23.5,
+        -6.75
+      ],
+      "yaw": 180
+    },
+    "start": {
+      "position": [
+        -20,
+        0
+      ],
+      "yaw": 270
+    }
+  }
+}

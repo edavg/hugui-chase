@@ -6,6 +6,7 @@ import {
   type RoomDoorway,
   type RoomSpawn,
 } from './roomBuilder';
+import { computeHideSpot, type HideSpot } from './hides';
 
 export const ROOM_IDS = [
   'room_vestibulo',
@@ -41,6 +42,7 @@ export interface RoomNav {
   colliders: Collider[];
   doorways: RoomDoorway[];
   spawns: Record<string, RoomSpawn>;
+  hides: HideSpot[];
   halfWidth: number;
   halfDepth: number;
 }
@@ -69,6 +71,7 @@ export class RoomGraph {
           colliders: computeColliders(data),
           doorways: computeDoorways(data),
           spawns: data.spawns,
+          hides: (data.hides ?? []).map(computeHideSpot),
           halfWidth: data.size[0] / 2,
           halfDepth: data.size[2] / 2,
         };

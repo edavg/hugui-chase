@@ -326,6 +326,17 @@
       "yaw": 0
     }
   ],
+  "hides": [
+    {
+      "id": "comedor_aparador",
+      "kind": "wardrobe",
+      "position": [
+        -2.3,
+        -2.35
+      ],
+      "yaw": 180
+    }
+  ],
   "spawns": {
     "from_salon": {
       "position": [

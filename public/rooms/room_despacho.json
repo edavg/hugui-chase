@@ -323,6 +323,33 @@
       "yaw": -90
     }
   ],
+  "events": [
+    {
+      "id": "despacho_radio",
+      "kind": "sound",
+      "sound": "radio",
+      "position": [
+        0,
+        0.9,
+        -1.9
+      ],
+      "repeat": 2,
+      "interval": 3.8,
+      "when": {
+        "posters": 4
+      }
+    },
+    {
+      "id": "despacho_sillon",
+      "kind": "moved",
+      "model": 1,
+      "yaw": 180,
+      "when": {
+        "posters": 2,
+        "visits": 2
+      }
+    }
+  ],
   "spawns": {
     "from_pasillo": {
       "position": [

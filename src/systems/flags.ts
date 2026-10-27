@@ -9,6 +9,10 @@ export class Flags {
     this.values.add(flag);
   }
 
+  list(): string[] {
+    return [...this.values];
+  }
+
   clear(): void {
     this.values.clear();
   }

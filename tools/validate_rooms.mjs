@@ -153,7 +153,60 @@ function collidersOf(room) {
     const [sx, , sz] = prop.size;
     colliders.push({ minX: px - sx / 2, maxX: px + sx / 2, minZ: pz - sz / 2, maxZ: pz + sz / 2 });
   }
+  for (const hide of room.hides ?? []) {
+    const [width, depth] = HIDE_SIZES[hide.kind] ?? HIDE_SIZES.wardrobe;
+    const yaw = (hide.yaw * Math.PI) / 180;
+    const [hx0, hz0] = hide.position;
+    const hx = (width / 2) * Math.abs(Math.cos(yaw)) + (depth / 2) * Math.abs(Math.sin(yaw));
+    const hz = (width / 2) * Math.abs(Math.sin(yaw)) + (depth / 2) * Math.abs(Math.cos(yaw));
+    colliders.push({ minX: hx0 - hx, maxX: hx0 + hx, minZ: hz0 - hz, maxZ: hz0 + hz });
+  }
   return colliders;
+}
+
+// Huella de los escondites (ancho, fondo), igual que src/systems/hides.ts.
+const HIDE_SIZES = { wardrobe: [1.0, 0.6], locker: [0.8, 0.55], confessional: [1.0, 1.0] };
+const HIDE_KINDS = Object.keys(HIDE_SIZES);
+const EVENT_SOUNDS = ['radio', 'phone_ring', 'tv_static'];
+const eventIds = new Set();
+const hideIds = new Set();
+
+// Escondites y sustos (M13): ids únicos, tipos conocidos y referencias válidas.
+function validateM13(room) {
+  const [w, , d] = room.size;
+  for (const hide of room.hides ?? []) {
+    if (hideIds.has(hide.id)) fail(`${room.id}: escondite ${hide.id} repetido`);
+    hideIds.add(hide.id);
+    if (!HIDE_KINDS.includes(hide.kind)) fail(`${room.id}: escondite ${hide.id} de tipo desconocido ${hide.kind}`);
+    if (hide.yaw % 90 !== 0) fail(`${room.id}: escondite ${hide.id} con yaw ${hide.yaw} (sólo múltiplos de 90)`);
+    if (Math.abs(hide.position[0]) > w / 2 || Math.abs(hide.position[1]) > d / 2) fail(`${room.id}: escondite ${hide.id} fuera de la sala`);
+  }
+  for (const event of room.events ?? []) {
+    if (eventIds.has(event.id)) fail(`${room.id}: evento ${event.id} repetido`);
+    eventIds.add(event.id);
+    if (event.kind === 'sound') {
+      if (!EVENT_SOUNDS.includes(event.sound)) fail(`${room.id}: evento ${event.id} con sonido desconocido ${event.sound}`);
+    } else if (event.kind === 'moved') {
+      const model = room.models?.[event.model];
+      if (!model) {
+        fail(`${room.id}: evento ${event.id} apunta al modelo ${event.model}, que no existe`);
+      } else if (model.collide && model.size) {
+        const turn = (((event.yaw - (model.yaw ?? 0)) % 180) + 180) % 180;
+        const square = Math.abs(model.size[0] - model.size[2]) < 0.05;
+        if (turn !== 0 && !(turn === 90 && square)) fail(`${room.id}: evento ${event.id} cambia la huella de colisión de ${model.file}`);
+      }
+    } else if (event.kind === 'defaced') {
+      const match = (room.props ?? []).some(
+        (prop) => prop.decal && prop.position.every((value, index) => Math.abs(value - event.position[index]) < 0.01) && room.textures[prop.texture] === event.texture,
+      );
+      if (!match) fail(`${room.id}: evento ${event.id} no coincide con ningún cuadro con textura ${event.texture}`);
+    } else if (event.kind === 'apparition') {
+      const [x, z] = event.position;
+      if (collidersOf(room).some((collider) => insideCollider(collider, x, z, 0.3))) fail(`${room.id}: la silueta ${event.id} está dentro de un mueble`);
+    } else {
+      fail(`${room.id}: evento ${event.id} de tipo desconocido ${event.kind}`);
+    }
+  }
 }
 
 function insideCollider(collider, x, z, margin) {
@@ -353,6 +406,7 @@ for (const room of rooms.values()) {
     }
   }
 
+  validateM13(room);
   const tris = estimateTris(room);
   // Presupuesto PS2 (antes 4.000 tris PSX). La estimación no cuenta molduras ni
   // luminarias; el recuento real lo imprime el juego en consola.

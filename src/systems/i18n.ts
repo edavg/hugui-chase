@@ -3,6 +3,9 @@ export type Language = 'es' | 'en';
 export type ControlRow = readonly [action: string, keys: string];
 
 export interface UiTexts {
+  minimapTitle: string;
+  minimapPending: string;
+  minimapBurned: string;
   introObjective: string;
   clickToPlay: string;
   touchToPlay: string;
@@ -16,6 +19,10 @@ export interface UiTexts {
   promptKeyLocked: string;
   promptPadlock: string;
   promptEat: string;
+  promptHide: string;
+  promptLeaveHide: string;
+  toastHideOveruse: string;
+  toastFoundHiding: string;
   toastFood: (hearts: number) => string;
   toastFoodFull: string;
   promptUnlock: string;
@@ -30,6 +37,7 @@ export interface UiTexts {
   promptBurnPoster: string;
   promptEndingReady: string;
   promptEndingLocked: (have: number, total: number) => string;
+  endingDoorHint: string;
   inventoryFull: string;
   readHint: string;
   endingTitle: string;
@@ -101,6 +109,9 @@ export interface UiTexts {
 
 export const TEXTS: Record<Language, UiTexts> = {
   es: {
+    minimapTitle: 'MINIMAPA',
+    minimapPending: 'PEND.',
+    minimapBurned: 'QUEM.',
     introObjective: 'QUEMA LOS 12 AFICHES PARA PODER SALIR',
     clickToPlay: 'CLICK PARA JUGAR — WASD MOVER · SHIFT CORRER · E INTERACTUAR · F LINTERNA',
     touchToPlay: 'JOYSTICK IZQ MOVER · ARRASTRA DER MIRAR',
@@ -114,6 +125,10 @@ export const TEXTS: Record<Language, UiTexts> = {
     promptKeyLocked: 'E — CERRADA CON LLAVE',
     promptPadlock: 'E — CERRADA CON CANDADO',
     promptEat: 'E — COMER CHIPA',
+    promptHide: 'E — ESCONDERSE',
+    promptLeaveHide: 'E — SALIR DEL ESCONDITE',
+    toastHideOveruse: 'HUGUI EMPIEZA A SOSPECHAR DE ESTE ESCONDITE...',
+    toastFoundHiding: '¡TE HA ENCONTRADO!',
     toastFood: (hearts) => `¡CHIPA! +1 CORAZÓN (${hearts})`,
     toastFoodFull: 'YA NO TE ENTRA NI UNA CHIPA MÁS',
     promptUnlock: 'E — ABRIR EL CANDADO',
@@ -127,7 +142,8 @@ export const TEXTS: Record<Language, UiTexts> = {
     promptPickTool: (name) => `E — COGER ${name.toUpperCase()}`,
     promptBurnPoster: 'E — QUEMAR AFICHE',
     promptEndingReady: 'E — SALIR DE LA CASA',
-    promptEndingLocked: (have, total) => `E — CERRADA (${have}/${total} AFICHES)`,
+    promptEndingLocked: (have, total) => `E — CANDADO (${have}/${total} AFICHES)`,
+    endingDoorHint: 'QUEMA TODOS LOS AFICHES PARA QUE DESAPAREZCA EL CANDADO',
     inventoryFull: 'NO PUEDES LLEVAR MÁS COSAS',
     readHint: 'E CONTINUAR · ESC CERRAR',
     endingTitle: 'HAS ESCAPADO',
@@ -200,6 +216,9 @@ export const TEXTS: Record<Language, UiTexts> = {
     menuHintBackTouch: 'PAUSA',
   },
   en: {
+    minimapTitle: 'MINIMAP',
+    minimapPending: 'LEFT',
+    minimapBurned: 'BURNED',
     introObjective: 'BURN ALL 12 POSTERS TO ESCAPE',
     clickToPlay: 'CLICK TO PLAY — WASD MOVE · SHIFT RUN · E INTERACT · F FLASHLIGHT',
     touchToPlay: 'LEFT JOYSTICK MOVE · DRAG RIGHT TO LOOK',
@@ -213,6 +232,10 @@ export const TEXTS: Record<Language, UiTexts> = {
     promptKeyLocked: 'E — LOCKED WITH A KEY',
     promptPadlock: 'E — PADLOCKED',
     promptEat: 'E — EAT CHIPA',
+    promptHide: 'E — HIDE',
+    promptLeaveHide: 'E — LEAVE HIDING SPOT',
+    toastHideOveruse: 'HUGUI IS GROWING SUSPICIOUS OF THIS HIDING SPOT...',
+    toastFoundHiding: 'IT FOUND YOU!',
     toastFood: (hearts) => `CHIPA! +1 HEART (${hearts})`,
     toastFoodFull: 'YOU CANNOT EAT ANOTHER CHIPA',
     promptUnlock: 'E — UNLOCK THE PADLOCK',
@@ -226,7 +249,8 @@ export const TEXTS: Record<Language, UiTexts> = {
     promptPickTool: (name) => `E — TAKE ${name.toUpperCase()}`,
     promptBurnPoster: 'E — BURN POSTER',
     promptEndingReady: 'E — LEAVE THE HOUSE',
-    promptEndingLocked: (have, total) => `E — LOCKED (${have}/${total} POSTERS)`,
+    promptEndingLocked: (have, total) => `E — PADLOCK (${have}/${total} POSTERS)`,
+    endingDoorHint: 'BURN EVERY POSTER TO MAKE THE PADLOCK DISAPPEAR',
     inventoryFull: 'YOU CANNOT CARRY ANYTHING ELSE',
     readHint: 'E CONTINUE · ESC CLOSE',
     endingTitle: 'YOU ESCAPED',
@@ -303,9 +327,9 @@ export const TEXTS: Record<Language, UiTexts> = {
 export const CONTROLS: Record<Language, readonly ControlRow[]> = {
   es: [
     ['MOVER', 'W A S D / FLECHAS'],
-    ['CORRER', 'MAYÚS'],
+    ['CORRER (GASTA AGUANTE)', 'MAYÚS'],
     ['MIRAR', 'RATÓN'],
-    ['INTERACTUAR', 'E'],
+    ['INTERACTUAR / ESCONDERSE', 'E'],
     ['LEER / REVELAR', 'E / ESPACIO'],
     ['LINTERNA', 'F'],
     ['PAUSA', 'ESC'],
@@ -313,9 +337,9 @@ export const CONTROLS: Record<Language, readonly ControlRow[]> = {
   ],
   en: [
     ['MOVE', 'W A S D / ARROWS'],
-    ['RUN', 'SHIFT'],
+    ['RUN (USES STAMINA)', 'SHIFT'],
     ['LOOK', 'MOUSE'],
-    ['INTERACT', 'E'],
+    ['INTERACT / HIDE', 'E'],
     ['READ / REVEAL', 'E / SPACE'],
     ['FLASHLIGHT', 'F'],
     ['PAUSE', 'ESC'],

@@ -278,6 +278,17 @@
       "yaw": 40
     }
   ],
+  "hides": [
+    {
+      "id": "dormitorio_ropero",
+      "kind": "wardrobe",
+      "position": [
+        3.35,
+        -0.6
+      ],
+      "yaw": 90
+    }
+  ],
   "spawns": {
     "from_pasillo_alto": {
       "position": [

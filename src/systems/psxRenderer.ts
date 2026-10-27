@@ -55,7 +55,7 @@ export class PsxRenderer {
   // el par "base" queda fijo para poder volver a horizontal sin releer config.
   private readonly baseResolution: [number, number];
   private resolution: [number, number];
-  private readonly portraitEnabled: boolean;
+  private readonly mobileViewport: boolean;
   private readonly blitScene = new THREE.Scene();
   private readonly blitCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   private readonly blitMaterial: THREE.ShaderMaterial;
@@ -70,9 +70,9 @@ export class PsxRenderer {
   private shadowCaster: ShadowCaster | null = null;
   private readonly shadowLook = new THREE.Vector3();
 
-  constructor(canvas: HTMLCanvasElement, config: PsxConfig, portraitEnabled = false) {
+  constructor(canvas: HTMLCanvasElement, config: PsxConfig, mobileViewport = false) {
     this.config = config;
-    this.portraitEnabled = portraitEnabled;
+    this.mobileViewport = mobileViewport;
     this.baseResolution = [config.resolution[0], config.resolution[1]];
     this.resolution = [config.resolution[0], config.resolution[1]];
     const [resWidth, resHeight] = this.resolution;
@@ -152,7 +152,7 @@ export class PsxRenderer {
     return this.imageMode;
   }
 
-  // Par de resolución activo (horizontal 4:3 u vertical dinámico de móvil).
+  // Resolución base en escritorio; aspecto del dispositivo en móvil.
   get activeResolution(): readonly [number, number] {
     return this.resolution;
   }
@@ -176,11 +176,10 @@ export class PsxRenderer {
     this.syncBlur();
 
     const fit = Math.min(width / resWidth, height / resHeight);
-    // En vertical se prioriza llenar la pantalla: el escalado entero dejaría
-    // franjas negras aunque la resolución ya coincide con el aspecto real.
-    const portraitActive = this.portraitEnabled && isPortraitWindow();
+    // En móvil ambas orientaciones llenan la pantalla; el escalado entero
+    // dejaría franjas aunque la resolución coincida con el aspecto real.
     const scale =
-      this.config.effects.integer_scaling && !portraitActive && fit >= 1 ? Math.floor(fit) : fit;
+      this.config.effects.integer_scaling && !this.mobileViewport && fit >= 1 ? Math.floor(fit) : fit;
     const viewWidth = Math.min(width, Math.max(1, Math.round(resWidth * scale)));
     const viewHeight = Math.min(height, Math.max(1, Math.round(resHeight * scale)));
     this.viewport.set(
@@ -197,8 +196,12 @@ export class PsxRenderer {
   };
 
   private desiredResolution(): [number, number] {
-    if (!this.portraitEnabled || !isPortraitWindow()) {
+    if (!this.mobileViewport) {
       return this.baseResolution;
+    }
+    if (!isPortraitWindow()) {
+      const aspect = window.innerWidth / Math.max(1, window.innerHeight);
+      return [Math.round(this.baseResolution[1] * aspect), this.baseResolution[1]];
     }
     const aspect = window.innerHeight / Math.max(1, window.innerWidth);
     const height = Math.max(PORTRAIT_MIN_HEIGHT, Math.round(PORTRAIT_WIDTH * aspect));

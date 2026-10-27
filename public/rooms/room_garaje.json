@@ -462,6 +462,17 @@
       "yaw": 0
     }
   ],
+  "hides": [
+    {
+      "id": "garaje_taquilla",
+      "kind": "locker",
+      "position": [
+        -2,
+        3.1
+      ],
+      "yaw": 0
+    }
+  ],
   "spawns": {
     "from_vestibulo": {
       "position": [

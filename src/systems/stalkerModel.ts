@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { PsxConfig } from './config';
 import { createPsxMaterial, type PsxMaterialHandle } from './psxMaterial';
 import type { HeadAtlas } from './stalkerFace';
-import { buildHeadMesh } from './stalkerHead';
+import { buildHeadMesh, HEAD_UNITS } from './stalkerHead';
 import { addVertexColors } from './vertexColors';
 import { applyFiltering } from './textures';
 
@@ -11,17 +11,14 @@ export const STALKER_MODEL_URL = 'assets/models/stalker/monster.glb';
 export const MODEL_HEAD_SIZE = 0.5;
 
 const HEAD_BONE_HINTS = ['head'];
-const HEAD_CUT_WEIGHT = 0.5;
-const HEAD_OVERSIZE = 1.15;
+const HEAD_CUT_WEIGHT = 0.1;
+const HEAD_MEASURE_WEIGHT = 0.95;
+const HEAD_OVERSIZE = 1.12;
 const HEAD_SIZE_RATIO = 0.16;
-const HEAD_CENTER_RATIO = 0.42;
 const MODEL_ROTATION_Y = Math.PI;
 // Las texturas ya no se decodifican como sRGB: el cuerpo sale más claro que
 // antes, así que el sombreado de vértice baja (piel oscura, enfermiza).
 const MODEL_SHADE = 0.46;
-// La cabeza esculpida mide 1 unidad (coronilla→barbilla); el cubo medía 0.5.
-const HEAD_GEOMETRY_SCALE = 0.6;
-const HEAD_DROP = -0.04;
 
 export interface StalkerRig {
   root: THREE.Group;
@@ -73,27 +70,31 @@ export async function loadStalkerRig(
   const meshHeight = Math.max(0.1, bounds.max.y - bounds.min.y);
   const scale = config.enemy.height / meshHeight;
 
-  // La escala del rig se aplica ANTES de medir la cabeza: así la medida, la
-  // posición y el tamaño del cubo están todos en el mismo espacio (mundo).
+  // Medir el modelo ya escalado: el anclaje y la geometría quedan en mundo.
   root.rotation.y = MODEL_ROTATION_Y;
   root.position.y = -bounds.min.y * scale;
   root.scale.setScalar(scale);
   root.updateMatrixWorld(true);
 
-  const head = measureHead(headBone, bounds.max.y * scale, config.enemy.height);
+  const head = measureHead(mesh, headBone, config.enemy.height);
   const removedTriangles = stripHeadGeometry(mesh, headBone);
-  const { group: headCube, material: headMaterial } = buildHead(config, atlas);
-  // La cadena de huesos del FBX trae una escala espuria con shear, así que en vez
-  // de descomponerla se compone la matriz local exacta: hueso⁻¹ · mundo deseado.
   const desired = new THREE.Matrix4().compose(
     head.center,
     new THREE.Quaternion(),
-    new THREE.Vector3().setScalar(head.size * HEAD_OVERSIZE),
+    new THREE.Vector3().setScalar(head.size / HEAD_UNITS),
   );
+  const neckBone = findBone(root, ['neck']) ?? headBone;
+  const chestBone = findBone(root, ['chest']) ?? neckBone;
+  const { group: headCube, material: headMaterial } = buildHead(
+    config, atlas, [headBone, neckBone, chestBone], desired,
+  );
+  // Conservar la matriz exacta del FBX (puede contener shear). El cráneo sigue
+  // al hueso de cabeza; el cuello mezcla cabeza/cuello/pecho y queda unido al
+  // torso incluso cuando la animación echa la cabeza hacia atrás.
   headCube.matrixAutoUpdate = false;
-  headCube.matrix.copy(new THREE.Matrix4().copy(headBone.matrixWorld).invert().multiply(desired));
+  headCube.matrix.copy(new THREE.Matrix4().copy(root.matrixWorld).invert().multiply(desired));
   headCube.matrix.decompose(headCube.position, headCube.quaternion, headCube.scale);
-  headBone.add(headCube);
+  root.add(headCube);
   root.updateMatrixWorld(true);
 
   const clips = new Map<string, THREE.AnimationClip>();
@@ -142,11 +143,36 @@ interface HeadMeasure {
   vertices: number;
 }
 
-function measureHead(headBone: THREE.Bone, modelTop: number, modelHeight: number): HeadMeasure {
+function measureHead(mesh: THREE.SkinnedMesh, headBone: THREE.Bone, modelHeight: number): HeadMeasure {
   const anchor = new THREE.Vector3().setFromMatrixPosition(headBone.matrixWorld);
+  const bounds = new THREE.Box3();
+  const boneIndex = mesh.skeleton.bones.indexOf(headBone);
+  const skinIndex = mesh.geometry.getAttribute('skinIndex') as IndexAttribute | undefined;
+  const skinWeight = mesh.geometry.getAttribute('skinWeight') as IndexAttribute | undefined;
+  const point = new THREE.Vector3();
+  let vertices = 0;
+  if (boneIndex >= 0 && skinIndex && skinWeight) {
+    mesh.skeleton.update();
+    for (let vertex = 0; vertex < skinIndex.count; vertex += 1) {
+      // El cráneo tiene pesos casi completos; los pesos menores son del cuello.
+      if (headWeight(skinIndex, skinWeight, vertex, boneIndex) < HEAD_MEASURE_WEIGHT) continue;
+      mesh.getVertexPosition(vertex, point).applyMatrix4(mesh.matrixWorld);
+      bounds.expandByPoint(point);
+      vertices += 1;
+    }
+  }
+  if (!bounds.isEmpty()) {
+    const extent = bounds.getSize(new THREE.Vector3());
+    const size = Math.max(extent.x, extent.y, extent.z) * HEAD_OVERSIZE;
+    const center = bounds.getCenter(new THREE.Vector3());
+    // Mantener la coronilla original y centrar sobre el cráneo, no sobre el
+    // pivote del hueso, que está detrás, en la unión con el cuello.
+    center.y = bounds.max.y - size * 0.5;
+    return { center, size, vertices };
+  }
   const size = Math.max(0.12, modelHeight * HEAD_SIZE_RATIO);
   return {
-    center: new THREE.Vector3(anchor.x, modelTop - size * HEAD_CENTER_RATIO, anchor.z),
+    center: new THREE.Vector3(anchor.x, anchor.y + size * 0.3, anchor.z),
     size,
     vertices: 0,
   };
@@ -186,8 +212,8 @@ function stripHeadGeometry(mesh: THREE.SkinnedMesh, headBone: THREE.Bone): numbe
     const a = source[i];
     const b = source[i + 1];
     const c = source[i + 2];
-    // Basta con que UN vértice sea de la cabeza: así no quedan picos del
-    // muñón del cuello atravesando la cabeza esculpida (mejillas, papada).
+    // Quitar también la transición del cuello: sus vértices mezclan pesos de
+    // cabeza/cuello y de lo contrario atraviesan la mandíbula al animarse.
     if (
       headWeight(skinIndex, skinWeight, a, boneIndex) >= HEAD_CUT_WEIGHT ||
       headWeight(skinIndex, skinWeight, b, boneIndex) >= HEAD_CUT_WEIGHT ||
@@ -205,16 +231,33 @@ function stripHeadGeometry(mesh: THREE.SkinnedMesh, headBone: THREE.Bone): numbe
   return removed;
 }
 
-function buildHead(config: PsxConfig, atlas: HeadAtlas): { group: THREE.Group; material: PsxMaterialHandle } {
+function buildHead(
+  config: PsxConfig,
+  atlas: HeadAtlas,
+  bones: THREE.Bone[],
+  bindMatrix: THREE.Matrix4,
+): { group: THREE.Group; material: PsxMaterialHandle } {
   const group = new THREE.Group();
   group.name = 'stalker_head';
   const head = buildHeadMesh(atlas);
   const geometry = head.geometry.clone();
-  geometry.scale(HEAD_GEOMETRY_SCALE, HEAD_GEOMETRY_SCALE, HEAD_GEOMETRY_SCALE);
-  geometry.translate(0, -HEAD_DROP, 0);
+  const position = geometry.getAttribute('position');
+  const skinIndex = new Uint16Array(position.count * 4);
+  const skinWeight = new Float32Array(position.count * 4);
+  for (let vertex = 0; vertex < position.count; vertex += 1) {
+    const y = position.getY(vertex) / HEAD_UNITS;
+    const headWeight = THREE.MathUtils.smoothstep(y, -0.78, -0.48);
+    const chestWeight = 1 - THREE.MathUtils.smoothstep(y, -0.92, -0.7);
+    const i = vertex * 4;
+    skinIndex.set([0, 1, 2, 0], i);
+    skinWeight.set([headWeight, 1 - headWeight - chestWeight, chestWeight, 0], i);
+  }
+  geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndex, 4));
+  geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeight, 4));
   addVertexColors(geometry, 0.95);
   const material = createPsxMaterial(config, head.texture, null, { spec: 0.28, gloss: 22 });
-  const mesh = new THREE.Mesh(geometry, material.material);
+  const mesh = new THREE.SkinnedMesh(geometry, material.material);
+  mesh.bind(new THREE.Skeleton(bones), bindMatrix);
   mesh.frustumCulled = false;
   group.add(mesh);
   return { group, material };

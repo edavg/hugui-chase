@@ -51,7 +51,11 @@
     "interact_fov_deg": 32,
     "invert_look": false,
     "hearts": 3,
-    "hit_invuln_seconds": 2.5
+    "hit_invuln_seconds": 2.5,
+    "stamina_seconds": 6.0,
+    "stamina_recover_seconds": 8.0,
+    "stamina_resume": 0.4,
+    "exhausted_speed": 0.85
   },
   "enemy": {
     "chase_speed": 2.4,
@@ -97,7 +101,21 @@
     "forbidden_rooms": [
       "room_vestibulo"
     ],
-    "forbidden_seconds": 120.0
+    "forbidden_seconds": 120.0,
+    "flashlight_sight_scale": 1.4,
+    "dark_sight_scale": 0.65,
+    "beam_notice_range": 10.0,
+    "beam_notice_deg": 14,
+    "pant_hearing": 6.0,
+    "hide_check_uses": 3,
+    "inspect_seconds": 1.6,
+    "hide_light_radius": 4.0,
+    "memory_seconds": 240.0,
+    "memory_chance": 0.5,
+    "lure_min_seconds": 75.0,
+    "lure_max_seconds": 140.0,
+    "burn_noise_hops": 1,
+    "trace_seconds": 150.0
   },
   "loading": {
     "authentic": true,

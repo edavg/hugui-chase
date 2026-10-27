@@ -13,10 +13,13 @@ import {
   type PsxMaterialHandle,
   type SurfaceOptions,
 } from './psxMaterial';
-import { loadPosterTexture } from './proceduralTextures';
+import { loadDefacedTexture, loadPosterTexture } from './proceduralTextures';
 import type { SceneLightDef } from './sceneLights';
 import { applyFiltering, loadNormalMap, loadPixelTexture } from './textures';
 import { addVertexColors } from './vertexColors';
+import { createEndingDoorDecoration, type EndingDoorDecoration } from './endingDoor';
+import { buildHideFurniture, computeHideSpot, type HideHandle, type RoomHide } from './hides';
+import { buildApparition, type RoomEventDef, type RoomEventHandle } from './roomEvents';
 
 export interface Collider {
   minX: number;
@@ -153,6 +156,10 @@ export interface RoomData {
   trim?: boolean;
   // Friso de madera en la parte baja del muro (clave de textura + altura).
   wainscot?: { texture: string; height?: number };
+  // Escondites (M13): roperos/taquillas/confesionarios con colisión.
+  hides?: RoomHide[];
+  // Sustos con guion (M13), ver roomEvents.ts.
+  events?: RoomEventDef[];
 }
 
 export interface DoorLeaf {
@@ -162,6 +169,8 @@ export interface DoorLeaf {
 }
 
 export interface DoorHandle {
+  heading: number;
+  halfWidth: number;
   name: string;
   group: THREE.Group | null;
   leaves: DoorLeaf[];
@@ -179,6 +188,8 @@ export interface DoorHandle {
   collider: Collider | null;
   // Candado de las puertas con llave: se quita con la llave antes de abrir.
   lock: DoorLock | null;
+  // Candado de la salida: desaparece al quemar todos los afiches requeridos.
+  posterLock: THREE.Group | null;
   // Identificador estable de la cerradura (sala→destino) para los flags.
   lockId: string;
 }
@@ -201,6 +212,7 @@ export interface ItemHandle {
 export interface BuiltRoom {
   id: string;
   name: string;
+  mapSize: readonly [width: number, depth: number];
   scene: THREE.Scene;
   colliders: Collider[];
   doors: DoorHandle[];
@@ -210,6 +222,10 @@ export interface BuiltRoom {
   atmosphere: Atmosphere | null;
   lights: SceneLightDef[];
   outdoor: boolean;
+  hides: HideHandle[];
+  events: RoomEventHandle[];
+  // Raíces de los GLB por índice de `models` (null si no cargó).
+  models: Array<THREE.Object3D | null>;
   sync: (config: PsxConfig) => void;
   triangleCount: number;
 }
@@ -345,6 +361,10 @@ export function computeColliders(data: RoomData): Collider[] {
     colliders.push({ minX: px - sx / 2, maxX: px + sx / 2, minZ: pz - sz / 2, maxZ: pz + sz / 2 });
   }
 
+  for (const hide of data.hides ?? []) {
+    colliders.push({ ...computeHideSpot(hide).collider });
+  }
+
   return colliders;
 }
 
@@ -466,6 +486,7 @@ export async function buildRoom(
     textureKeys.map((key) => [key, [] as THREE.BufferGeometry[]]),
   );
   const extraMaterials: PsxMaterialHandle[] = [];
+  const endingDecorations: EndingDoorDecoration[] = [];
 
   const [width, height, depth] = data.size;
   const thickness = data.wall_thickness;
@@ -828,7 +849,24 @@ export async function buildRoom(
           );
           leaves.push({ group, baseRotation: heading, openAngle });
         }
+        let posterLock: THREE.Group | null = null;
+        if (opening.ending) {
+          const lock = buildPadlock(materials.fixture.material, 1);
+          const scale = opening.width > 2 ? 5.2 : 4.5;
+          lock.group.scale.setScalar(scale);
+          lock.group.position.set(-0.03 * scale, Math.min(1.46, opening.height * 0.7), 0.045 - 0.035 * scale);
+          const decoration = createEndingDoorDecoration(
+            config, atmosphere, opening.width, opening.height, thickness, lock.group,
+          );
+          decoration.group.position.set(centerX, 0, centerZ);
+          decoration.group.rotation.y = heading + (faceSign < 0 ? Math.PI : 0);
+          scene.add(decoration.group);
+          endingDecorations.push(decoration);
+          posterLock = decoration.padlock;
+        }
         doors.push({
+          heading,
+          halfWidth: opening.width / 2,
           name: leaves[0].group.name,
           group: leaves[0].group,
           leaves,
@@ -843,11 +881,14 @@ export async function buildRoom(
           height: opening.height,
           collider: findCollider(colliders, centerX, centerZ, heading, opening.width, DOOR_THICKNESS),
           lock: (leaves[0].group.userData.lock as DoorLock | undefined) ?? null,
+          posterLock,
           lockId: `${data.id}>${opening.to ?? 'exit'}`,
         });
       } else if (opening.kind === 'passage') {
         if (!opening.blocked && opening.to) {
           doors.push({
+            heading,
+            halfWidth: opening.width / 2,
             name: `passage_${data.id}_${doors.length + 1}`,
             group: null,
             leaves: [],
@@ -862,6 +903,7 @@ export async function buildRoom(
             height: opening.height,
             collider: null,
             lock: null,
+            posterLock: null,
             lockId: `${data.id}>${opening.to}`,
           });
         }
@@ -949,13 +991,61 @@ export async function buildRoom(
     bucket.push(geometry);
   }
 
+  const models: Array<THREE.Object3D | null> = [];
   for (const model of data.models ?? []) {
     try {
       const object = await loadRoomModel(model, config, atmosphere, extraMaterials);
       scene.add(object);
+      models.push(object);
     } catch (error) {
       console.warn(`[M10] No se pudo cargar el modelo ${model.file} de ${data.id}`, error);
+      models.push(null);
     }
+  }
+
+  const hides = (data.hides ?? []).map((def) => {
+    const spot = computeHideSpot(def);
+    const handle = buildHideFurniture(spot, (def.kind === 'locker' ? materials.fixture : materials.trim).material);
+    scene.add(handle.group);
+    return handle;
+  });
+
+  const events: RoomEventHandle[] = [];
+  let apparitionMaterial: PsxMaterialHandle | null = null;
+  for (const def of data.events ?? []) {
+    let object: THREE.Object3D | null = null;
+    if (def.kind === 'apparition') {
+      if (!apparitionMaterial) {
+        apparitionMaterial = createPsxMaterial(config, whitePixelTexture(), atmosphere, { spec: 0, noDirect: true });
+        extraMaterials.push(apparitionMaterial);
+      }
+      object = buildApparition(apparitionMaterial.material);
+      object.position.set(def.position[0], 0, def.position[1]);
+      object.name = `event_${def.id}`;
+      scene.add(object);
+    } else if (def.kind === 'moved') {
+      object = models[def.model] ?? null;
+    } else if (def.kind === 'defaced') {
+      // Copia del cuadro con los ojos rayados, un pelo por delante del original.
+      const geometry = decalGeometry(
+        { kind: 'box', position: def.position, size: def.size, decal: true, fit: true },
+        width, height, depth, thickness, texScale,
+      );
+      const normal = new THREE.Vector3().fromBufferAttribute(geometry.getAttribute('normal'), 0);
+      geometry.translate(normal.x * 0.004, normal.y * 0.004, normal.z * 0.004);
+      paintVertexColors(geometry, () => 0.87);
+      const handle = createPsxMaterial(config, loadDefacedTexture(textureUrl(def.texture), def.eyes), atmosphere, { spec: 0.12 });
+      handle.material.side = THREE.FrontSide;
+      handle.material.polygonOffset = true;
+      handle.material.polygonOffsetFactor = -2;
+      handle.material.polygonOffsetUnits = -2;
+      extraMaterials.push(handle);
+      object = new THREE.Mesh(geometry, handle.material);
+      object.name = `event_${def.id}`;
+      object.visible = false;
+      scene.add(object);
+    }
+    events.push({ def, object });
   }
 
   let foodMaterials: { chipa: THREE.Material; plate: THREE.Material } | null = null;
@@ -1087,6 +1177,7 @@ export async function buildRoom(
   return {
     id: data.id,
     name: data.name,
+    mapSize: [data.size[0], data.size[2]],
     scene,
     colliders,
     doors,
@@ -1096,10 +1187,14 @@ export async function buildRoom(
     atmosphere,
     lights,
     outdoor,
+    hides,
+    events,
+    models,
     sync: (next) => {
       textureKeys.forEach((key) => materials[key].sync(next, atmosphere));
       posterMaterial.sync(next, posterAtmosphere);
       extraMaterials.forEach((handle) => handle.sync(next, atmosphere));
+      endingDecorations.forEach((decoration) => decoration.sync(next));
     },
     triangleCount: countTriangles(scene),
   };

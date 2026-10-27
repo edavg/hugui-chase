@@ -229,6 +229,17 @@
       "decal": true
     }
   ],
+  "hides": [
+    {
+      "id": "bodega_taquilla",
+      "kind": "locker",
+      "position": [
+        -1.8,
+        2.1
+      ],
+      "yaw": 0
+    }
+  ],
   "spawns": {
     "from_lavanderia": {
       "position": [

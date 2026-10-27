@@ -511,6 +511,40 @@
       "yaw": 180
     }
   ],
+  "hides": [
+    {
+      "id": "salon_ropero",
+      "kind": "wardrobe",
+      "position": [
+        -1.3,
+        3.1
+      ],
+      "yaw": 0
+    }
+  ],
+  "events": [
+    {
+      "id": "salon_tele",
+      "kind": "sound",
+      "sound": "tv_static",
+      "position": [
+        -0.5,
+        0.95,
+        -2.95
+      ],
+      "repeat": 3,
+      "interval": 3.2,
+      "light": [
+        0.55,
+        0.7,
+        1
+      ],
+      "when": {
+        "posters": 1,
+        "visits": 2
+      }
+    }
+  ],
   "spawns": {
     "from_vestibulo": {
       "position": [

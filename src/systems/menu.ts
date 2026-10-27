@@ -136,7 +136,7 @@ const PAUSE_TITLE_Y = 96;
 const PAUSE_RULE_Y = 132;
 const PAUSE_LIST_REGION: Rect = { x: 96, y: 160, width: 448, height: 230 };
 const GAMEOVER_LIST_REGION: Rect = { x: 96, y: 236, width: 448, height: 158 };
-const ENDING_LIST_REGION: Rect = GAMEOVER_LIST_REGION;
+const ENDING_IMAGE_ASPECT = 1080 / 1292;
 
 const VEL_PAUSE = 0.78;
 const VEL_GAMEOVER = 0.82;
@@ -161,6 +161,17 @@ interface OptionsLayout {
   highlightWidth: number;
 }
 
+interface EndingLayout {
+  endingImage: Rect;
+  endingCenterX: number;
+  endingTitleScale: number;
+  endingTitleY: number;
+  endingRuleY: number;
+  endingTextY: number;
+  endingTextWidth: number;
+  endingList: Rect;
+}
+
 interface MenuLayout {
   portrait: boolean;
   hintY: number;
@@ -172,11 +183,6 @@ interface MenuLayout {
   outcomeTextY: number;
   outcomeTextWidth: number;
   outcomeList: Rect;
-  endingTitleY: number;
-  endingRuleY: number;
-  endingTextY: number;
-  endingTextWidth: number;
-  endingList: Rect;
   options: OptionsLayout;
   controls: { panel: Rect; actionX: number; keysX: number; rowTop: number; rowBottom: number; noteY: number };
   credits: { panel: Rect; textWidth: number; backY: number };
@@ -199,6 +205,7 @@ export class Menu {
   private readonly settings: Settings;
   private readonly config: PsxConfig;
   private readonly actions: MenuActions;
+  private readonly endingImage = new Image();
   private readonly stack: MenuScreen[] = [];
   private readonly axes: Record<Axis, AxisState> = {
     up: { held: false, timer: 0 },
@@ -227,6 +234,7 @@ export class Menu {
     this.settings = settings;
     this.config = config;
     this.actions = actions;
+    this.endingImage.src = `${import.meta.env.BASE_URL}assets/textures/ending_victory.jpg`;
     if (typeof settings?.onChange === 'function') {
       settings.onChange((event) => {
         this.rowsDirty = true;
@@ -444,6 +452,48 @@ export class Menu {
     return TEXTS[this.lang()];
   }
 
+  private endingLayout(): EndingLayout {
+    const ui = this.ui;
+    const portrait = ui.height > ui.width;
+    const width = Math.min(680, ui.width - ui.safeArea.left - ui.safeArea.right - 48);
+    const left = Math.round(ui.safeArea.left + (ui.width - ui.safeArea.left - ui.safeArea.right - width) / 2);
+    const bottomReserve = this.touchHints() ? Math.ceil(132 / ui.cssScale) : 36;
+    const availableHeight = ui.height - ui.safeArea.top - ui.safeArea.bottom - bottomReserve - 24;
+    const imageWidth = portrait ? Math.min(252, width) : Math.floor(width * 0.4);
+    const textWidth = portrait ? width : width - imageWidth - 32;
+    const titleScale = Math.max(1, Math.min(portrait ? 2 : 3,
+      Math.floor(textWidth / ui.font.measure(this.texts().endingTitle))));
+    const titleHeight = ui.font.lineHeight(titleScale);
+    const bodyHeight = this.measureWrap(this.texts().endingText, textWidth);
+    // Incluye el botón y su indicación para mantenerlos dentro del área visible.
+    const textHeight = titleHeight + 34 + bodyHeight + 108;
+    const imageHeight = Math.max(1, Math.floor(Math.min(imageWidth / ENDING_IMAGE_ASPECT,
+      portrait ? availableHeight - textHeight - 24 : availableHeight)));
+    const actualImageWidth = Math.floor(imageHeight * ENDING_IMAGE_ASPECT);
+    const height = portrait ? textHeight + imageHeight + 24 : Math.max(textHeight, imageHeight);
+    const top = Math.round(ui.safeArea.top + 24 + Math.max(0, availableHeight - height) / 2);
+    const centerX = portrait ? left + width / 2 : left + imageWidth + 32 + textWidth / 2;
+    const titleY = portrait ? top : top + Math.round((height - textHeight) / 2);
+    const ruleY = titleY + titleHeight + 12;
+    const imageY = portrait ? ruleY + 22 : top + Math.round((height - imageHeight) / 2);
+    const textY = portrait ? imageY + imageHeight + 24 : ruleY + 22;
+    return {
+      endingImage: {
+        x: Math.round(portrait ? left + (width - actualImageWidth) / 2 : left + (imageWidth - actualImageWidth) / 2),
+        y: imageY,
+        width: actualImageWidth,
+        height: imageHeight,
+      },
+      endingCenterX: centerX,
+      endingTitleScale: titleScale,
+      endingTitleY: titleY,
+      endingRuleY: ruleY,
+      endingTextY: textY,
+      endingTextWidth: textWidth,
+      endingList: { x: centerX - textWidth / 2, y: textY + bodyHeight + 24, width: textWidth, height: 56 },
+    };
+  }
+
   // Layout adaptable: en 640×480 reproduce el diseño original; en vertical los
   // paneles usan el ancho disponible y el alto extra de la pantalla.
   private layout(): MenuLayout {
@@ -451,50 +501,47 @@ export class Menu {
     const height = this.ui.height;
     const portrait = height > width;
     if (!portrait) {
+      const offsetX = Math.round((width - 640) / 2);
+      const centered = (rect: Rect): Rect => ({ ...rect, x: rect.x + offsetX });
       return {
         portrait,
         hintY: HINT_Y,
         pauseTitleY: PAUSE_TITLE_Y,
         pauseRuleY: PAUSE_RULE_Y,
-        pauseList: PAUSE_LIST_REGION,
+        pauseList: centered(PAUSE_LIST_REGION),
         outcomeTitleY: 112,
         outcomeRuleY: 148,
         outcomeTextY: 172,
         outcomeTextWidth: 400,
-        outcomeList: GAMEOVER_LIST_REGION,
-        endingTitleY: 92,
-        endingRuleY: 124,
-        endingTextY: 148,
-        endingTextWidth: 440,
-        endingList: ENDING_LIST_REGION,
+        outcomeList: centered(GAMEOVER_LIST_REGION),
         options: {
-          panelX: OPTION_PANEL_X,
+          panelX: OPTION_PANEL_X + offsetX,
           panelY: OPTION_PANEL_Y,
           panelWidth: OPTION_PANEL_WIDTH,
-          tabsX: OPTION_TABS_X,
+          tabsX: OPTION_TABS_X + offsetX,
           tabsY: OPTION_TABS_Y,
           tabWidth: OPTION_TAB_WIDTH,
           tabGap: OPTION_TAB_GAP,
           rowTop: OPTION_ROW_TOP,
           rowHeight: OPTION_ROW_HEIGHT,
-          labelX: OPTION_LABEL_X,
-          valueX: OPTION_VALUE_X,
-          barX: OPTION_BAR_X,
+          labelX: OPTION_LABEL_X + offsetX,
+          valueX: OPTION_VALUE_X + offsetX,
+          barX: OPTION_BAR_X + offsetX,
           barWidth: OPTION_BAR_WIDTH,
           barBelow: false,
-          highlightX: OPTION_HIGHLIGHT_X,
+          highlightX: OPTION_HIGHLIGHT_X + offsetX,
           highlightWidth: OPTION_HIGHLIGHT_WIDTH,
         },
         controls: {
-          panel: CONTROLS_PANEL,
-          actionX: CONTROLS_ACTION_X,
-          keysX: CONTROLS_KEYS_X,
+          panel: centered(CONTROLS_PANEL),
+          actionX: CONTROLS_ACTION_X + offsetX,
+          keysX: CONTROLS_KEYS_X + offsetX,
           rowTop: CONTROLS_ROW_TOP,
           rowBottom: CONTROLS_ROW_BOTTOM,
           noteY: 414,
         },
         credits: {
-          panel: CREDITS_PANEL,
+          panel: centered(CREDITS_PANEL),
           textWidth: CREDITS_TEXT_WIDTH,
           backY: CREDITS_BACK_Y,
         },
@@ -510,10 +557,6 @@ export class Menu {
     const outcomeRuleY = outcomeTitleY + 36;
     const outcomeTextY = outcomeRuleY + 24;
     const outcomeListY = outcomeTextY + 96;
-    const endingTitleY = Math.round(height * 0.12);
-    const endingRuleY = endingTitleY + 32;
-    const endingTextY = endingRuleY + 24;
-    const endingListY = endingTextY + 112;
     const tabGap = 6;
     const tabsX = margin + 8;
     const tabsY = 88;
@@ -549,16 +592,6 @@ export class Menu {
         y: outcomeListY,
         width: width - (margin + 16) * 2,
         height: Math.max(130, height - outcomeListY - 110),
-      },
-      endingTitleY,
-      endingRuleY,
-      endingTextY,
-      endingTextWidth: panelWidth - 24,
-      endingList: {
-        x: margin + 16,
-        y: endingListY,
-        width: width - (margin + 16) * 2,
-        height: Math.max(130, height - endingListY - 110),
       },
       options: {
         panelX: margin,
@@ -1000,7 +1033,7 @@ export class Menu {
     return this.input.touchCapable && this.settings.get('touchControls');
   }
 
-  private drawList(entries: readonly ListEntry[], region: Rect): void {
+  private drawList(entries: readonly ListEntry[], region: Rect, showHint = true): void {
     const offsets: number[] = [];
     let width = 0;
     let height = 0;
@@ -1047,7 +1080,7 @@ export class Menu {
         });
       }
     }
-    this.drawHint();
+    if (showHint) this.drawHint();
   }
 
   private drawPause(): void {
@@ -1101,14 +1134,19 @@ export class Menu {
 
   private drawEnding(): void {
     const texts = this.texts();
-    const layout = this.layout();
-    this.ui.textCentered(texts.endingTitle, layout.endingTitleY, {
-      scale: 3,
+    const layout = this.endingLayout();
+    const image = layout.endingImage;
+    this.ui.panel(image.x - 5, image.y - 5, image.width + 10, image.height + 10);
+    if (this.endingImage.complete && this.endingImage.naturalWidth > 0) {
+      this.ui.ctx.drawImage(this.endingImage, image.x, image.y, image.width, image.height);
+    }
+    this.ui.textCenteredIn(texts.endingTitle, layout.endingCenterX, layout.endingTitleY, {
+      scale: layout.endingTitleScale,
       color: PALETTE.textBright,
       shadow: PALETTE.shadow,
     });
     this.ui.rect(
-      Math.round(this.ui.width / 2 - 80),
+      Math.round(layout.endingCenterX - 80),
       layout.endingRuleY,
       160,
       2,
@@ -1117,7 +1155,7 @@ export class Menu {
     );
     this.ui.wrapCentered(
       texts.endingText,
-      this.ui.width / 2,
+      layout.endingCenterX,
       layout.endingTextY,
       layout.endingTextWidth,
       {
@@ -1126,7 +1164,13 @@ export class Menu {
         lineSpacing: PARAGRAPH_LINE_SPACING,
       },
     );
-    this.drawList(this.endingEntries(), layout.endingList);
+    this.drawList(this.endingEntries(), layout.endingList, false);
+    this.ui.textCenteredIn(
+      this.touchHints() ? texts.menuHintAcceptTouch : texts.endingHint,
+      layout.endingCenterX,
+      layout.endingList.y + layout.endingList.height + 20,
+      { color: PALETTE.textDark, shadow: PALETTE.shadow },
+    );
   }
 
   private drawOptions(): void {

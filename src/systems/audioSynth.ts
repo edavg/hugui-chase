@@ -28,7 +28,15 @@ export type OneShotId =
   | 'breath'
   | 'stalker_step'
   | 'hurt'
-  | 'eat';
+  | 'eat'
+  | 'pant'
+  | 'whistle'
+  | 'door_slam'
+  | 'phone_ring'
+  | 'radio'
+  | 'tv_static'
+  | 'whisper'
+  | 'cabinet';
 
 export type FootstepMaterial = 'wood' | 'tile' | 'stone' | 'metal' | 'brick' | 'dirt' | 'grass';
 export type AmbienceId = 'house' | 'basement' | 'outdoor';
@@ -50,6 +58,11 @@ export const ONE_SHOT_VARIANTS: Partial<Record<OneShotId, number>> = {
   hurt: 2,
   eat: 2,
   attack_warn: 2,
+  pant: 3,
+  whistle: 2,
+  door_slam: 2,
+  whisper: 2,
+  cabinet: 2,
 };
 
 export const FOOTSTEP_VARIANTS = 4;
@@ -1060,6 +1073,134 @@ export async function renderReverbImpulse(sampleRate: number, id: ReverbPresetId
 }
 
 // ---------------------------------------------------------------------------
+// Sustos y escondites (M13)
+// ---------------------------------------------------------------------------
+
+async function renderPant(sampleRate: number): Promise<AudioBuffer> {
+  // Jadeo del jugador agotado: tres ciclos rápidos de inspirar/espirar.
+  const duration = 1.7;
+  const ctx = createOffline(sampleRate, duration);
+  const noise = noiseBuffer(ctx, 1, 'pink');
+  const mouth = resonator(ctx, [[rand(800, 950), 1], [rand(1400, 1650), 0.6], [2900, 0.25]], 3.5);
+  for (let i = 0; i < 3; i += 1) {
+    const at = i * rand(0.5, 0.56);
+    noiseBurst(ctx, noise, { at, duration: 0.2, gain: 0.35, type: 'highpass', frequency: 500, attack: 0.12, dest: mouth });
+    noiseBurst(ctx, noise, { at: at + 0.22, duration: 0.24, gain: 0.55, type: 'lowpass', frequency: 2600, attack: 0.03, dest: mouth });
+  }
+  return normalize(await ctx.startRendering(), 0.6);
+}
+
+async function renderWhistle(sampleRate: number): Promise<AudioBuffer> {
+  // Silbido humano lejano en dos notas (la trampa del stalker): sube, cae y repite corto.
+  const ctx = createOffline(sampleRate, 1.8);
+  const noise = noiseBuffer(ctx, 1.8, 'white');
+  const high = rand(1350, 1600);
+  tone(ctx, { at: 0.05, frequency: high * 0.85, endFrequency: high, duration: 0.55, gain: 0.32, attack: 0.08, vibrato: { rate: 5.5, depth: 14 } });
+  tone(ctx, { at: 0.62, frequency: high, endFrequency: high * 0.7, duration: 0.75, gain: 0.3, attack: 0.04, vibrato: { rate: 6, depth: 18 } });
+  noiseBurst(ctx, noise, { at: 0.05, duration: 1.3, gain: 0.025, type: 'bandpass', frequency: high, q: 6, attack: 0.1 });
+  return normalize(await ctx.startRendering(), 0.7);
+}
+
+async function renderDoorSlam(sampleRate: number): Promise<AudioBuffer> {
+  // Portazo violento: barrido de aire, golpe seco, subgrave y vibración del marco.
+  const ctx = createOffline(sampleRate, 1.6);
+  const noise = noiseBuffer(ctx, 1.6, 'pink');
+  noiseBurst(ctx, noise, { duration: 0.12, gain: 0.25, type: 'bandpass', frequency: 400, endFrequency: 1400, attack: 0.1 });
+  const hit = 0.12;
+  const frame = resonator(ctx, [[85, 1], [190, 0.9], [430, 0.6], [900, 0.3]], 6);
+  noiseBurst(ctx, noise, { at: hit, duration: 0.12, gain: 1, type: 'lowpass', frequency: 1600, dest: frame });
+  noiseBurst(ctx, noise, { at: hit, duration: 0.05, gain: 0.8, type: 'lowpass', frequency: 2400 });
+  tone(ctx, { at: hit, frequency: 58, endFrequency: 30, duration: 0.6, gain: 1, attack: 0.002 });
+  latchClicks(ctx, noise, hit + 0.01, 0.9, false);
+  for (let i = 0; i < 6; i += 1) {
+    noiseBurst(ctx, noise, { at: hit + 0.05 + i * rand(0.03, 0.05), duration: 0.02, gain: 0.35 / (i + 1), type: 'bandpass', frequency: 1300, q: 2 });
+  }
+  return normalize(await ctx.startRendering(), 0.95);
+}
+
+async function renderPhoneRing(sampleRate: number): Promise<AudioBuffer> {
+  // Teléfono de campanilla: dos trenes de martilleo a 20 Hz sobre parciales de campana.
+  const ctx = createOffline(sampleRate, 2.2);
+  const bell = ctx.createGain();
+  const shell = resonator(ctx, [[880, 1], [1320, 0.7], [2210, 0.45], [3530, 0.2]], 30);
+  bell.connect(shell);
+  for (const start of [0, 0.6]) {
+    for (let t = start; t < start + 0.42; t += 0.05) {
+      ring(ctx, t, [880, 1332, 2214], 0.09, 0.22, bell);
+    }
+  }
+  return normalize(await ctx.startRendering(), 0.75);
+}
+
+async function renderRadio(sampleRate: number): Promise<AudioBuffer> {
+  // Radio vieja que se enciende sola: estática de AM y una melodía lejana que se pierde.
+  const duration = 3.6;
+  const ctx = createOffline(sampleRate, duration);
+  const noise = noiseBuffer(ctx, duration, 'white');
+  const speaker = filtered(ctx, 'bandpass', 1400, 0.9);
+  noiseBurst(ctx, noise, { duration, gain: 0.18, type: 'bandpass', frequency: 2200, q: 0.6, attack: 0.05, dest: speaker });
+  playSignal(ctx, crackleSignal(sampleRate, duration, () => 60, () => 0.7), 0, speaker, 0.8);
+  const notes = [392, 349, 330, 294, 330, 262];
+  notes.forEach((frequency, index) => {
+    const at = 0.4 + index * 0.42;
+    tone(ctx, {
+      at,
+      frequency: frequency * rand(0.97, 1.0),
+      duration: 0.38,
+      gain: 0.22 * (1 - index / (notes.length + 2)),
+      type: 'square',
+      attack: 0.02,
+      vibrato: { rate: 0.8 + index * 0.3, depth: 9 },
+      dest: speaker,
+    });
+  });
+  return normalize(await ctx.startRendering(), 0.7);
+}
+
+async function renderTvStatic(sampleRate: number): Promise<AudioBuffer> {
+  // Televisor sin señal: siseo de banda ancha, zumbido de red y chasquidos del tubo.
+  const duration = 3.2;
+  const ctx = createOffline(sampleRate, duration);
+  const noise = noiseBuffer(ctx, duration, 'white');
+  noiseBurst(ctx, noise, { duration, gain: 0.3, type: 'highpass', frequency: 1200, attack: 0.01 });
+  noiseBurst(ctx, noise, { duration, gain: 0.12, type: 'bandpass', frequency: 4500, q: 0.8, attack: 0.01 });
+  tone(ctx, { frequency: 50, duration, gain: 0.08, type: 'sawtooth', attack: 0.01 });
+  noiseBurst(ctx, noise, { duration: 0.03, gain: 0.8, type: 'highpass', frequency: 2000 });
+  return normalize(await ctx.startRendering(), 0.6);
+}
+
+async function renderWhisper(sampleRate: number): Promise<AudioBuffer> {
+  // Susurro ininteligible: ruido por formantes que se desplazan y una "s" final.
+  const ctx = createOffline(sampleRate, 1.9);
+  const noise = noiseBuffer(ctx, 2, 'pink');
+  for (let i = 0; i < 5; i += 1) {
+    const at = 0.05 + i * rand(0.18, 0.26);
+    const voice = resonator(ctx, [[rand(500, 900), 1], [rand(1200, 2200), 0.6], [rand(2600, 3200), 0.3]], 6);
+    noiseBurst(ctx, noise, { at, duration: rand(0.15, 0.25), gain: 0.5, type: 'highpass', frequency: 300, attack: 0.05, dest: voice });
+  }
+  noiseBurst(ctx, noise, { at: 1.3, duration: 0.45, gain: 0.25, type: 'highpass', frequency: 5000, attack: 0.08 });
+  return normalize(await ctx.startRendering(), 0.55);
+}
+
+async function renderCabinet(sampleRate: number): Promise<AudioBuffer> {
+  // Puerta de ropero: chirrido corto de bisagra pequeña y el pestillo de imán.
+  const ctx = createOffline(sampleRate, 0.9);
+  const noise = noiseBuffer(ctx, 1, 'pink');
+  const base = rand(260, 340);
+  const creak = creakSignal(
+    sampleRate,
+    0.45,
+    (t) => base + 140 * Math.sin((t / 0.45) * Math.PI),
+    (t) => Math.min(1, t * 12) * Math.pow(1 - t / 0.45, 0.8),
+    0.25,
+  );
+  playSignal(ctx, creak, 0.02, resonator(ctx, [[720, 1], [1500, 0.6], [2900, 0.3]], 9), 0.7);
+  noiseBurst(ctx, noise, { at: 0.55, duration: 0.03, gain: 0.6, type: 'lowpass', frequency: 1500, dest: resonator(ctx, [[160, 1], [380, 0.5]], 6) });
+  noiseBurst(ctx, noise, { at: 0.55, duration: 0.008, gain: 0.5, type: 'highpass', frequency: 3000 });
+  return normalize(await ctx.startRendering(), 0.7);
+}
+
+// ---------------------------------------------------------------------------
 // Entradas públicas
 // ---------------------------------------------------------------------------
 
@@ -1105,6 +1246,22 @@ export async function renderOneShot(sampleRate: number, id: OneShotId): Promise<
       return renderHurt(sampleRate);
     case 'eat':
       return renderEat(sampleRate);
+    case 'pant':
+      return renderPant(sampleRate);
+    case 'whistle':
+      return renderWhistle(sampleRate);
+    case 'door_slam':
+      return renderDoorSlam(sampleRate);
+    case 'phone_ring':
+      return renderPhoneRing(sampleRate);
+    case 'radio':
+      return renderRadio(sampleRate);
+    case 'tv_static':
+      return renderTvStatic(sampleRate);
+    case 'whisper':
+      return renderWhisper(sampleRate);
+    case 'cabinet':
+      return renderCabinet(sampleRate);
     default: {
       const exhaustive: never = id;
       throw new Error(`Sonido no soportado: ${String(exhaustive)}`);

@@ -273,6 +273,17 @@
       "yaw": 90
     }
   ],
+  "hides": [
+    {
+      "id": "calderas_taquilla",
+      "kind": "locker",
+      "position": [
+        0,
+        2.85
+      ],
+      "yaw": 0
+    }
+  ],
   "spawns": {
     "from_lavanderia": {
       "position": [

@@ -60,6 +60,8 @@ export class UiCanvas {
   height: number;
   readonly ctx: CanvasRenderingContext2D;
   readonly font: BitmapFont;
+  readonly safeArea = { top: 0, right: 0, bottom: 0, left: 0 };
+  cssScale = 1;
 
   private readonly canvas: HTMLCanvasElement;
   private readonly getViewport: () => ViewportRect;
@@ -87,8 +89,8 @@ export class UiCanvas {
     this.resize();
   }
 
-  // El tamaño lógico sigue la resolución activa del render (4:3 en horizontal,
-  // más alto que ancho en vertical); así la interfaz nunca se deforma.
+  // El HUD conserva el aspecto del render con una resolución lógica propia
+  // para mantener el texto legible al cambiar la resolución de los gráficos.
   setLogicalSize(width: number, height: number): void {
     const nextWidth = Math.max(64, Math.round(width));
     const nextHeight = Math.max(64, Math.round(height));
@@ -125,6 +127,17 @@ export class UiCanvas {
     this.canvas.style.width = `${Math.max(1, Math.round(rect.width * scaleX))}px`;
     this.canvas.style.height = `${Math.max(1, Math.round(rect.height * scaleY))}px`;
     this.canvas.style.imageRendering = 'pixelated';
+    const style = getComputedStyle(document.documentElement);
+    const inset = (edge: string): number => parseFloat(style.getPropertyValue(`--safe-${edge}`)) || 0;
+    const viewLeft = hostRect.left + rect.x * scaleX;
+    const viewTop = hostRect.top + rect.y * scaleY;
+    const viewWidth = Math.max(1, rect.width * scaleX);
+    const viewHeight = Math.max(1, rect.height * scaleY);
+    this.cssScale = viewWidth / this.width;
+    this.safeArea.left = Math.max(0, inset('left') - viewLeft) * this.width / viewWidth;
+    this.safeArea.top = Math.max(0, inset('top') - viewTop) * this.height / viewHeight;
+    this.safeArea.right = Math.max(0, inset('right') - (window.innerWidth - viewLeft - viewWidth)) * this.width / viewWidth;
+    this.safeArea.bottom = Math.max(0, inset('bottom') - (window.innerHeight - viewTop - viewHeight)) * this.height / viewHeight;
     this.dirty = true;
   };
 

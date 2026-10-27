@@ -1,5 +1,43 @@
 # Mondyi — Estado del proyecto
 
+## M13 — Supervivencia, stalker más listo y sustos (27 oct 2026)
+
+- **Aguante** (`player.ts`): correr gasta aguante (`stamina_seconds`, 6 s); al vaciarse quedas agotado,
+  caminas más lento (`exhausted_speed`) y no puedes correr hasta recuperar `stamina_resume`. Agotado
+  **jadeas** (`pant`) y el stalker te oye a `pant_hearing` m aunque estés quieto. Barra bajo los corazones
+  (sólo visible si falta aliento; parpadea en rojo agotado). El aguante se conserva al cruzar puertas.
+- **La linterna delata** (`stalker.ts`): encendida, el stalker te ve más lejos (`flashlight_sight_scale`);
+  en salas oscuras sin linterna te ve peor (`dark_sight_scale`); y si le apuntas con el haz
+  (`beam_notice_deg`, `beam_notice_range`) te nota aunque esté de espaldas.
+- **Escondites** (`hides.ts`, `hides` en el JSON): 12 roperos/taquillas en la casa y un confesionario en
+  la iglesia de Luque. **E** para entrar y salir; dentro se espía entre las lamas (mirada limitada,
+  bandas oscuras, latido si el stalker está cerca, sin minimapa). Si te ve entrar, va directo a abrirlo:
+  te saca de un tirón y te golpea. La **linterna encendida dentro** se ve por la rejilla a
+  `hide_light_radius` m. **Adaptación**: tras `hide_check_uses` usos de un mismo escondite
+  ("HUGUI EMPIEZA A SOSPECHAR…") lo revisa por su cuenta al pasar por su sala.
+- **Memoria y búsqueda**: recuerda las salas donde te vio u oyó (`memory_seconds`) y vuelve a ellas al
+  patrullar (`memory_chance`); al perderte, primero va al último punto conocido aunque esté en otra sala.
+- **Trampas**: cada `lure_min/max_seconds`, si estás a 1–3 salas y no te ha visto hace rato, hace un
+  **portazo o un silbido** en una puerta de tu sala que no es por la que va a entrar, y viene a por ti.
+- **Ruido al quemar**: prender un afiche se oye a `burn_noise_hops` salas; el stalker viene a mirar.
+- **Rastros** (`traces.ts`): huellas de barro donde camina (aunque no estés) y puertas que deja
+  **entornadas** al cruzarlas (también en vivo); duran `trace_seconds`.
+- **Minimapa**: sólo muestra los afiches que ya has visto (flag `seen:<id>`) o quemado.
+- **Sustos con guion** (`roomEvents.ts`, `events` en el JSON; una vez por partida, flag `event:<id>`):
+  siluetas que se esfuman al iluminarlas, acercarte o mirarlas (Pasillo, Pasillo Alto, Jardín), la tele
+  del Salón con estática y parpadeo azul, la radio del Despacho, el teléfono del Vestíbulo y de las
+  joyerías de Luque, sillones girados al volver (Despacho, Vestíbulo) y el cuadro junto a la salida con
+  los **ojos rayados** a partir de 9 afiches (cuadro genérico `painting_b`; los retratos de personas
+  reales no se modifican).
+- **Audio** nuevo sintetizado: `pant`, `whistle`, `door_slam`, `phone_ring`, `radio`, `tv_static`,
+  `whisper`, `cabinet`.
+- **Herramientas**: `gen_rooms.mjs`/`gen_luque.mjs` emiten `hides`/`events`; `check_access.mjs` cuenta
+  los escondites como muebles y comprueba que se pueda salir y que el stalker llegue delante;
+  `validate_rooms.mjs` valida ids, tipos, el giro de los muebles (misma huella) y el cuadro rayado.
+- **QA** (`window.__mondyi`): `debugHides`, `debugEnterHide`, `debugHidden`, `debugStamina`,
+  `debugFootprints`, `debugFlags`, `debugSetFlag`, `debugReenterRoom`, `debugScares`,
+  `debugTeleportStalker`, `debugLureNow`, `debugDoorOpen`.
+
 ## M12 — Salto a estética PS2 y casa ampliada (11 oct 2026)
 
 - **Render PS2** (`psx.vert/frag.glsl`, `psxMaterial.ts`, `psxRenderer.ts`): texturas bilineales con
@@ -54,6 +92,11 @@
   cada puerta (radio del stalker), conectividad de puertas e ítems por sala y simula la partida con llaves y
   candados (12/12 afiches y salida). Movidos: estantería del Garaje (tapaba la puerta al Jardín), caja de la
   Lavandería y tres muebles del Pasillo Alto (Escalera, Baño Alto, Ático).
+
+- **Salida señalizada**: carteles ES/EN de 512 px, papeles desgarrados con relieve y bordes curvados,
+  sangre con mezcla alfa y brillo bajo las luces actuales. La puerta final usa el mismo modelo de
+  candado de las puertas con llave; desaparece al terminar de quemar los 12 afiches. Volver a la sala
+  conserva el desbloqueo y reiniciar restaura el candado. Los candados con llave conservan su mecánica.
 
 ---
 

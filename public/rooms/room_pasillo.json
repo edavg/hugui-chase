@@ -316,6 +316,31 @@
       "decal": true
     }
   ],
+  "hides": [
+    {
+      "id": "pasillo_ropero",
+      "kind": "wardrobe",
+      "position": [
+        -1.5,
+        0.8
+      ],
+      "yaw": 0
+    }
+  ],
+  "events": [
+    {
+      "id": "pasillo_silueta",
+      "kind": "apparition",
+      "position": [
+        -5.6,
+        0.1
+      ],
+      "when": {
+        "posters": 2,
+        "chance": 0.6
+      }
+    }
+  ],
   "spawns": {
     "from_cocina": {
       "position": [

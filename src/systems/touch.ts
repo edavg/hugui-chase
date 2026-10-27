@@ -124,9 +124,29 @@ const STYLE = `
     right: calc(118px + env(safe-area-inset-right));
     bottom: calc(36px + env(safe-area-inset-bottom));
   }
-    .touch-btn-light {
+  .touch-btn-light {
     right: calc(92px + env(safe-area-inset-right));
     bottom: calc(120px + env(safe-area-inset-bottom));
+  }
+}
+@media (orientation: landscape) and (max-height: 440px) {
+  .touch-btn-use {
+    right: calc(16px + env(safe-area-inset-right));
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    width: 68px;
+    height: 68px;
+  }
+  .touch-btn-run {
+    right: calc(96px + env(safe-area-inset-right));
+    bottom: calc(18px + env(safe-area-inset-bottom));
+    width: 52px;
+    height: 52px;
+  }
+  .touch-btn-light {
+    right: calc(80px + env(safe-area-inset-right));
+    bottom: calc(92px + env(safe-area-inset-bottom));
+    width: 48px;
+    height: 48px;
   }
 }
 `;

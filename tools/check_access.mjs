@@ -102,7 +102,29 @@ function analyse(room) {
     const [w, , d] = m.size;
     furniture.push({ minX: px - w / 2, maxX: px + w / 2, minZ: pz - d / 2, maxZ: pz + d / 2, what: `modelo ${m.file} @${px},${pz}` });
   }
+  // Escondites (M13): misma huella que computeHideSpot en src/systems/hides.ts.
+  for (const h of room.hides ?? []) {
+    const spot = hideSpot(h);
+    furniture.push({ ...spot.collider, what: `escondite ${h.id}` });
+  }
   return { walls, furniture, doorways };
+}
+
+const HIDE_SIZES = { wardrobe: [1.0, 0.6], locker: [0.8, 0.55], confessional: [1.0, 1.0] };
+
+function hideSpot(h) {
+  const [width, depth] = HIDE_SIZES[h.kind] ?? HIDE_SIZES.wardrobe;
+  const yaw = (h.yaw * Math.PI) / 180;
+  const fx = -Math.sin(yaw);
+  const fz = -Math.cos(yaw);
+  const [x, z] = h.position;
+  const hx = (width / 2) * Math.abs(Math.cos(yaw)) + (depth / 2) * Math.abs(Math.sin(yaw));
+  const hz = (width / 2) * Math.abs(Math.sin(yaw)) + (depth / 2) * Math.abs(Math.cos(yaw));
+  return {
+    collider: { minX: x - hx, maxX: x + hx, minZ: z - hz, maxZ: z + hz },
+    frontX: x + fx * (depth / 2 + 0.55),
+    frontZ: z + fz * (depth / 2 + 0.55),
+  };
 }
 
 function grid(room, colliders, radius) {
@@ -212,6 +234,15 @@ for (const room of rooms.values()) {
   if (sComps.size > 1) errors.push(`${room.id}: el stalker no puede ir de una puerta a otra (muebles cortan la sala)`);
   if (pComps.size > 1) errors.push(`${room.id}: el jugador no puede ir de una puerta a otra (muebles cortan la sala)`);
   const mainPlayerComp = [...pComps][0] ?? componentNear(playerGrid, room.spawns.start.position[0], room.spawns.start.position[1], 1);
+
+  // Escondites: el jugador sale y el stalker se planta delante (punto libre y conectado).
+  for (const h of room.hides ?? []) {
+    const { frontX, frontZ } = hideSpot(h);
+    const s = componentNear(stalkerGrid, frontX, frontZ, 0.25);
+    const p = componentNear(playerGrid, frontX, frontZ, 0.25);
+    if (p < 0 || (pComps.size > 0 && !pComps.has(p))) errors.push(`${room.id}: el jugador no puede salir del escondite ${h.id}`);
+    if (s < 0 || (sComps.size > 0 && !sComps.has(s))) errors.push(`${room.id}: el stalker no llega delante del escondite ${h.id}`);
+  }
 
   // Afiches tapados: cualquier caja (con o sin colisión) que se interponga
   // delante de la cara del afiche, hasta 0.6 m hacia la sala.

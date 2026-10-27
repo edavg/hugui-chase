@@ -64,9 +64,7 @@ export async function loadStalkerHeadAtlas(loader: THREE.TextureLoader): Promise
       console.info('[M5] No se pudo detectar el despiece, se usan las regiones por defecto');
     }
     const refined = refineToInk(image, coarse);
-    const trimmed = trimCollars(probe.cloth, refined);
-    console.info(`[M5] Cabeza recortada: ${describeBlocks(trimmed)}`);
-    return buildAtlas(image, trimmed, TILE);
+    return buildAtlas(image, refined, TILE);
   } catch (error) {
     console.warn(`[M5] No se encontró ${STALKER_FACE_URL}, se usa la cabeza procedural`, error);
     return buildFallbackAtlas();
@@ -75,7 +73,6 @@ export async function loadStalkerHeadAtlas(loader: THREE.TextureLoader): Promise
 
 interface Probe {
   ink: Uint8Array;
-  cloth: Uint8Array;
 }
 
 // El despiece va sobre fondo casi blanco: todo lo que supera esto es fondo.
@@ -83,11 +80,8 @@ const INK_LUMA = 234;
 
 /**
  * El despiece viene sobre fondo casi blanco, así que "tinta" es todo lo que no
- * es fondo. "Tela" (cuello de la camisa) es la sub-banda clara y desaturada que
- * cuelga del bloque hacia abajo: se separa en su propia máscara para poder
- * recortarla después sin comerse la piel clara de la cara. El techo de LUMA es
- * el propio umbral de fondo, así la tela nunca sesolda con el fondo por el borde
- * y el recorte por inundación no se escapa por la silueta.
+ * es fondo. La camisa se enmascara después, al construir cada baldosa, para
+ * conservar la altura completa de la mandíbula en las distintas proyecciones.
  */
 function probeImage(image: HTMLImageElement): Probe {
   const canvas = document.createElement('canvas');
@@ -95,7 +89,7 @@ function probeImage(image: HTMLImageElement): Probe {
   canvas.height = PROBE_SIZE;
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   if (!ctx) {
-    return { ink: new Uint8Array(PROBE_SIZE * PROBE_SIZE), cloth: new Uint8Array(PROBE_SIZE * PROBE_SIZE) };
+    return { ink: new Uint8Array(PROBE_SIZE * PROBE_SIZE) };
   }
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, PROBE_SIZE, PROBE_SIZE);
@@ -103,18 +97,15 @@ function probeImage(image: HTMLImageElement): Probe {
   const data = ctx.getImageData(0, 0, PROBE_SIZE, PROBE_SIZE).data;
 
   const ink = new Uint8Array(PROBE_SIZE * PROBE_SIZE);
-  const cloth = new Uint8Array(PROBE_SIZE * PROBE_SIZE);
   for (let i = 0; i < ink.length; i += 1) {
     const alpha = data[i * 4 + 3];
     const r = data[i * 4];
     const g = data[i * 4 + 1];
     const b = data[i * 4 + 2];
     const luma = 0.299 * r + 0.587 * g + 0.114 * b;
-    const chroma = Math.max(r, g, b) - Math.min(r, g, b);
     ink[i] = alpha > 24 && luma < INK_LUMA ? 1 : 0;
-    cloth[i] = alpha > 24 && luma > 200 && luma < INK_LUMA && chroma < 26 ? 1 : 0;
   }
-  return { ink, cloth };
+  return { ink };
 }
 
 interface Span {
@@ -241,94 +232,36 @@ function rowFill(
   return hits / boxWidth;
 }
 
-/**
- * Cuello de la camisa. Se inunda desde el borde inferior la malla de tela y se
- * corta por arriba del todo de ese componente: al ser una mancha conectada, se
- * lleva también las puntas aisladas del cuello, que con un simple umbral por fila
- * se colaban (esas puntas salían como dos esquinas blancas bajo la barbilla).
- *
- * Se entra sólo si el borde inferior ya es claramente tela, y nunca se come más
- * del 45% del bloque por si el despiece viniera con la camisa metida de fondo.
- */
-const COLLAR_ON = 0.14;
-const COLLAR_KEEP = 0.55;
-
-function trimCollars(
-  cloth: Uint8Array,
-  regions: Record<HeadFace, [number, number, number, number]>,
-): Record<HeadFace, [number, number, number, number]> {
-  const out = {} as Record<HeadFace, [number, number, number, number]>;
-  for (const face of TILE_ORDER) {
-    out[face] = trimCollar(cloth, regions[face]);
-  }
-  return out;
-}
-
-function trimCollar(
-  cloth: Uint8Array,
-  region: [number, number, number, number],
-): [number, number, number, number] {
-  const y0 = Math.round(region[1] * PROBE_SIZE);
-  const y1 = Math.min(PROBE_SIZE, Math.round(region[3] * PROBE_SIZE)) - 1;
-  const x0 = Math.round(region[0] * PROBE_SIZE);
-  const x1 = Math.min(PROBE_SIZE, Math.round(region[2] * PROBE_SIZE)) - 1;
-  const width = x1 - x0 + 1;
-  const height = y1 - y0 + 1;
-  if (height < 2 || width < 2) {
-    return region;
-  }
-  if (clothRatio(cloth, x0, x1, y1) < COLLAR_ON) {
-    return region;
-  }
-
-  const seen = new Uint8Array(width * height);
-  const filled = new Int32Array(height);
+// Borrar sólo la tela conectada al borde inferior. Recortar toda la baldosa
+// a la altura de las puntas de la camisa también cortaba la barba y barbilla.
+function maskCollar(ctx: CanvasRenderingContext2D, ox: number, oy: number, tile: number): void {
+  const image = ctx.getImageData(ox, oy, tile, tile);
+  const data = image.data;
+  const seen = new Uint8Array(tile * tile);
   const stack: number[] = [];
-  for (let x = x0; x <= x1; x += 1) {
-    if (cloth[y1 * PROBE_SIZE + x]) {
-      stack.push((height - 1) * width + (x - x0));
-      seen[(height - 1) * width + (x - x0)] = 1;
+  const visit = (pixel: number): void => {
+    if (seen[pixel]) return;
+    seen[pixel] = 1;
+    const i = pixel * 4;
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+    if (luma > 160 && Math.max(r, g, b) - Math.min(r, g, b) < 38) {
+      stack.push(pixel);
     }
-  }
+  };
+  for (let x = 0; x < tile; x += 1) visit((tile - 1) * tile + x);
   while (stack.length > 0) {
-    const cell = stack.pop() as number;
-    const row = Math.floor(cell / width);
-    filled[row] += 1;
-    const step = [-1, 1, -width, width];
-    for (let direction = 0; direction < step.length; direction += 1) {
-      const next = cell + step[direction];
-      if (next < 0 || next >= width * height || (direction < 2 && Math.floor(next / width) !== row)) {
-        continue;
-      }
-      if (seen[next] === 1 || cloth[(y0 + Math.floor(next / width)) * PROBE_SIZE + x0 + (next % width)] === 0) {
-        continue;
-      }
-      seen[next] = 1;
-      stack.push(next);
-    }
+    const pixel = stack.pop() as number;
+    data[pixel * 4 + 3] = 0;
+    const x = pixel % tile;
+    if (x > 0) visit(pixel - 1);
+    if (x < tile - 1) visit(pixel + 1);
+    if (pixel >= tile) visit(pixel - tile);
+    if (pixel < tile * (tile - 1)) visit(pixel + tile);
   }
-
-  let cut = -1;
-  for (let row = 0; row < height; row += 1) {
-    if (filled[row] > 0) {
-      cut = row;
-      break;
-    }
-  }
-  if (cut < 0) {
-    return region;
-  }
-  cut = Math.max(cut, Math.floor(height * COLLAR_KEEP));
-  return [region[0], region[1], region[2], (y0 + cut) / PROBE_SIZE];
-}
-
-function clothRatio(cloth: Uint8Array, x0: number, x1: number, y: number): number {
-  let hits = 0;
-  const width = x1 - x0 + 1;
-  for (let x = x0; x <= x1; x += 1) {
-    hits += cloth[y * PROBE_SIZE + x];
-  }
-  return hits / width;
+  ctx.putImageData(image, ox, oy);
 }
 
 function detectBlocks(
@@ -556,6 +489,9 @@ function buildAtlas(
       tile,
       tile,
     );
+    if (face !== 'top' && face !== 'back') {
+      maskCollar(ctx, column * tile, row * tile, tile);
+    }
   });
 
   const texture = new THREE.CanvasTexture(canvas);

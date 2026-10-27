@@ -257,6 +257,17 @@
       "decal": true
     }
   ],
+  "hides": [
+    {
+      "id": "lavanderia_taquilla",
+      "kind": "locker",
+      "position": [
+        -2.5,
+        -2.35
+      ],
+      "yaw": 180
+    }
+  ],
   "spawns": {
     "from_sotano": {
       "position": [

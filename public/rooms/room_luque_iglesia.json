@@ -1,0 +1,892 @@
+{
+  "id": "room_luque_iglesia",
+  "name": "Santuario Virgen del Rosario",
+  "size": [
+    20,
+    6,
+    28
+  ],
+  "texture_scale": 4,
+  "wall_thickness": 0.3,
+  "door_fit": true,
+  "atmosphere": {
+    "fog_start": 6,
+    "fog_end": 30,
+    "fog_color": [
+      0.02,
+      0.02,
+      0.03
+    ],
+    "ambient": 0.11,
+    "direct": 0.1,
+    "lamp": {
+      "position": [
+        0,
+        3.5,
+        10
+      ],
+      "color": [
+        1,
+        0.85,
+        0.55
+      ],
+      "range": 12,
+      "intensity": 1.9
+    }
+  },
+  "textures": {
+    "wall": "Custom/church_stone.png",
+    "floor": "Custom/plaza_tile.png",
+    "ceiling": "Misc/Horror_Misc_03-128x128.png",
+    "door": "Custom/WoodenDoor1diffuse.png",
+    "window": "Custom/street_vitral.png",
+    "stone": "Custom/church_stone.png",
+    "wood": "Floor/Horror_Floor_03-128x128.png",
+    "metal": "Metal/Horror_Metal_01-128x128.png",
+    "marble": "Custom/shop_marble.png",
+    "stain": "Stains/Horror_Stain_05-128x128.png"
+  },
+  "audio": {
+    "reverb": "hall",
+    "floor_material": "stone",
+    "ambience": "house"
+  },
+  "walls": [
+    {
+      "start": [
+        -10,
+        -14
+      ],
+      "end": [
+        10,
+        -14
+      ],
+      "openings": [
+        {
+          "kind": "window",
+          "offset": 2.5,
+          "width": 2,
+          "height": 2.4,
+          "sill": 2.2
+        },
+        {
+          "kind": "window",
+          "offset": 7.5,
+          "width": 2,
+          "height": 2.4,
+          "sill": 2.2
+        },
+        {
+          "kind": "window",
+          "offset": 12.5,
+          "width": 2,
+          "height": 2.4,
+          "sill": 2.2
+        },
+        {
+          "kind": "window",
+          "offset": 17.5,
+          "width": 2,
+          "height": 2.4,
+          "sill": 2.2
+        }
+      ]
+    },
+    {
+      "start": [
+        10,
+        -14
+      ],
+      "end": [
+        10,
+        14
+      ],
+      "openings": [
+        {
+          "kind": "window",
+          "offset": 4,
+          "width": 2,
+          "height": 2.4,
+          "sill": 2.2
+        },
+        {
+          "kind": "window",
+          "offset": 10,
+          "width": 2,
+          "height": 2.4,
+          "sill": 2.2
+        },
+        {
+          "kind": "window",
+          "offset": 16,
+          "width": 2,
+          "height": 2.4,
+          "sill": 2.2
+        },
+        {
+          "kind": "window",
+          "offset": 22,
+          "width": 2,
+          "height": 2.4,
+          "sill": 2.2
+        }
+      ]
+    },
+    {
+      "start": [
+        10,
+        14
+      ],
+      "end": [
+        -10,
+        14
+      ],
+      "openings": [
+        {
+          "kind": "window",
+          "offset": 2.5,
+          "width": 2,
+          "height": 2.4,
+          "sill": 2.2
+        },
+        {
+          "kind": "window",
+          "offset": 5.5,
+          "width": 2,
+          "height": 2.4,
+          "sill": 2.2
+        },
+        {
+          "kind": "door",
+          "offset": 9,
+          "width": 2,
+          "height": 2.7,
+          "door": "closed",
+          "to": "room_luque_cerro_cora",
+          "spawn": "from_luque_iglesia"
+        },
+        {
+          "kind": "window",
+          "offset": 14.5,
+          "width": 2,
+          "height": 2.4,
+          "sill": 2.2
+        },
+        {
+          "kind": "window",
+          "offset": 17.5,
+          "width": 2,
+          "height": 2.4,
+          "sill": 2.2
+        }
+      ]
+    },
+    {
+      "start": [
+        -10,
+        14
+      ],
+      "end": [
+        -10,
+        -14
+      ],
+      "openings": [
+        {
+          "kind": "window",
+          "offset": 4,
+          "width": 2,
+          "height": 2.4,
+          "sill": 2.2
+        },
+        {
+          "kind": "window",
+          "offset": 10,
+          "width": 2,
+          "height": 2.4,
+          "sill": 2.2
+        },
+        {
+          "kind": "window",
+          "offset": 16,
+          "width": 2,
+          "height": 2.4,
+          "sill": 2.2
+        },
+        {
+          "kind": "window",
+          "offset": 22,
+          "width": 2,
+          "height": 2.4,
+          "sill": 2.2
+        }
+      ]
+    }
+  ],
+  "props": [
+    {
+      "kind": "cylinder",
+      "position": [
+        -7,
+        2.6,
+        -9
+      ],
+      "size": [
+        0.7,
+        5.2,
+        0.7
+      ],
+      "texture": "stone",
+      "tint": 0.85,
+      "collide": true,
+      "segments": 10
+    },
+    {
+      "kind": "cylinder",
+      "position": [
+        -7,
+        2.6,
+        -3
+      ],
+      "size": [
+        0.7,
+        5.2,
+        0.7
+      ],
+      "texture": "stone",
+      "tint": 0.85,
+      "collide": true,
+      "segments": 10
+    },
+    {
+      "kind": "cylinder",
+      "position": [
+        -7,
+        2.6,
+        3
+      ],
+      "size": [
+        0.7,
+        5.2,
+        0.7
+      ],
+      "texture": "stone",
+      "tint": 0.85,
+      "collide": true,
+      "segments": 10
+    },
+    {
+      "kind": "cylinder",
+      "position": [
+        -7,
+        2.6,
+        9
+      ],
+      "size": [
+        0.7,
+        5.2,
+        0.7
+      ],
+      "texture": "stone",
+      "tint": 0.85,
+      "collide": true,
+      "segments": 10
+    },
+    {
+      "kind": "cylinder",
+      "position": [
+        7,
+        2.6,
+        -9
+      ],
+      "size": [
+        0.7,
+        5.2,
+        0.7
+      ],
+      "texture": "stone",
+      "tint": 0.85,
+      "collide": true,
+      "segments": 10
+    },
+    {
+      "kind": "cylinder",
+      "position": [
+        7,
+        2.6,
+        -3
+      ],
+      "size": [
+        0.7,
+        5.2,
+        0.7
+      ],
+      "texture": "stone",
+      "tint": 0.85,
+      "collide": true,
+      "segments": 10
+    },
+    {
+      "kind": "cylinder",
+      "position": [
+        7,
+        2.6,
+        3
+      ],
+      "size": [
+        0.7,
+        5.2,
+        0.7
+      ],
+      "texture": "stone",
+      "tint": 0.85,
+      "collide": true,
+      "segments": 10
+    },
+    {
+      "kind": "cylinder",
+      "position": [
+        7,
+        2.6,
+        9
+      ],
+      "size": [
+        0.7,
+        5.2,
+        0.7
+      ],
+      "texture": "stone",
+      "tint": 0.85,
+      "collide": true,
+      "segments": 10
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.8,
+        0.42,
+        -8
+      ],
+      "size": [
+        5.2,
+        0.12,
+        0.6
+      ],
+      "texture": "wood",
+      "tint": 0.7,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.8,
+        0.42,
+        -8
+      ],
+      "size": [
+        5.2,
+        0.12,
+        0.6
+      ],
+      "texture": "wood",
+      "tint": 0.7,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.8,
+        0.42,
+        -5.6
+      ],
+      "size": [
+        5.2,
+        0.12,
+        0.6
+      ],
+      "texture": "wood",
+      "tint": 0.7,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.8,
+        0.42,
+        -5.6
+      ],
+      "size": [
+        5.2,
+        0.12,
+        0.6
+      ],
+      "texture": "wood",
+      "tint": 0.7,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.8,
+        0.42,
+        -3.2
+      ],
+      "size": [
+        5.2,
+        0.12,
+        0.6
+      ],
+      "texture": "wood",
+      "tint": 0.7,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.8,
+        0.42,
+        -3.2
+      ],
+      "size": [
+        5.2,
+        0.12,
+        0.6
+      ],
+      "texture": "wood",
+      "tint": 0.7,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.8,
+        0.42,
+        -0.8
+      ],
+      "size": [
+        5.2,
+        0.12,
+        0.6
+      ],
+      "texture": "wood",
+      "tint": 0.7,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.8,
+        0.42,
+        -0.8
+      ],
+      "size": [
+        5.2,
+        0.12,
+        0.6
+      ],
+      "texture": "wood",
+      "tint": 0.7,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.8,
+        0.42,
+        1.6
+      ],
+      "size": [
+        5.2,
+        0.12,
+        0.6
+      ],
+      "texture": "wood",
+      "tint": 0.7,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.8,
+        0.42,
+        1.6
+      ],
+      "size": [
+        5.2,
+        0.12,
+        0.6
+      ],
+      "texture": "wood",
+      "tint": 0.7,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.8,
+        0.42,
+        4
+      ],
+      "size": [
+        5.2,
+        0.12,
+        0.6
+      ],
+      "texture": "wood",
+      "tint": 0.7,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.8,
+        0.42,
+        4
+      ],
+      "size": [
+        5.2,
+        0.12,
+        0.6
+      ],
+      "texture": "wood",
+      "tint": 0.7,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.8,
+        0.21,
+        -8
+      ],
+      "size": [
+        5,
+        0.42,
+        0.5
+      ],
+      "texture": "wood",
+      "tint": 0.62
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.8,
+        0.21,
+        -8
+      ],
+      "size": [
+        5,
+        0.42,
+        0.5
+      ],
+      "texture": "wood",
+      "tint": 0.62
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.8,
+        0.21,
+        -5.6
+      ],
+      "size": [
+        5,
+        0.42,
+        0.5
+      ],
+      "texture": "wood",
+      "tint": 0.62
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.8,
+        0.21,
+        -5.6
+      ],
+      "size": [
+        5,
+        0.42,
+        0.5
+      ],
+      "texture": "wood",
+      "tint": 0.62
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.8,
+        0.21,
+        -3.2
+      ],
+      "size": [
+        5,
+        0.42,
+        0.5
+      ],
+      "texture": "wood",
+      "tint": 0.62
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.8,
+        0.21,
+        -3.2
+      ],
+      "size": [
+        5,
+        0.42,
+        0.5
+      ],
+      "texture": "wood",
+      "tint": 0.62
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.8,
+        0.21,
+        -0.8
+      ],
+      "size": [
+        5,
+        0.42,
+        0.5
+      ],
+      "texture": "wood",
+      "tint": 0.62
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.8,
+        0.21,
+        -0.8
+      ],
+      "size": [
+        5,
+        0.42,
+        0.5
+      ],
+      "texture": "wood",
+      "tint": 0.62
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.8,
+        0.21,
+        1.6
+      ],
+      "size": [
+        5,
+        0.42,
+        0.5
+      ],
+      "texture": "wood",
+      "tint": 0.62
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.8,
+        0.21,
+        1.6
+      ],
+      "size": [
+        5,
+        0.42,
+        0.5
+      ],
+      "texture": "wood",
+      "tint": 0.62
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.8,
+        0.21,
+        4
+      ],
+      "size": [
+        5,
+        0.42,
+        0.5
+      ],
+      "texture": "wood",
+      "tint": 0.62
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.8,
+        0.21,
+        4
+      ],
+      "size": [
+        5,
+        0.42,
+        0.5
+      ],
+      "texture": "wood",
+      "tint": 0.62
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        0.6,
+        11
+      ],
+      "size": [
+        3.2,
+        1.2,
+        1.4
+      ],
+      "texture": "marble",
+      "tint": 0.9,
+      "collide": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        1.32,
+        11
+      ],
+      "size": [
+        3.4,
+        0.14,
+        1.6
+      ],
+      "texture": "marble",
+      "tint": 0.95
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        3.4,
+        13.2
+      ],
+      "size": [
+        0.35,
+        3.4,
+        0.35
+      ],
+      "texture": "wood",
+      "tint": 0.85
+    },
+    {
+      "kind": "box",
+      "position": [
+        0,
+        4.1,
+        13.2
+      ],
+      "size": [
+        2.1,
+        0.35,
+        0.35
+      ],
+      "texture": "wood",
+      "tint": 0.85
+    },
+    {
+      "kind": "sign",
+      "position": [
+        0,
+        4.9,
+        -13.72
+      ],
+      "size": [
+        6,
+        1.1,
+        0.02
+      ],
+      "text": "SANTUARIO VIRGEN DEL ROSARIO",
+      "yaw": 0
+    },
+    {
+      "kind": "cylinder",
+      "position": [
+        -7.5,
+        0.55,
+        -11.5
+      ],
+      "size": [
+        0.8,
+        1.1,
+        0.8
+      ],
+      "texture": "stone",
+      "tint": 0.8,
+      "collide": true,
+      "segments": 10
+    },
+    {
+      "kind": "cylinder",
+      "position": [
+        7.5,
+        0.55,
+        -11.5
+      ],
+      "size": [
+        0.8,
+        1.1,
+        0.8
+      ],
+      "texture": "stone",
+      "tint": 0.8,
+      "collide": true,
+      "segments": 10
+    }
+  ],
+  "items": [
+    {
+      "id": "poster_8",
+      "position": [
+        4,
+        1.8,
+        -13.7
+      ],
+      "yaw": 0
+    },
+    {
+      "id": "flashlight",
+      "position": [
+        3.8,
+        0.6,
+        4
+      ],
+      "yaw": 0
+    }
+  ],
+  "hides": [
+    {
+      "id": "iglesia_confesionario",
+      "kind": "confessional",
+      "position": [
+        -9.33,
+        7
+      ],
+      "yaw": 270
+    }
+  ],
+  "spawns": {
+    "from_luque_cerro_cora": {
+      "position": [
+        0,
+        12.75
+      ],
+      "yaw": 0
+    },
+    "start": {
+      "position": [
+        0,
+        -10
+      ],
+      "yaw": 180
+    }
+  }
+}
