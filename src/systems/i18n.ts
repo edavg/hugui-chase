@@ -50,7 +50,6 @@ export interface UiTexts {
   toastFlashlightTouch: string;
   toastStalker: string;
   toastStalkerSeen: string;
-  toastSecondStalker: string;
   toastHit: (hearts: number) => string;
   menuOptions: string;
   menuControls: string;
@@ -148,7 +147,7 @@ export const TEXTS: Record<Language, UiTexts> = {
     readHint: 'E CONTINUAR · ESC CERRAR',
     endingTitle: 'HAS ESCAPADO',
     endingText:
-      'La puerta principal se cierra a tu espalda. La casa se queda atrás, vacía.\n\nQuemaste los doce afiches de Hugui Farías. Sin su propaganda, sin su presencia. Por eso la puerta se abrió.',
+      'La puerta principal se cierra a tu espalda. La casa se queda atrás, vacía.\n\nQuemaste los doce afiches. Sin su propaganda, sin su presencia. Por eso la puerta se abrió.',
     endingHint: 'E — VOLVER A JUGAR',
     toastNote: (have, total) => `NOTA CONSEGUIDA (${have}/${total})`,
     toastPoster: (have, total) => `AFICHE QUEMADO (${have}/${total})`,
@@ -157,7 +156,6 @@ export const TEXTS: Record<Language, UiTexts> = {
     toastFlashlightTouch: 'LINTERNA CONSEGUIDA — BOTÓN LUZ PARA ENCENDERLA',
     toastStalker: 'ALGO SE HA DESPERTADO EN LA CASA…',
     toastStalkerSeen: 'TE HA VISTO',
-    toastSecondStalker: 'OTRO HUGUI HA APARECIDO EN EL VESTÍBULO…',
     toastHit: (hearts) =>
       hearts > 0 ? `TE HA GOLPEADO — QUEDAN ${hearts} CORAZONES` : 'TE HA ALCANZADO',
     menuOptions: 'OPCIONES',
@@ -255,7 +253,7 @@ export const TEXTS: Record<Language, UiTexts> = {
     readHint: 'E CONTINUE · ESC CLOSE',
     endingTitle: 'YOU ESCAPED',
     endingText:
-      'The front door closes behind your back. The house stays behind, empty.\n\nYou burned all twelve of Hugui Farías\'s posters. No more propaganda, no more presence. That is why the door opened.',
+      'The front door closes behind your back. The house stays behind, empty.\n\nYou burned all twelve posters. No more propaganda, no more presence. That is why the door opened.',
     endingHint: 'E — PLAY AGAIN',
     toastNote: (have, total) => `NOTE COLLECTED (${have}/${total})`,
     toastPoster: (have, total) => `POSTER BURNED (${have}/${total})`,
@@ -264,7 +262,6 @@ export const TEXTS: Record<Language, UiTexts> = {
     toastFlashlightTouch: 'FLASHLIGHT COLLECTED — LIGHT BUTTON TO TURN IT ON',
     toastStalker: 'SOMETHING HAS AWOKEN IN THE HOUSE…',
     toastStalkerSeen: 'IT HAS SEEN YOU',
-    toastSecondStalker: 'ANOTHER HUGUI HAS APPEARED IN THE VESTIBULE…',
     toastHit: (hearts) =>
       hearts > 0 ? `IT STRUCK YOU — ${hearts} HEARTS LEFT` : 'IT GOT YOU',
     menuOptions: 'OPTIONS',

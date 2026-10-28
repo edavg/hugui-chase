@@ -367,7 +367,6 @@ export class Game {
       this.secondStalkerSpawned = true;
       this.syncSecondStalkerPresence();
       this.audio.play('stinger', 0.9);
-      this.ui.toast(TEXTS[this.config.language].toastSecondStalker);
       console.info(`[M5] 2º stalker en ${target} vigilando ${stalker.guardRoomId ?? target}`);
     } catch (error) {
       console.error('[M5] No se pudo despertar al 2º stalker', error);
@@ -1335,6 +1334,7 @@ export class Game {
         for (const door of this.room.doors) {
           door.endingEye?.update(dt, this.player.camera.position, this.clock);
         }
+        this.room.flesh?.update(this.clock);
         this.updateStalker(dt);
         this.traces.update(this.clock);
         this.scares.update(dt, this.scareContext());

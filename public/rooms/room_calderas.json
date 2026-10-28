@@ -284,6 +284,83 @@
       "yaw": 0
     }
   ],
+  "flesh": [
+    {
+      "kind": "growth",
+      "on": "E",
+      "at": [
+        1.4,
+        1.2
+      ],
+      "radius": [
+        0.6,
+        0.9
+      ],
+      "bulge": 0.12
+    },
+    {
+      "kind": "growth",
+      "on": "E",
+      "at": [
+        -1.5,
+        1.9
+      ],
+      "radius": [
+        0.45,
+        0.5
+      ],
+      "bulge": 0.06
+    },
+    {
+      "kind": "growth",
+      "on": "ceiling",
+      "at": [
+        3,
+        0.6
+      ],
+      "radius": [
+        0.8,
+        1
+      ],
+      "bulge": 0.1
+    },
+    {
+      "kind": "growth",
+      "on": "floor",
+      "at": [
+        3.4,
+        1.6
+      ],
+      "radius": [
+        0.4,
+        0.5
+      ],
+      "bulge": 0.1
+    },
+    {
+      "kind": "vein",
+      "on": "floor",
+      "points": [
+        [
+          3.7,
+          0.6
+        ],
+        [
+          3,
+          0.9
+        ],
+        [
+          2.2,
+          0.8
+        ],
+        [
+          1.4,
+          1.4
+        ]
+      ],
+      "radius": 0.03
+    }
+  ],
   "spawns": {
     "from_lavanderia": {
       "position": [

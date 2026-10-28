@@ -1319,6 +1319,98 @@ const EVENTS = {
   ],
 };
 
+// Carne de la maldición (ver src/systems/fleshGrowth.ts). Coordenadas de
+// superficie: [x, z] en suelo/techo, [x, y] en muros N/S, [z, y] en muros E/W.
+// Nace en la salida del Vestíbulo y en la Bodega, y deja rastros entre ambas.
+const growth = (on, at, radius, bulge, extra = {}) => ({ kind: 'growth', on, at, radius, bulge, ...extra });
+const vein = (on, points, radius = 0.025) => ({ kind: 'vein', on, points, radius });
+const FLESH = {
+  room_vestibulo: [
+    // Nido junto a la puerta maldita: esquina NO tomada de suelo a techo.
+    growth('N', [-3.2, 1.25], [0.75, 1.05], 0.3),
+    growth('W', [-2.65, 1.0], [0.5, 0.9], 0.2),
+    growth('floor', [-3.35, -2.6], [0.55, 0.5], 0.55),
+    growth('W', [0.6, 2.35], [0.7, 0.32], 0.1),
+    growth('ceiling', [0.0, -2.45], [2.6, 0.75], 0.12, { roots: 12 }),
+    growth('ceiling', [-2.6, -1.8], [1.2, 1.1], 0.3),
+    growth('ceiling', [1.6, -1.1], [0.85, 0.7], 0.22),
+    growth('ceiling', [2.9, 2.4], [0.9, 0.7], 0.15),
+    growth('E', [-1.7, 1.55], [0.65, 0.85], 0.12),
+    growth('E', [2.6, 1.2], [0.5, 1.0], 0.3),
+    growth('floor', [3.35, 2.65], [0.5, 0.45], 0.45),
+    growth('S', [3.3, 1.6], [0.55, 0.9], 0.18),
+    growth('S', [-2.2, 0.45], [1.1, 0.42], 0.08),
+    vein('floor', [[-2.9, -2.2], [-2.4, -1.4], [-1.6, -0.6], [-0.9, 0.2]], 0.035),
+    vein('floor', [[3.0, 2.3], [2.6, 1.5], [2.9, 0.9], [3.3, 0.7]], 0.03),
+    vein('ceiling', [[-1.4, -2.2], [-0.6, -1.2], [-0.3, 0.4], [0.4, 1.6]], 0.04),
+    vein('E', [[-1.1, 1.3], [-0.85, 0.7], [-0.8, 0.15]], 0.025),
+  ],
+  room_bodega: [
+    // El origen: el muro este y el techo están vivos.
+    growth('E', [0.0, 1.3], [1.9, 1.15], 0.4, { roots: 10 }),
+    growth('E', [-1.9, 2.0], [0.5, 0.6], 0.15),
+    growth('floor', [2.4, -1.9], [0.45, 0.45], 0.5),
+    growth('floor', [2.25, 1.8], [0.6, 0.55], 0.65),
+    growth('floor', [2.35, 0.0], [0.5, 1.4], 0.05),
+    growth('ceiling', [0.6, 0.3], [2.2, 1.9], 0.1, { roots: 14 }),
+    growth('ceiling', [1.8, -1.2], [0.5, 0.45], 0.4),
+    growth('ceiling', [-1.2, 1.2], [0.45, 0.5], 0.35),
+    growth('ceiling', [2.2, 1.4], [0.6, 0.6], 0.3),
+    growth('S', [2.2, 1.3], [0.65, 1.0], 0.25),
+    growth('S', [0.4, 2.2], [1.3, 0.4], 0.08),
+    growth('N', [2.3, 1.2], [0.5, 1.1], 0.2),
+    growth('N', [-2.3, 1.6], [0.5, 0.9], 0.1),
+    growth('W', [-1.6, 1.5], [0.6, 0.8], 0.1),
+    growth('W', [1.6, 2.1], [0.55, 0.45], 0.08),
+    vein('floor', [[1.8, 1.4], [0.8, 1.0], [-0.4, 0.6], [-1.8, 0.3], [-2.75, 0.2]], 0.045),
+    vein('floor', [[2.0, -1.6], [1.0, -1.3], [0.3, -1.9], [0.1, -2.3]], 0.04),
+    vein('floor', [[1.9, 0.4], [1.2, 0.0], [0.6, -0.6]], 0.03),
+  ],
+  room_calderas: [
+    growth('E', [1.4, 1.2], [0.6, 0.9], 0.12),
+    growth('E', [-1.5, 1.9], [0.45, 0.5], 0.06),
+    growth('ceiling', [3.0, 0.6], [0.8, 1.0], 0.1),
+    growth('floor', [3.4, 1.6], [0.4, 0.5], 0.1),
+    vein('floor', [[3.7, 0.6], [3.0, 0.9], [2.2, 0.8], [1.4, 1.4]], 0.03),
+  ],
+  room_lavanderia: [
+    growth('E', [-1.3, 1.1], [0.5, 0.7], 0.1),
+    growth('floor', [3.0, 0.9], [0.35, 0.3], 0.04),
+    growth('ceiling', [2.7, 0.0], [0.6, 0.8], 0.08),
+    vein('floor', [[3.3, 0.3], [2.6, 0.5], [1.8, 0.2], [1.0, 0.4]], 0.025),
+  ],
+  room_salon: [
+    // Se cuela desde el Vestíbulo.
+    growth('W', [-1.6, 1.8], [0.6, 0.55], 0.07),
+    growth('W', [1.6, 0.5], [0.45, 0.4], 0.04),
+    growth('ceiling', [-4.0, -0.9], [0.6, 0.5], 0.06),
+    vein('W', [[-0.75, 0.1], [-1.0, 0.8], [-1.3, 1.5]], 0.025),
+    vein('floor', [[-4.5, 0.9], [-4.0, 1.4], [-3.6, 2.2], [-3.1, 2.6]], 0.025),
+  ],
+  room_pasillo: [
+    // Sube por la puerta del sótano.
+    growth('N', [0.3, 0.55], [0.32, 0.45], 0.05),
+    growth('ceiling', [1.5, -0.65], [0.55, 0.4], 0.05),
+    vein('N', [[0.4, 1.0], [0.5, 1.6], [0.7, 2.2], [0.75, 2.6]], 0.022),
+    vein('floor', [[1.3, -1.0], [0.9, -0.5], [0.2, -0.3]], 0.022),
+  ],
+  room_dormitorio: [
+    growth('W', [-0.6, 1.75], [0.65, 0.45], 0.06),
+    growth('ceiling', [-2.3, -0.6], [0.7, 0.5], 0.08),
+    vein('W', [[-0.2, 1.6], [0.1, 1.2], [0.25, 0.7]], 0.022),
+  ],
+  room_bano: [
+    growth('ceiling', [-1.4, -1.1], [0.45, 0.4], 0.06),
+    growth('N', [-0.4, 2.2], [0.45, 0.35], 0.04),
+    vein('N', [[-0.3, 1.9], [-0.2, 1.3], [-0.35, 0.8]], 0.02),
+  ],
+  room_pasillo_alto: [
+    growth('ceiling', [1.05, 0.6], [0.5, 0.35], 0.05),
+    growth('S', [-0.3, 1.6], [0.3, 0.4], 0.04),
+    vein('ceiling', [[1.0, 0.4], [0.2, 0.0], [-0.7, -0.3]], 0.02),
+  ],
+};
+
 const WALL_FURNITURE_DEFAULT = 'wood';
 const props_use_fireplace = (room) => (room.props ?? []).some((prop) => prop.texture === 'embers');
 let paintingFlip = 0;
@@ -1391,6 +1483,7 @@ const outputs = rooms.map((room) => {
   }
   if (HIDES[room.id]) data.hides = HIDES[room.id];
   if (EVENTS[room.id]) data.events = EVENTS[room.id];
+  if (FLESH[room.id]) data.flesh = FLESH[room.id];
   data.spawns = spawnsByRoom.get(room.id);
   return data;
 });

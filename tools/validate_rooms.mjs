@@ -161,7 +161,103 @@ function collidersOf(room) {
     const hz = (width / 2) * Math.abs(Math.sin(yaw)) + (depth / 2) * Math.abs(Math.cos(yaw));
     colliders.push({ minX: hx0 - hx, maxX: hx0 + hx, minZ: hz0 - hz, maxZ: hz0 + hz });
   }
+  colliders.push(...fleshColliders(room));
   return colliders;
+}
+
+// Masas de carne que sobresalen, igual que fleshColliders en src/systems/fleshGrowth.ts.
+const FLESH_COLLIDE_BULGE = 0.22;
+const FLESH_BODY_HEIGHT = 1.7;
+const FLESH_SPAN = 0.8;
+const FLESH_SURFACES = ['floor', 'ceiling', 'N', 'E', 'S', 'W'];
+
+function fleshCollides(growth) {
+  if (growth.collide !== undefined) return growth.collide;
+  if (growth.on === 'ceiling' || (growth.bulge ?? 0) < FLESH_COLLIDE_BULGE) return false;
+  return growth.on === 'floor' || growth.at[1] - growth.radius[1] < FLESH_BODY_HEIGHT;
+}
+
+function fleshColliders(room) {
+  const innerX = room.size[0] / 2 - room.wall_thickness / 2;
+  const innerZ = room.size[2] / 2 - room.wall_thickness / 2;
+  const colliders = [];
+  for (const growth of room.flesh ?? []) {
+    if (growth.kind !== 'growth' || !fleshCollides(growth)) continue;
+    const [p, q] = growth.at;
+    const [ra, rb] = growth.radius;
+    const depth = growth.bulge * FLESH_SPAN;
+    const a0 = p - ra * FLESH_SPAN;
+    const a1 = p + ra * FLESH_SPAN;
+    if (growth.on === 'floor') colliders.push({ minX: a0, maxX: a1, minZ: q - rb * FLESH_SPAN, maxZ: q + rb * FLESH_SPAN });
+    if (growth.on === 'N') colliders.push({ minX: a0, maxX: a1, minZ: -innerZ, maxZ: -innerZ + depth });
+    if (growth.on === 'S') colliders.push({ minX: a0, maxX: a1, minZ: innerZ - depth, maxZ: innerZ });
+    if (growth.on === 'W') colliders.push({ minX: -innerX, maxX: -innerX + depth, minZ: a0, maxZ: a1 });
+    if (growth.on === 'E') colliders.push({ minX: innerX - depth, maxX: innerX, minZ: a0, maxZ: a1 });
+  }
+  return colliders;
+}
+
+// Lado de un muro de la sala (N/S/E/W) y su eje a lo largo, como en fleshGrowth.ts.
+function wallSide(run) {
+  const alongX = Math.abs(run.end[1] - run.start[1]) < 1e-6;
+  return alongX ? (run.start[1] < 0 ? 'N' : 'S') : (run.start[0] < 0 ? 'W' : 'E');
+}
+
+// La carne no tapa huecos ni afiches y no estorba delante de las puertas.
+function validateFlesh(room) {
+  const [w, h, d] = room.size;
+  const innerX = w / 2 - room.wall_thickness / 2;
+  const innerZ = d / 2 - room.wall_thickness / 2;
+  const posters = (room.items ?? []).filter((item) => item.id.startsWith('poster_'));
+  for (const [index, def] of (room.flesh ?? []).entries()) {
+    const label = `${room.id}: carne #${index}`;
+    if (!FLESH_SURFACES.includes(def.on)) fail(`${label} en superficie desconocida ${def.on}`);
+    if (def.kind === 'vein') {
+      if (!Array.isArray(def.points) || def.points.length < 2) fail(`${label}: vena con menos de 2 puntos`);
+      continue;
+    }
+    if (def.kind !== 'growth') {
+      fail(`${label} de tipo desconocido ${def.kind}`);
+      continue;
+    }
+    const [p, q] = def.at;
+    const [ra, rb] = def.radius;
+    const wall = def.on !== 'floor' && def.on !== 'ceiling';
+    const limitP = def.on === 'N' || def.on === 'S' || !wall ? innerX : innerZ;
+    if (Math.abs(p) > limitP || (wall ? q < 0 || q > h : Math.abs(q) > innerZ)) fail(`${label} fuera de la superficie`);
+    if (!wall) continue;
+    for (const run of room.walls) {
+      if (wallSide(run) !== def.on) continue;
+      const alongX = def.on === 'N' || def.on === 'S';
+      const { length } = runGeometry(run);
+      const origin = alongX ? run.start[0] : run.start[1];
+      const dir = ((alongX ? run.end[0] : run.end[1]) - origin) / length;
+      for (const opening of run.openings ?? []) {
+        const a = origin + dir * opening.offset;
+        const b = origin + dir * (opening.offset + opening.width);
+        const sill = opening.sill ?? 0;
+        if (p + ra > Math.min(a, b) && p - ra < Math.max(a, b) && q + rb > sill && q - rb < sill + opening.height) {
+          fail(`${label} tapa un hueco ${opening.kind} del muro ${def.on}`);
+        }
+      }
+    }
+    for (const poster of posters) {
+      const [x, y, z] = poster.position;
+      const side = Math.abs(Math.abs(x) - innerX) < 0.2 ? (x < 0 ? 'W' : 'E') : Math.abs(Math.abs(z) - innerZ) < 0.2 ? (z < 0 ? 'N' : 'S') : null;
+      const along = side === 'N' || side === 'S' ? x : z;
+      if (side === def.on && Math.abs(along - p) < ra + 0.25 && Math.abs(y - q) < rb + 0.3) {
+        fail(`${label} tapa el afiche ${poster.id}`);
+      }
+    }
+  }
+  const doorways = room.walls.flatMap((run) => {
+    const { sx, sz, dirX, dirZ } = runGeometry(run);
+    return (run.openings ?? []).filter((opening) => opening.kind === 'door')
+      .map((opening) => [sx + dirX * (opening.offset + opening.width / 2), sz + dirZ * (opening.offset + opening.width / 2)]);
+  });
+  for (const collider of fleshColliders(room)) {
+    if (doorways.some(([x, z]) => insideCollider(collider, x, z, 0.9))) fail(`${room.id}: una masa de carne bloquea una puerta`);
+  }
 }
 
 // Huella de los escondites (ancho, fondo), igual que src/systems/hides.ts.
@@ -407,6 +503,7 @@ for (const room of rooms.values()) {
   }
 
   validateM13(room);
+  validateFlesh(room);
   const tris = estimateTris(room);
   // Presupuesto PS2 (antes 4.000 tris PSX). La estimación no cuenta molduras ni
   // luminarias; el recuento real lo imprime el juego en consola.

@@ -19,6 +19,7 @@ import { applyFiltering, loadNormalMap, loadPixelTexture } from './textures';
 import { addVertexColors } from './vertexColors';
 import { createEndingDoorDecoration, type EndingDoorDecoration } from './endingDoor';
 import type { DemonicEye } from './demonicEye';
+import { FleshGrowth, fleshColliders, type RoomFleshDef } from './fleshGrowth';
 import { buildHideFurniture, computeHideSpot, type HideHandle, type RoomHide } from './hides';
 import { buildApparition, type RoomEventDef, type RoomEventHandle } from './roomEvents';
 
@@ -161,6 +162,8 @@ export interface RoomData {
   hides?: RoomHide[];
   // Sustos con guion (M13), ver roomEvents.ts.
   events?: RoomEventDef[];
+  // Carne de la maldición sobre muros, suelo y techo, ver fleshGrowth.ts.
+  flesh?: RoomFleshDef[];
 }
 
 export interface DoorLeaf {
@@ -227,6 +230,7 @@ export interface BuiltRoom {
   events: RoomEventHandle[];
   // Raíces de los GLB por índice de `models` (null si no cargó).
   models: Array<THREE.Object3D | null>;
+  flesh: FleshGrowth | null;
   sync: (config: PsxConfig) => void;
   triangleCount: number;
 }
@@ -258,6 +262,29 @@ const MODELS_BASE = `${import.meta.env.BASE_URL}assets/models/furniture/`;
 const REQUIRED_TEXTURES = ['wall', 'floor', 'ceiling', 'door'];
 const DOOR_SWING = 1.66;
 const DOOR_THICKNESS = 0.07;
+
+// Molduras pegadas a la cara interior del muro: alto y fondo (m).
+const TRIM = {
+  base: { height: 0.14, depth: 0.028 },
+  wainscot: { depth: 0.018 },
+  rail: { drop: 0.015, height: 0.05, depth: 0.034 },
+  crown: { height: 0.11, depth: 0.05 },
+  crownStep: { height: 0.05, depth: 0.025 },
+};
+
+// Cuánto sobresalen las molduras a una altura dada (la carne trepa por encima).
+function wallRelief(data: RoomData, outdoor: boolean): (y: number) => number {
+  if (!(data.trim ?? !outdoor)) return () => 0;
+  const height = data.size[1];
+  const wainscotTop = data.wainscot && (data.wainscot.height ?? 1.0) > 0.25 ? (data.wainscot.height ?? 1.0) : 0;
+  return (y) => {
+    if (y >= height - TRIM.crown.height) return TRIM.crown.depth;
+    if (y >= height - TRIM.crown.height - TRIM.crownStep.height) return TRIM.crownStep.depth;
+    if (y < TRIM.base.height) return TRIM.base.depth;
+    if (y >= wainscotTop - TRIM.rail.drop && y < wainscotTop - TRIM.rail.drop + TRIM.rail.height) return TRIM.rail.depth;
+    return y < wainscotTop ? TRIM.wainscot.depth : 0;
+  };
+}
 
 const FALLBACK_ROOM_AUDIO: RoomAudio = { reverb: 'small', floor_material: 'wood', ambience: 'house' };
 
@@ -365,6 +392,8 @@ export function computeColliders(data: RoomData): Collider[] {
   for (const hide of data.hides ?? []) {
     colliders.push({ ...computeHideSpot(hide).collider });
   }
+
+  colliders.push(...fleshColliders(data.flesh ?? [], data.size, thickness));
 
   return colliders;
 }
@@ -718,17 +747,17 @@ export async function buildRoom(
       ];
       const wainscotHeight = data.wainscot ? (data.wainscot.height ?? 1.0) : 0;
       for (const span of spans) {
-        addInnerStrip('trim', runInfo, span.from, span.to, 0, 0.14, 0.028, 0.8);
+        addInnerStrip('trim', runInfo, span.from, span.to, 0, TRIM.base.height, TRIM.base.depth, 0.8);
         if (data.wainscot && wainscotHeight > 0.2) {
           const top = Math.min(wainscotHeight, span.cap - 0.05);
           if (top > 0.25) {
-            addInnerStrip(data.wainscot.texture, runInfo, span.from, span.to, 0.14, top - 0.14, 0.018);
-            addInnerStrip('trim', runInfo, span.from, span.to, top - 0.015, 0.05, 0.034, 0.95);
+            addInnerStrip(data.wainscot.texture, runInfo, span.from, span.to, TRIM.base.height, top - TRIM.base.height, TRIM.wainscot.depth);
+            addInnerStrip('trim', runInfo, span.from, span.to, top - TRIM.rail.drop, TRIM.rail.height, TRIM.rail.depth, 0.95);
           }
         }
       }
-      addInnerStrip('trim', runInfo, 0, length, height - 0.11, 0.11, 0.05, 0.85);
-      addInnerStrip('trim', runInfo, 0, length, height - 0.16, 0.05, 0.025, 0.85);
+      addInnerStrip('trim', runInfo, 0, length, height - TRIM.crown.height, TRIM.crown.height, TRIM.crown.depth, 0.85);
+      addInnerStrip('trim', runInfo, 0, length, height - TRIM.crown.height - TRIM.crownStep.height, TRIM.crownStep.height, TRIM.crownStep.depth, 0.85);
     }
 
     for (const opening of openings) {
@@ -1007,6 +1036,13 @@ export async function buildRoom(
     return handle;
   });
 
+  const flesh = data.flesh?.length
+    ? new FleshGrowth(config, atmosphere, data.flesh, {
+      size: data.size, thickness, walls: data.walls, relief: wallRelief(data, outdoor),
+    })
+    : null;
+  if (flesh) scene.add(flesh.group);
+
   const events: RoomEventHandle[] = [];
   let apparitionMaterial: PsxMaterialHandle | null = null;
   for (const def of data.events ?? []) {
@@ -1189,8 +1225,10 @@ export async function buildRoom(
     hides,
     events,
     models,
+    flesh,
     sync: (next) => {
       textureKeys.forEach((key) => materials[key].sync(next, atmosphere));
+      flesh?.sync(next);
       posterMaterial.sync(next, posterAtmosphere);
       extraMaterials.forEach((handle) => handle.sync(next, atmosphere));
       endingDecorations.forEach((decoration) => decoration.sync(next));

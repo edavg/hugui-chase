@@ -104,6 +104,30 @@ Los ítems recogibles se definen en la sala y se resuelven contra `public/config
   `defaced` debe coincidir con un decal de cuadro de la sala (misma posición y textura); `eyes` en UV
   con v desde arriba.
 
+## Carne de la maldición
+
+```json
+"flesh": [
+  { "kind": "growth", "on": "N", "at": [-3.2, 1.25], "radius": [0.75, 1.05], "bulge": 0.3 },
+  { "kind": "growth", "on": "floor", "at": [-3.35, -2.6], "radius": [0.55, 0.5], "bulge": 0.55, "roots": 6 },
+  { "kind": "vein", "on": "ceiling", "points": [[-1.4, -2.2], [-0.6, -1.2], [-0.3, 0.4]], "radius": 0.04 }
+]
+```
+
+- La misma textura de carne del ojo de la salida (`demonic_eye_flesh.png`) crece sobre la sala
+  (`src/systems/fleshGrowth.ts`). Se define en la tabla `FLESH` de `tools/gen_rooms.mjs`; hoy hay
+  mucha en el Vestíbulo y la Bodega, y rastros en Salón, Pasillo, Dormitorio, Baño, Pasillo Alto,
+  Lavandería y Calderas.
+- `on`: `floor`, `ceiling` o el muro `N`/`S`/`E`/`W`. Las coordenadas van sobre la superficie: `[x, z]`
+  en suelo y techo, `[x, y]` en los muros N/S y `[z, y]` en los muros E/W. En los muros la carne trepa
+  por encima del zócalo, el friso y la cornisa.
+- `growth`: cúpula lobulada con bultos y raíces (`roots`, por defecto según el tamaño); `radius` son
+  semiejes en el orden de `at`. Desde `bulge` 0.15 lleva tumores y respira; desde 0.22 colisiona sola
+  (en el suelo, o en un muro si baja de 1.7 m; nunca en el techo). `collide` lo fuerza.
+- `vein`: tubo aplastado contra la superficie. Venas y raíces se cortan al llegar a un hueco.
+- El validador falla si un crecimiento de muro tapa una puerta, ventana o afiche, o si una masa que
+  colisiona queda a menos de 0.9 m del centro de una puerta.
+
 ## Reglas
 
 - `walls`: recorridos de muro en planta (x, z). `offset` se mide desde `start` a lo largo del muro. Debe caber `offset + width <= longitud` del muro.

@@ -7,16 +7,21 @@ import { addVertexColors } from './vertexColors';
 let irisTexture: THREE.Texture | null = null;
 let fleshTexture: THREE.Texture | null = null;
 
+// Carne de la maldición: la comparten el ojo y la contaminación de las salas.
+export function curseFleshTexture(): THREE.Texture {
+  if (!fleshTexture) {
+    fleshTexture = new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}assets/textures/demonic_eye_flesh.png`);
+    applyFiltering(fleshTexture);
+  }
+  return fleshTexture;
+}
+
 function eyeTextures(): { iris: THREE.Texture; flesh: THREE.Texture } {
   if (!irisTexture) {
     irisTexture = new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}assets/textures/demonic_eye_iris.png`);
     applyFiltering(irisTexture, { repeat: false });
   }
-  if (!fleshTexture) {
-    fleshTexture = new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}assets/textures/demonic_eye_flesh.png`);
-    applyFiltering(fleshTexture);
-  }
-  return { iris: irisTexture, flesh: fleshTexture };
+  return { iris: irisTexture, flesh: curseFleshTexture() };
 }
 
 // El globo gira dentro de una cuenca fija: la puerta no se mueve al mirarnos.
