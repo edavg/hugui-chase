@@ -18,6 +18,7 @@ import type { SceneLightDef } from './sceneLights';
 import { applyFiltering, loadNormalMap, loadPixelTexture } from './textures';
 import { addVertexColors } from './vertexColors';
 import { createEndingDoorDecoration, type EndingDoorDecoration } from './endingDoor';
+import type { DemonicEye } from './demonicEye';
 import { buildHideFurniture, computeHideSpot, type HideHandle, type RoomHide } from './hides';
 import { buildApparition, type RoomEventDef, type RoomEventHandle } from './roomEvents';
 
@@ -188,8 +189,8 @@ export interface DoorHandle {
   collider: Collider | null;
   // Candado de las puertas con llave: se quita con la llave antes de abrir.
   lock: DoorLock | null;
-  // Candado de la salida: desaparece al quemar todos los afiches requeridos.
-  posterLock: THREE.Group | null;
+  // Ojo de la maldición: desaparece al quemar todos los afiches requeridos.
+  endingEye: DemonicEye | null;
   // Identificador estable de la cerradura (sala→destino) para los flags.
   lockId: string;
 }
@@ -849,20 +850,16 @@ export async function buildRoom(
           );
           leaves.push({ group, baseRotation: heading, openAngle });
         }
-        let posterLock: THREE.Group | null = null;
+        let endingEye: DemonicEye | null = null;
         if (opening.ending) {
-          const lock = buildPadlock(materials.fixture.material, 1);
-          const scale = opening.width > 2 ? 5.2 : 4.5;
-          lock.group.scale.setScalar(scale);
-          lock.group.position.set(-0.03 * scale, Math.min(1.46, opening.height * 0.7), 0.045 - 0.035 * scale);
           const decoration = createEndingDoorDecoration(
-            config, atmosphere, opening.width, opening.height, thickness, lock.group,
+            config, atmosphere, opening.width, opening.height, thickness,
           );
           decoration.group.position.set(centerX, 0, centerZ);
           decoration.group.rotation.y = heading + (faceSign < 0 ? Math.PI : 0);
           scene.add(decoration.group);
           endingDecorations.push(decoration);
-          posterLock = decoration.padlock;
+          endingEye = decoration.eye;
         }
         doors.push({
           heading,
@@ -881,7 +878,7 @@ export async function buildRoom(
           height: opening.height,
           collider: findCollider(colliders, centerX, centerZ, heading, opening.width, DOOR_THICKNESS),
           lock: (leaves[0].group.userData.lock as DoorLock | undefined) ?? null,
-          posterLock,
+          endingEye,
           lockId: `${data.id}>${opening.to ?? 'exit'}`,
         });
       } else if (opening.kind === 'passage') {
@@ -903,7 +900,7 @@ export async function buildRoom(
             height: opening.height,
             collider: null,
             lock: null,
-            posterLock: null,
+            endingEye: null,
             lockId: `${data.id}>${opening.to}`,
           });
         }

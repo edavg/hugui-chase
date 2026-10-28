@@ -1,0 +1,29 @@
+Asset: public/assets/textures/demonic_eye_iris.png
+Generator: built-in image_gen (imagegen skill).
+
+Initial iris prompt (superseded):
+Use case: stylized-concept
+Asset type: square diffuse texture for the animated iris of a giant demonic eyeball in a dark low-poly PS2-style 3D horror game.
+Primary request: one terrifying circular demonic iris, viewed perfectly straight on, with a narrow vertical jet-black slit pupil dead center. The iris has intricate radial fibers, scorched dark crimson at its rim and glowing amber and blood-red striations inward, unsettling organic detail, subtle unevenness and dark branching cracks.
+Composition/framing: ONLY the circular iris and centered slit pupil, a flat orthographic texture without perspective. The iris is a perfect centered circle occupying the entire square, touching all four edges; corners outside the circle are solid near-black. The pupil is fully contained within the iris. Uniform diffuse lighting suitable for texturing a moving 3D eye, no cast shadows.
+Style/medium: hand-painted survival-horror game texture, grimy organic detail that remains readable at 512px.
+Constraints: no eyelids, no sclera, no skin surrounding the iris, no eyelashes, no highlights resembling windows, no text, no symbols, no watermark, no background scene, one iris only.
+
+
+Revised iris prompt (current):
+Use case: style-transfer
+Asset type: diffuse iris texture for a disturbing organic eye embedded in an exit door of a PS2 survival-horror game.
+Input images: Image 1 is the edit target; preserve its perfectly centered circular iris composition and texture mapping.
+Primary request: restyle this iris as something from Silent Hill's sickly, tactile body horror. Replace the fiery palette and flame-like fibers with a diseased humanlike iris: desaturated dirty gray, cloudy bone ivory, muddy brown, bruised mauve and sparse dried rust-red capillaries. A deep black irregular elongated oval pupil is centered, shorter and less reptilian than the reference slit. The iris feels wet, exhausted, infected, and unnervingly alive, with delicate radial organic fibers and a faint cloudy film.
+Composition/framing: flat orthographic front view; one centered perfect circular iris touching all four edges of the square, corners outside the circle near-black. Keep the pupil fully contained and centered.
+Style/medium: gritty hand-painted photographic texture from an early-2000s psychological survival-horror game, subdued believable organic detail.
+Constraints: no orange, no fire, no lava, no magical glow, no neon, no fantasy dragon styling, no outer sclera, no eyelids, no text or watermark. Diffuse even lighting, no baked directional highlights.
+
+Asset: public/assets/textures/demonic_eye_flesh.png
+Flesh texture prompt (current):
+Use case: stylized-concept
+Asset type: tileable square organic skin diffuse texture for the swollen eyelids and tendons of a monstrous eye growing out of a wooden door in a PS2 psychological horror game.
+Primary request: seamless, completely flat close-up material texture of sickly pale gray-pink tissue, wrinkled leathery folds, thin dark wine-red veins, subtle bruised purple patches, dried rusty brown crust caught in creases, tiny pores and a damp waxy surface. A restrained, desaturated and unsettling Silent Hill-inspired body-horror material.
+Composition/framing: entire square covered edge to edge in the same organic material at consistent scale. Orthographic, evenly lit texture scan. No recognizable body parts.
+Style/medium: gritty early-2000s survival-horror game material with photographic tactile detail, low saturation and readable broad folds.
+Constraints: seamless tiling, diffuse/albedo only, no directional shadows, no highlights, no dramatic lighting, no eyes, no pupils, no face, no mouth, no teeth, no organs, no open wounds, no dripping blood, no lettering, no borders or watermark, no orange glow.

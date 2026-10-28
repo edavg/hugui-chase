@@ -4,6 +4,7 @@ import type { Language } from './i18n';
 import { createPsxMaterial, type Atmosphere } from './psxMaterial';
 import { addVertexColors } from './vertexColors';
 import { applyFiltering } from './textures';
+import { DemonicEye } from './demonicEye';
 
 type PaperKind = 'burn' | 'lock' | 'exit' | 'scrap';
 type TextureKind = PaperKind | 'blood';
@@ -12,14 +13,14 @@ const textureCache = new Map<string, THREE.CanvasTexture>();
 const normalCache = new Map<string, THREE.DataTexture>();
 const WARNINGS: Record<Language, Record<PaperKind, string[]>> = {
   es: {
-    burn: ['QUEMA', 'TODOS LOS', 'AFICHES'],
-    lock: ['SIN AFICHES', 'EL CANDADO', 'DESAPARECE'],
+    burn: ['SOLO QUEMANDO', 'TODOS LOS', 'AFICHES'],
+    lock: ['DESAPARECERÁ', 'LA MALDICIÓN', 'QUE BLOQUEA', 'ESTA PUERTA'],
     exit: ['NO HAY OTRA SALIDA'],
     scrap: ['TODOS', 'DEBEN ARDER'],
   },
   en: {
-    burn: ['BURN', 'EVERY', 'POSTER'],
-    lock: ['NO POSTERS', 'THE PADLOCK', 'DISAPPEARS'],
+    burn: ['ONLY BY BURNING', 'EVERY', 'POSTER'],
+    lock: ['WILL THE CURSE', 'BLOCKING', 'THIS DOOR', 'DISAPPEAR'],
     exit: ['THERE IS NO OTHER WAY OUT'],
     scrap: ['ALL MUST', 'BURN'],
   },
@@ -157,7 +158,7 @@ function warningTexture(kind: TextureKind, language: Language): THREE.CanvasText
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const lines = WARNINGS[language][kind];
-    const lineHeight = kind === 'exit' ? 36 : 43;
+    const lineHeight = kind === 'exit' ? 36 : Math.min(43, (h - 48) / lines.length);
     for (let i = 0; i < lines.length; i += 1) {
       let size = kind === 'exit' ? 23 : i === 0 && kind === 'burn' ? 45 : 29;
       do {
@@ -184,7 +185,7 @@ function warningTexture(kind: TextureKind, language: Language): THREE.CanvasText
 
 export interface EndingDoorDecoration {
   group: THREE.Group;
-  padlock: THREE.Group;
+  eye: DemonicEye;
   sync: (config: PsxConfig) => void;
 }
 
@@ -195,7 +196,6 @@ export function createEndingDoorDecoration(
   width: number,
   height: number,
   wallThickness: number,
-  padlock: THREE.Group,
 ): EndingDoorDecoration {
   const group = new THREE.Group();
   group.name = 'ending_door_warnings';
@@ -252,16 +252,15 @@ export function createEndingDoorDecoration(
       0.2 + random() * 0.19, 0.15 + random() * 0.15, random() * Math.PI * 2, true);
   }
 
-  padlock.name = 'ending_padlock';
-  group.add(padlock);
-  padlock.traverse((object) => {
-    if (object instanceof THREE.Mesh) object.raycast = () => {};
-  });
+  const eye = new DemonicEye(config, atmosphere, width);
+  eye.group.position.set(0, Math.min(1.46, height * 0.7), wallThickness / 2 + 0.08);
+  group.add(eye.group);
 
   return {
     group,
-    padlock,
+    eye,
     sync: (next) => {
+      eye.sync(next);
       for (const { kind, handle } of paperMaterials) {
         handle.material.uniforms.u_tex.value = warningTexture(kind, next.language);
         handle.sync(next, atmosphere);

@@ -1332,6 +1332,9 @@ export class Game {
     switch (this.state) {
       case 'playing':
         this.player.update(dt, this.config, this.input);
+        for (const door of this.room.doors) {
+          door.endingEye?.update(dt, this.player.camera.position, this.clock);
+        }
         this.updateStalker(dt);
         this.traces.update(this.clock);
         this.scares.update(dt, this.scareContext());
@@ -1439,8 +1442,8 @@ export class Game {
 
   private syncEndingLocks(room: BuiltRoom): void {
     for (const door of room.doors) {
-      if (door.posterLock) {
-        door.posterLock.visible = !door.requires.every((id) => this.flags.has(`burned:${id}`));
+      if (door.endingEye) {
+        door.endingEye.group.visible = !door.requires.every((id) => this.flags.has(`burned:${id}`));
       }
     }
   }
@@ -1733,7 +1736,7 @@ export class Game {
     this.stalkerSecond?.setBurnedPosters(have);
     this.ui.toast(texts.toastPoster(have, POSTER_IDS.length));
     this.updatePosterHud();
-    // Al completar todos los afiches desaparece el candado y aparece el guardián.
+    // Al completar todos los afiches se rompe la maldición y aparece el guardián.
     if (have >= POSTER_IDS.length) {
       this.audio.play('padlock_unlock', 0.8);
       void this.activateSecondStalker();
