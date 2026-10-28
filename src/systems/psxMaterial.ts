@@ -41,6 +41,8 @@ export interface SurfaceOptions {
   noDirect?: boolean;
   // Decal con mezcla alfa (manchas): sin alpha test duro, bordes suaves.
   blend?: boolean;
+  // Margen en UV (0–0.5) en el que un decal 1:1 se funde hacia sus bordes.
+  edgeFade?: number;
 }
 
 export interface PsxMaterialHandle {
@@ -70,6 +72,7 @@ export function createPsxMaterial(
       u_gloss: { value: surface.gloss ?? DEFAULT_GLOSS },
       u_emissive: { value: surface.emissive ?? 0 },
       u_alpha_out: { value: surface.blend ? 1 : 0 },
+      u_edge_fade: { value: surface.edgeFade ?? 0 },
       u_res: { value: new THREE.Vector2(config.resolution[0], config.resolution[1]) },
       u_snap: { value: config.effects.vertex_snap ? 1 : 0 },
       u_affine: { value: config.effects.affine_mapping ? 1 : 0 },

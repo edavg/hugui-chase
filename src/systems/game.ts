@@ -1866,6 +1866,9 @@ export class Game {
     this.transitionStart = performance.now();
     this.traces.clearDoor(this.room.id, target);
     this.scares.leaveRoom();
+    for (const stalker of [this.stalker, this.stalkerSecond]) {
+      stalker?.notePlayerDoor(this.room.id, target, door.center.x, door.center.z);
+    }
 
     const { authentic, door_anim_seconds, fade_seconds, min_seconds } = this.config.loading;
     const doorDuration = authentic ? door_anim_seconds : 0.4;

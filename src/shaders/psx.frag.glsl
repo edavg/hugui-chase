@@ -11,6 +11,8 @@ uniform float u_spec;
 uniform float u_gloss;
 uniform float u_emissive;
 uniform float u_alpha_out;
+// Margen (en UV) en el que un decal 1:1 se funde a transparente (0 = sin fundido).
+uniform float u_edge_fade;
 
 uniform vec3 u_fog_color;
 uniform float u_fog_enabled;
@@ -31,6 +33,7 @@ uniform vec3 u_flash_dir;
 uniform vec3 u_flash_color;
 uniform float u_flash_cos_outer;
 uniform float u_flash_cos_inner;
+uniform float u_flash_cos_spill;
 uniform float u_flash_range;
 uniform float u_flash_intensity;
 uniform vec3 u_eye_pos;
@@ -101,6 +104,12 @@ void main() {
   vec2 affineUv = v_uvw.xy / v_uvw.z;
   vec2 texUv = mix(v_uv, affineUv, v_depth);
   vec4 tex = texture2D(u_tex, texUv);
+  if (u_edge_fade > 0.0) {
+    // Manchas que llegan al borde de la textura: sin esto el decal termina en
+    // un rectángulo duro (y el filtrado con repetición trae la fila opuesta).
+    vec2 edge = min(v_uv, 1.0 - v_uv);
+    tex.a *= smoothstep(0.0, u_edge_fade, edge.x) * smoothstep(0.0, u_edge_fade, edge.y);
+  }
   if (tex.a < u_alpha_test) discard;
   vec3 albedo = tex.rgb * v_color;
 
@@ -139,14 +148,19 @@ void main() {
     vec3 toLight = u_flash_pos - v_world;
     float dist = length(toLight);
     vec3 L = toLight / max(dist, 0.0001);
-    float cone = smoothstep(u_flash_cos_outer, u_flash_cos_inner, dot(-L, u_flash_dir));
+    float spot = dot(-L, u_flash_dir);
+    float cone = smoothstep(u_flash_cos_outer, u_flash_cos_inner, spot);
     // Anillo del reflector (el haz de una linterna barata no es uniforme).
     float ring = 1.0 + 0.18 * smoothstep(0.55, 0.9, cone) - 0.12 * smoothstep(0.15, 0.45, cone) * smoothstep(0.8, 0.5, cone);
-    float att = clamp(1.0 - dist / u_flash_range, 0.0, 1.0);
+    // Derrame tenue alrededor del haz: deja intuir paredes y muebles a los lados.
+    float spill = smoothstep(u_flash_cos_spill, u_flash_cos_outer, spot) * (1.0 - cone) * 0.13;
+    // Caída suave (como las luces de sala): el haz conserva fuerza a media distancia.
+    float reach = dist / u_flash_range;
+    float att = clamp(1.0 - reach * reach, 0.0, 1.0);
     att *= att;
     float ndl = max(dot(n, L), 0.0);
     float shadow = cone > 0.001 ? shadowFactor(v_world, n) : 1.0;
-    vec3 flash = u_flash_color * (cone * ring * att * u_flash_intensity * shadow);
+    vec3 flash = u_flash_color * ((cone * ring * shadow + spill) * att * u_flash_intensity);
     light += flash * (0.2 + 0.8 * ndl);
     vec3 H = normalize(L + viewDir);
     spec += flash * ndl * pow(max(dot(n, H), 0.0), u_gloss) * 1.4;

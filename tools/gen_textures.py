@@ -680,6 +680,21 @@ def carpet(name: str, base: str, pattern: str, seed: int) -> None:
     save(name, img, fiber * 0.7 + m * 0.1, 2.5)
 
 
+def canvas(name: str, base: str, seed: int) -> None:
+    """Lona polvorienta: tejido fino, pliegues largos y polvo asentado."""
+    yy, xx = np.mgrid[0:N, 0:N].astype(float)
+    weave = (np.sin(xx * math.pi / 2) * np.sin(yy * math.pi / 2)) * 0.5 + 0.5
+    folds = fnoise(seed, 2.6, aniso=(0.12, 1.0))
+    wrinkles = fnoise(seed + 1, 2.0, aniso=(1.0, 0.3))
+    shade = 0.72 + 0.38 * folds + 0.12 * (wrinkles - 0.5)
+    img = fill(base) * shade[..., None] * (0.93 + 0.1 * weave)[..., None]
+    dust = smooth(0.45, 0.85, fnoise(seed + 2, 1.8))
+    img = mix(img, col("#8a8574"), dust * 0.35)
+    img = water_stains(img, seed + 3, 2, 0.3)
+    img = grime(img, seed + 4, 0.25)
+    save(name, img, folds * 0.9 + wrinkles * 0.25 + weave * 0.04, 3.0)
+
+
 def books(name: str, seed: int) -> None:
     """Lomos de libros en 4 baldas (para estanterías y paredes de biblioteca)."""
     r = rng(seed)
@@ -1037,6 +1052,7 @@ def main() -> None:
     metal("metal_clean", "#7c8186", 58, 0.15, rivets=False)
     carpet("carpet_red", "#4a1416", "#8a6a3a", 61)
     carpet("carpet_blue", "#1c2440", "#7a6a4a", 62)
+    canvas("canvas", "#676a52", 64)
     books("books", 63)
     grass("grass", 71)
     gravel("gravel", 72)

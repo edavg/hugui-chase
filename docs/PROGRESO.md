@@ -1,5 +1,28 @@
 # Mondyi — Estado del proyecto
 
+## M14 — Pulido de entorno, visibilidad y stalker (28 oct 2026)
+
+- **Muebles**: `CHAIR` y `TABLE` en `gen_rooms.mjs` (asiento, patas, respaldo/faldón y caja oculta de
+  colisión). Sustituyen a las "sillas" cubo de Comedor (mesa con 7 sillas, una apartada), Despacho,
+  Dormitorio, Cuarto, Invitados, Pasillo y Biblioteca, y a las mesas macizas de Invernadero, Ático y el
+  banco del Garaje. Radio, flexo, libros y mando del despacho apoyados en su superficie (antes hundidos o
+  flotando).
+- **Garaje**: estantería abierta (postes y baldas) con las cajas encima — antes estaban incrustadas en un
+  bloque macizo y sus caras coplanares parpadeaban; coche bajo una lona nueva (`ps2/canvas`, generada
+  con `canvas()` en `gen_textures.py`) con lunas inclinadas, ruedas cilíndricas y paragolpes.
+- **Z-fighting** corregido en las chimeneas (jambas dentro del dintel), cruce de vigas del Invernadero y
+  cornisa de la fachada del Jardín.
+- **Manchas**: las del Horror Pack que llenan la textura se funden en los bordes (`edgeFade` →
+  `u_edge_fade`); ya no se ven como rectángulos. Los chorreos (Stain_10/11) ya no se usan en suelos.
+- **Visibilidad**: linterna con caída suave (`range` 10, `intensity` 1.3) y derrame tenue alrededor del
+  haz (`u_flash_cos_spill`); algo más de ambiente en Lavandería, Calderas, Bodega y Ático; la Bodega tiene
+  una bombilla moribunda (antes no tenía ninguna luz).
+- **Stalker**: si te persigue, o si oye abrirse la puerta a ≤ `hearing_run` m, te sigue a la sala a la
+  que has ido (`notePlayerDoor`); al buscarte rastrea puntos alrededor del último sitio conocido en vez de
+  quedarse quieto encima; al entrar en tu sala con el jugador aún en el punto de entrada aparece en el
+  umbral, no dentro de la cámara.
+- **Build publicada**: los atajos de depuración (G = game over, T, L, 1–6) sólo existen en desarrollo.
+
 ## M13 — Supervivencia, stalker más listo y sustos (27 oct 2026)
 
 - **Aguante** (`player.ts`): correr gasta aguante (`stamina_seconds`, 6 s); al vaciarse quedas agotado,

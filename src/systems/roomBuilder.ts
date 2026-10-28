@@ -1153,10 +1153,12 @@ export async function buildRoom(
 
   for (const [key, list] of Object.entries(decalBuckets)) {
     const index = textureKeys.indexOf(key);
+    const stain = textureMap[key].includes('Stain');
     const handle = createPsxMaterial(config, textures[index], atmosphere, {
       ...surfaceFor(textureMap[key]),
       normalMap: normals[index],
-      blend: textureMap[key].includes('Stain'),
+      blend: stain,
+      edgeFade: stain ? STAIN_EDGE_FADE : 0,
     });
     // Una sola cara + polygon offset: el decal gana siempre el test de profundidad
     // contra la superficie que lo soporta, sin z-fighting al caminar.
@@ -1452,6 +1454,9 @@ function collectModelNodes(scene: THREE.Object3D, pattern: string): THREE.Object
 
 // Separación mínima de un decal respecto a la superficie que lo soporta.
 const DECAL_LIFT = 0.004;
+// Las manchas del Horror Pack que llenan toda la textura se funden en este
+// margen (UV) para no verse como un rectángulo pegado.
+const STAIN_EDGE_FADE = 0.22;
 
 // Los decales se colocan pegados a la cara interior del muro (o del suelo) que
 // les corresponde según su orientación y el signo de su posición, ignorando la

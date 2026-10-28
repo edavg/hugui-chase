@@ -30,7 +30,7 @@
   "atmosphere": {
     "fog_start": 2,
     "fog_end": 10,
-    "ambient": 0.035,
+    "ambient": 0.055,
     "direct": 0.05
   },
   "lights": [

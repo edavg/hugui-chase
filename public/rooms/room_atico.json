@@ -18,7 +18,7 @@
     "cloth": "ps2/plaster_white.png",
     "metal": "ps2/metal_rust.png",
     "window": "ps2/window_night.png",
-    "stain": "Stains/Horror_Stain_11-128x128.png",
+    "stain": "Stains/Horror_Stain_13-128x128.png",
     "painting": "ps2/painting.png",
     "painting_b": "ps2/painting_b.png"
   },
@@ -30,7 +30,7 @@
   "door_fit": true,
   "trim": false,
   "atmosphere": {
-    "ambient": 0.07,
+    "ambient": 0.085,
     "ambient_color": [
       0.75,
       0.75,
@@ -270,6 +270,150 @@
       "kind": "box",
       "position": [
         2.4,
+        0.775,
+        -1.9
+      ],
+      "size": [
+        2,
+        0.05,
+        0.9
+      ],
+      "texture": "light",
+      "tint": 0.75,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.515,
+        0.375,
+        -2.235
+      ],
+      "size": [
+        0.07,
+        0.75,
+        0.07
+      ],
+      "texture": "light",
+      "tint": 0.65,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.285,
+        0.375,
+        -2.235
+      ],
+      "size": [
+        0.07,
+        0.75,
+        0.07
+      ],
+      "texture": "light",
+      "tint": 0.65,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.515,
+        0.375,
+        -1.565
+      ],
+      "size": [
+        0.07,
+        0.75,
+        0.07
+      ],
+      "texture": "light",
+      "tint": 0.65,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.285,
+        0.375,
+        -1.565
+      ],
+      "size": [
+        0.07,
+        0.75,
+        0.07
+      ],
+      "texture": "light",
+      "tint": 0.65,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        2.4,
+        0.695,
+        -2.235
+      ],
+      "size": [
+        1.77,
+        0.1,
+        0.025
+      ],
+      "texture": "light",
+      "tint": 0.65,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        2.4,
+        0.695,
+        -1.565
+      ],
+      "size": [
+        1.77,
+        0.1,
+        0.025
+      ],
+      "texture": "light",
+      "tint": 0.65,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.515,
+        0.695,
+        -1.9
+      ],
+      "size": [
+        0.025,
+        0.1,
+        0.67
+      ],
+      "texture": "light",
+      "tint": 0.65,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        3.285,
+        0.695,
+        -1.9
+      ],
+      "size": [
+        0.025,
+        0.1,
+        0.67
+      ],
+      "texture": "light",
+      "tint": 0.65,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        2.4,
         0.4,
         -1.9
       ],
@@ -279,8 +423,9 @@
         0.9
       ],
       "texture": "light",
-      "tint": 0.75,
-      "collide": true
+      "tint": 0,
+      "collide": true,
+      "hidden": true
     },
     {
       "kind": "box",

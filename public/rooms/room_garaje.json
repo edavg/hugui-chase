@@ -15,7 +15,8 @@
     "door": "ps2/door_white.png",
     "metal": "ps2/metal_rust.png",
     "car": "ps2/metal_clean.png",
-    "tarp": "ps2/plaster_green.png",
+    "tarp": "ps2/canvas.png",
+    "tire": "ps2/concrete_oil.png",
     "wood": "ps2/wood_light.png",
     "boards": "ps2/boards.png",
     "glass": "ps2/window_bars.png",
@@ -201,12 +202,54 @@
       "kind": "box",
       "position": [
         0.3,
-        0.83,
-        -1.6
+        1.085,
+        -0.5
+      ],
+      "size": [
+        1.68,
+        0.04,
+        0.74
+      ],
+      "texture": "tarp",
+      "tint": 0.55,
+      "collide": false,
+      "rot": [
+        -47.7,
+        0,
+        0
+      ]
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.3,
+        1.085,
+        2.25
+      ],
+      "size": [
+        1.68,
+        0.04,
+        0.68
+      ],
+      "texture": "tarp",
+      "tint": 0.55,
+      "collide": false,
+      "rot": [
+        54,
+        0,
+        0
+      ]
+    },
+    {
+      "kind": "box",
+      "position": [
+        0.3,
+        0.36,
+        -1.62
       ],
       "size": [
         1.95,
-        0.08,
+        0.09,
         0.1
       ],
       "texture": "car",
@@ -216,65 +259,249 @@
     {
       "kind": "box",
       "position": [
-        -0.62,
+        0.3,
+        0.36,
+        2.82
+      ],
+      "size": [
+        1.95,
+        0.09,
+        0.1
+      ],
+      "texture": "car",
+      "tint": 0.45,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -0.54,
         0.3,
         -0.9
       ],
       "size": [
-        0.22,
         0.6,
+        0.2,
         0.6
       ],
-      "texture": "metal",
-      "tint": 0.2,
-      "collide": false
+      "texture": "tire",
+      "tint": 0.18,
+      "collide": false,
+      "shape": "cylinder",
+      "rot": [
+        0,
+        0,
+        90
+      ]
     },
     {
       "kind": "box",
       "position": [
-        1.22,
+        1.14,
         0.3,
         -0.9
       ],
       "size": [
-        0.22,
         0.6,
+        0.2,
         0.6
       ],
-      "texture": "metal",
-      "tint": 0.2,
+      "texture": "tire",
+      "tint": 0.18,
+      "collide": false,
+      "shape": "cylinder",
+      "rot": [
+        0,
+        0,
+        90
+      ]
+    },
+    {
+      "kind": "box",
+      "position": [
+        -0.54,
+        0.3,
+        2.1
+      ],
+      "size": [
+        0.6,
+        0.2,
+        0.6
+      ],
+      "texture": "tire",
+      "tint": 0.18,
+      "collide": false,
+      "shape": "cylinder",
+      "rot": [
+        0,
+        0,
+        90
+      ]
+    },
+    {
+      "kind": "box",
+      "position": [
+        1.14,
+        0.3,
+        2.1
+      ],
+      "size": [
+        0.6,
+        0.2,
+        0.6
+      ],
+      "texture": "tire",
+      "tint": 0.18,
+      "collide": false,
+      "shape": "cylinder",
+      "rot": [
+        0,
+        0,
+        90
+      ]
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.6,
+        0.875,
+        -3.09
+      ],
+      "size": [
+        2.6,
+        0.05,
+        0.65
+      ],
+      "texture": "wood",
+      "tint": 0.75,
       "collide": false
     },
     {
       "kind": "box",
       "position": [
-        -0.62,
-        0.3,
-        2.1
+        -3.785,
+        0.425,
+        -3.3
       ],
       "size": [
-        0.22,
-        0.6,
-        0.6
+        0.07,
+        0.85,
+        0.07
       ],
-      "texture": "metal",
-      "tint": 0.2,
+      "texture": "wood",
+      "tint": 0.65,
       "collide": false
     },
     {
       "kind": "box",
       "position": [
-        1.22,
-        0.3,
-        2.1
+        -1.415,
+        0.425,
+        -3.3
       ],
       "size": [
-        0.22,
-        0.6,
-        0.6
+        0.07,
+        0.85,
+        0.07
       ],
-      "texture": "metal",
-      "tint": 0.2,
+      "texture": "wood",
+      "tint": 0.65,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.785,
+        0.425,
+        -2.88
+      ],
+      "size": [
+        0.07,
+        0.85,
+        0.07
+      ],
+      "texture": "wood",
+      "tint": 0.65,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.415,
+        0.425,
+        -2.88
+      ],
+      "size": [
+        0.07,
+        0.85,
+        0.07
+      ],
+      "texture": "wood",
+      "tint": 0.65,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.6,
+        0.795,
+        -3.3
+      ],
+      "size": [
+        2.37,
+        0.1,
+        0.025
+      ],
+      "texture": "wood",
+      "tint": 0.65,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -2.6,
+        0.795,
+        -2.88
+      ],
+      "size": [
+        2.37,
+        0.1,
+        0.025
+      ],
+      "texture": "wood",
+      "tint": 0.65,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.785,
+        0.795,
+        -3.09
+      ],
+      "size": [
+        0.025,
+        0.1,
+        0.42
+      ],
+      "texture": "wood",
+      "tint": 0.65,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -1.415,
+        0.795,
+        -3.09
+      ],
+      "size": [
+        0.025,
+        0.1,
+        0.42
+      ],
+      "texture": "wood",
+      "tint": 0.65,
       "collide": false
     },
     {
@@ -282,7 +509,7 @@
       "position": [
         -2.6,
         0.45,
-        -3.1
+        -3.09
       ],
       "size": [
         2.6,
@@ -290,8 +517,9 @@
         0.65
       ],
       "texture": "wood",
-      "tint": 0.75,
-      "collide": true
+      "tint": 0,
+      "collide": true,
+      "hidden": true
     },
     {
       "kind": "box",
@@ -312,28 +540,157 @@
     {
       "kind": "box",
       "position": [
-        -4.15,
+        -4.4,
         1.1,
-        2.2
+        1.02
       ],
       "size": [
-        0.6,
+        0.05,
         2.2,
-        2.4
+        0.05
       ],
-      "texture": "boards",
-      "tint": 0.6,
-      "collide": true
+      "texture": "metal",
+      "tint": 0.5,
+      "collide": false
     },
     {
       "kind": "box",
       "position": [
-        -4.1,
-        0.55,
-        1.6
+        -3.94,
+        1.1,
+        1.02
+      ],
+      "size": [
+        0.05,
+        2.2,
+        0.05
+      ],
+      "texture": "metal",
+      "tint": 0.5,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.4,
+        1.1,
+        3.38
+      ],
+      "size": [
+        0.05,
+        2.2,
+        0.05
+      ],
+      "texture": "metal",
+      "tint": 0.5,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -3.94,
+        1.1,
+        3.38
+      ],
+      "size": [
+        0.05,
+        2.2,
+        0.05
+      ],
+      "texture": "metal",
+      "tint": 0.5,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.17,
+        0.12,
+        2.2
       ],
       "size": [
         0.5,
+        0.03,
+        2.4
+      ],
+      "texture": "wood",
+      "tint": 0.6,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.17,
+        0.8,
+        2.2
+      ],
+      "size": [
+        0.5,
+        0.03,
+        2.4
+      ],
+      "texture": "wood",
+      "tint": 0.6,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.17,
+        1.45,
+        2.2
+      ],
+      "size": [
+        0.5,
+        0.03,
+        2.4
+      ],
+      "texture": "wood",
+      "tint": 0.6,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.17,
+        2.1,
+        2.2
+      ],
+      "size": [
+        0.5,
+        0.03,
+        2.4
+      ],
+      "texture": "wood",
+      "tint": 0.6,
+      "collide": false
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.17,
+        1.1,
+        2.2
+      ],
+      "size": [
+        0.5,
+        2.2,
+        2.4
+      ],
+      "texture": "wood",
+      "tint": 0,
+      "collide": true,
+      "hidden": true
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.15,
+        0.335,
+        1.6
+      ],
+      "size": [
+        0.42,
         0.4,
         0.55
       ],
@@ -344,12 +701,29 @@
     {
       "kind": "box",
       "position": [
-        -4.1,
-        1.25,
+        -4.15,
+        0.235,
+        2.85
+      ],
+      "size": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "texture": "metal",
+      "tint": 0.55,
+      "collide": false,
+      "shape": "cylinder"
+    },
+    {
+      "kind": "box",
+      "position": [
+        -4.15,
+        1.015,
         2.6
       ],
       "size": [
-        0.5,
+        0.42,
         0.4,
         0.6
       ],
@@ -360,12 +734,12 @@
     {
       "kind": "box",
       "position": [
-        -4.1,
-        1.95,
+        -4.15,
+        1.64,
         1.9
       ],
       "size": [
-        0.5,
+        0.42,
         0.35,
         0.5
       ],

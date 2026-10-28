@@ -11,6 +11,8 @@ export interface FlashlightUniforms {
   u_flash_color: { value: THREE.Vector3 };
   u_flash_cos_outer: { value: number };
   u_flash_cos_inner: { value: number };
+  // Borde exterior del derrame tenue que rodea al haz.
+  u_flash_cos_spill: { value: number };
   u_flash_range: { value: number };
   u_flash_intensity: { value: number };
 }
@@ -22,6 +24,7 @@ export const FLASHLIGHT_UNIFORMS: FlashlightUniforms = {
   u_flash_color: { value: new THREE.Vector3(1, 0.93, 0.75) },
   u_flash_cos_outer: { value: Math.cos(THREE.MathUtils.degToRad(30)) },
   u_flash_cos_inner: { value: Math.cos(THREE.MathUtils.degToRad(16)) },
+  u_flash_cos_spill: { value: Math.cos(THREE.MathUtils.degToRad(54)) },
   u_flash_range: { value: 9 },
   u_flash_intensity: { value: 0 },
 };
@@ -43,6 +46,8 @@ const UP = new THREE.Vector3(0, 1, 0);
 const OFFSET_RIGHT = 0.2;
 const OFFSET_DOWN = 0.24;
 const CONVERGE_DISTANCE = 4.5;
+// El derrame llega hasta este múltiplo del ángulo del haz.
+const SPILL_ANGLE_SCALE = 1.8;
 
 export class Flashlight {
   owned = false;
@@ -119,6 +124,9 @@ export class Flashlight {
     const inner = outer * THREE.MathUtils.clamp(tuning.softness, 0.05, 1);
     FLASHLIGHT_UNIFORMS.u_flash_cos_outer.value = Math.cos(THREE.MathUtils.degToRad(outer));
     FLASHLIGHT_UNIFORMS.u_flash_cos_inner.value = Math.cos(THREE.MathUtils.degToRad(inner));
+    FLASHLIGHT_UNIFORMS.u_flash_cos_spill.value = Math.cos(
+      THREE.MathUtils.degToRad(Math.min(85, outer * SPILL_ANGLE_SCALE)),
+    );
     FLASHLIGHT_UNIFORMS.u_flash_range.value = Math.max(1, tuning.range);
     (FLASHLIGHT_UNIFORMS.u_flash_color.value as THREE.Vector3).set(
       tuning.color[0],

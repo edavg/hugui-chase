@@ -110,6 +110,14 @@ const INSPECT_TIMEOUT = 12;
 const LURE_MAX_HOPS = 3;
 const LURE_QUIET_SECONDS = 30;
 const LURE_FIRST_DELAY = 60;
+// Búsqueda: rastrea puntos alrededor del último sitio donde te vio (antes se
+// plantaba encima hasta rendirse) y de vez en cuando se asoma a una sala vecina.
+const SEARCH_SWEEP_RADIUS = 2.6;
+const SEARCH_SWEEP_CHANCE = 0.7;
+// Al entrar en la sala del jugador: si éste sigue a menos de esto del punto de
+// entrada, el stalker aparece en el umbral (a esta fracción del camino puerta→entrada).
+const ARRIVAL_CLEARANCE = 1.0;
+const ARRIVAL_THRESHOLD_FRACTION = 0.35;
 
 interface Inspection {
   spot: HideSpot;
@@ -399,6 +407,44 @@ export class Stalker {
     this.setState('suspect');
     this.planToKnown();
     return true;
+  }
+
+  /**
+   * El jugador cruza una puerta de la sala del stalker. Si lo perseguía, o si
+   * la oye abrirse (alcance de oído corriendo), sabe a qué sala ha ido y lo
+   * sigue: antes cruzar cualquier puerta bastaba para que lo perdiera.
+   */
+  notePlayerDoor(from: string, to: string, doorX: number, doorZ: number): void {
+    if (
+      from !== this.roomId ||
+      this.state === 'dormant' ||
+      this.state === 'attack' ||
+      this.state === 'inspect' ||
+      this.isForbidden(to)
+    ) {
+      return;
+    }
+    const chasing = this.state === 'chase';
+    if (!chasing && this.distanceTo(doorX, doorZ) > this.config.hearing_run) {
+      return;
+    }
+    const doorway = this.graph.exitToward(from, to);
+    if (!doorway) {
+      return;
+    }
+    const entry = this.graph.entryOf(doorway);
+    this.remember(to, entry.x, entry.z);
+    if (chasing) {
+      // Lo ha visto salir: la persecución continúa y steer() lo lleva a esa sala.
+      this.lastSeenAt = this.time;
+      this.route = [];
+      this.transitDoorway = null;
+      this.goal = null;
+      this.clearPath();
+      return;
+    }
+    this.setState('suspect');
+    this.planToKnown();
   }
 
   teleportTo(room: string, x: number, z: number, yaw: number): void {
@@ -706,10 +752,10 @@ export class Stalker {
       this.planToKnown();
       return;
     }
-    if (this.lastKnown && this.lastKnown.room === this.roomId) {
+    if (this.lastKnown && this.lastKnown.room === this.roomId && this.random() < SEARCH_SWEEP_CHANCE) {
       this.route = [];
       this.transitDoorway = null;
-      this.goal = { x: this.lastKnown.x, z: this.lastKnown.z };
+      this.goal = this.randomPoint(this.lastKnown, SEARCH_SWEEP_RADIUS);
       return;
     }
     const neighbors = (this.graph.room(this.roomId)?.doorways ?? [])
@@ -819,20 +865,27 @@ export class Stalker {
     return this.time - this.activeAt < this.config.forbidden_seconds;
   }
 
-  private randomPoint(): LocalGoal {
+  // Punto libre al azar de la sala, o a `radius` m de `around` si se indica.
+  private randomPoint(around?: LocalGoal, radius = 0): LocalGoal {
     const room = this.graph.room(this.roomId);
     if (!room) {
       return { x: this.position.x, z: this.position.z };
     }
     const colliders = this.graph.colliders(this.roomId);
+    const maxX = room.halfWidth * 0.7;
+    const maxZ = room.halfDepth * 0.7;
     for (let attempt = 0; attempt < 8; attempt += 1) {
-      const x = (this.random() * 2 - 1) * room.halfWidth * 0.7;
-      const z = (this.random() * 2 - 1) * room.halfDepth * 0.7;
+      const x = around
+        ? THREE.MathUtils.clamp(around.x + (this.random() * 2 - 1) * radius, -maxX, maxX)
+        : (this.random() * 2 - 1) * maxX;
+      const z = around
+        ? THREE.MathUtils.clamp(around.z + (this.random() * 2 - 1) * radius, -maxZ, maxZ)
+        : (this.random() * 2 - 1) * maxZ;
       if (!collidesAt(colliders, x, z, this.config.body_radius)) {
         return { x, z };
       }
     }
-    return { x: 0, z: 0 };
+    return around ? { x: around.x, z: around.z } : { x: 0, z: 0 };
   }
 
   private steer(dt: number, sense: StalkerSense, hooks: StalkerHooks): void {
@@ -964,8 +1017,16 @@ export class Stalker {
     if (this.transitDoorway && this.route.length > 1) {
       const entry = this.graph.entryOf(this.transitDoorway);
       const from = this.roomId;
+      let { x, z } = entry;
+      const back = this.graph.exitToward(entry.room, from);
+      if (back && sense.playerRoom === entry.room && Math.hypot(x - sense.playerX, z - sense.playerZ) < ARRIVAL_CLEARANCE) {
+        // El jugador espera junto a la puerta (su punto de entrada es el mismo):
+        // aparece en el umbral en vez de encima de la cámara.
+        x = back.centerX + (x - back.centerX) * ARRIVAL_THRESHOLD_FRACTION;
+        z = back.centerZ + (z - back.centerZ) * ARRIVAL_THRESHOLD_FRACTION;
+      }
       this.roomId = entry.room;
-      this.position.set(entry.x, 0, entry.z);
+      this.position.set(x, 0, z);
       this.yaw = entry.yaw;
       this.route = this.route.slice(1);
       this.transitDoorway = null;

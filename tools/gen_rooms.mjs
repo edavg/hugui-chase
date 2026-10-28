@@ -122,11 +122,13 @@ function round(value) {
 // piedra hasta el techo y un retrato sobre la repisa.
 const FIREPLACE = (x, wallZ, dir, ceiling, painting = 'painting') => {
   const f = (dz) => Math.round((wallZ + dir * dz) * 1000) / 1000;
+  // Las jambas acaban bajo el dintel: si lo atravesaran, sus caras coplanares
+  // parpadearían (z-fighting) en el frente de piedra.
   return [
-    { position: [x - 0.78, 0.55, f(0.27)], size: [0.34, 1.1, 0.54], texture: 'hearth', tint: 0.85, collide: false },
-    { position: [x + 0.78, 0.55, f(0.27)], size: [0.34, 1.1, 0.54], texture: 'hearth', tint: 0.85, collide: false },
+    { position: [x - 0.78, 0.43, f(0.27)], size: [0.34, 0.86, 0.54], texture: 'hearth', tint: 0.85, collide: false },
+    { position: [x + 0.78, 0.43, f(0.27)], size: [0.34, 0.86, 0.54], texture: 'hearth', tint: 0.85, collide: false },
     { position: [x, 0.98, f(0.27)], size: [1.9, 0.24, 0.54], texture: 'hearth', tint: 0.85, collide: false },
-    { position: [x, 0.43, f(0.03)], size: [1.24, 0.86, 0.06], texture: 'firebrick', tint: 0.35, collide: false },
+    { position: [x, 0.45, f(0.03)], size: [1.24, 0.9, 0.06], texture: 'firebrick', tint: 0.35, collide: false },
     { position: [x, 0.04, f(0.27)], size: [1.22, 0.08, 0.5], texture: 'embers', tint: 0.85, collide: false },
     { position: [x, 0.025, f(0.78)], size: [2.1, 0.05, 0.5], texture: 'hearth', tint: 0.8, collide: false },
     { position: [x, 1.15, f(0.31)], size: [2.15, 0.1, 0.64], texture: 'mantel', tint: 0.85, collide: false },
@@ -172,6 +174,59 @@ const TREE = (x, z, h, r) => {
   ];
 };
 
+// Silla de madera: asiento, patas, respaldo con travesaño y una caja oculta
+// para la colisión. `yaw` es hacia dónde mira quien se sienta (convención de
+// spawns: 0 = -Z, 90 = -X); las piezas giran con `rot` sobre su centro.
+// `texture: 'wall'` toma el material de mueble de la sala.
+const CHAIR = (x, z, yaw, { scale = 1, texture = 'wall', tint = 0.55 } = {}) => {
+  const a = (yaw * Math.PI) / 180;
+  const r = (v) => Math.round(v * 1000) / 1000;
+  const part = (dx, y, dz, size) => ({
+    position: [r(x + (dx * Math.cos(a) + dz * Math.sin(a)) * scale), r(y * scale), r(z + (-dx * Math.sin(a) + dz * Math.cos(a)) * scale)],
+    size: size.map((v) => r(v * scale)),
+    texture,
+    tint,
+    collide: false,
+    ...(yaw % 360 === 0 ? {} : { rot: [0, yaw, 0] }),
+  });
+  const footprint = r(0.46 * scale * (Math.abs(Math.cos(a)) + Math.abs(Math.sin(a))));
+  return [
+    part(0, 0.46, 0, [0.44, 0.05, 0.42]),
+    part(-0.19, 0.2175, -0.18, [0.04, 0.435, 0.04]),
+    part(0.19, 0.2175, -0.18, [0.04, 0.435, 0.04]),
+    // Las patas traseras siguen hasta arriba como postes del respaldo.
+    part(-0.19, 0.47, 0.18, [0.04, 0.94, 0.04]),
+    part(0.19, 0.47, 0.18, [0.04, 0.94, 0.04]),
+    part(0, 0.8, 0.18, [0.34, 0.2, 0.025]),
+    part(0, 0.6, 0.18, [0.34, 0.04, 0.025]),
+    { position: [x, r(0.47 * scale), z], size: [footprint, r(0.94 * scale), footprint], texture, tint: 0, collide: true, hidden: true },
+  ];
+};
+
+// Mesa: tablero, cuatro patas retranqueadas y faldón, con una caja oculta para
+// la colisión (los objetos encima se apoyan en `h`).
+const TABLE = (x, z, w, d, h = 0.75, { texture = 'wall', tint = 0.5 } = {}) => {
+  const r = (v) => Math.round(v * 1000) / 1000;
+  const top = 0.05;
+  const leg = 0.07;
+  const inset = 0.08;
+  const lx = w / 2 - inset - leg / 2;
+  const lz = d / 2 - inset - leg / 2;
+  const legH = h - top;
+  const apronY = h - top - 0.055;
+  return [
+    { position: [x, r(h - top / 2), z], size: [w, top, d], texture, tint: tint + 0.1, collide: false },
+    ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz]) => ({
+      position: [r(x + sx * lx), r(legH / 2), r(z + sz * lz)], size: [leg, r(legH), leg], texture, tint, collide: false,
+    })),
+    { position: [x, r(apronY), r(z - lz)], size: [r(2 * lx), 0.1, 0.025], texture, tint, collide: false },
+    { position: [x, r(apronY), r(z + lz)], size: [r(2 * lx), 0.1, 0.025], texture, tint, collide: false },
+    { position: [r(x - lx), r(apronY), z], size: [0.025, 0.1, r(2 * lz)], texture, tint, collide: false },
+    { position: [r(x + lx), r(apronY), z], size: [0.025, 0.1, r(2 * lz)], texture, tint, collide: false },
+    { position: [x, r(h / 2), z], size: [w, h, d], texture, tint: 0, collide: true, hidden: true },
+  ];
+};
+
 const POSTERS = Array.from({ length: 12 }, (_, i) => `poster_${i + 1}`);
 
 const rooms = [
@@ -202,7 +257,7 @@ const rooms = [
       { file: 'living_room/armchair.glb', position: [-1.6, 0, 2.25], yaw: 90, collide: true, size: [0.9, 0.9, 1] },
       { file: 'living_room/armchair.glb', position: [1.6, 0, 2.25], yaw: 270, collide: true, size: [0.9, 0.9, 1] },
       { file: 'living_room/bookcase.glb', position: [-3.55, 0, 0.6], yaw: 90, collide: true, size: [0.5, 1.8, 1] },
-      { file: 'living_room/book_brown_1.glb', position: [0.3, 0.42, 2.15], yaw: 25 },
+      { file: 'living_room/book_brown_1.glb', position: [0.3, 0.37, 2.15], yaw: 25 },
     ],
     props: [
       { position: [-3.87, 1.5, 0.2], size: [0.04, 0.9, 0.7], texture: 'metal', tint: 0.35, collide: false, decal: true },
@@ -282,13 +337,16 @@ const rooms = [
       { file: 'living_room/book_brown_1.glb', position: [0.4, 0.76, 0.2], yaw: 25 },
     ],
     props: [
-      { position: [0.0, 0.38, 0.2], size: [2.2, 0.75, 1.0], texture: 'wood', tint: 0.5, collide: true },
-      { position: [-1.5, 0.225, -0.4], size: [0.45, 0.45, 0.45], texture: 'wall', tint: 0.45, collide: true },
-      { position: [-1.5, 0.225, 0.8], size: [0.45, 0.45, 0.45], texture: 'wall', tint: 0.45, collide: true },
-      { position: [0.0, 0.225, -0.5], size: [0.45, 0.45, 0.45], texture: 'wall', tint: 0.45, collide: true },
-      { position: [0.0, 0.225, 0.9], size: [0.45, 0.45, 0.45], texture: 'wall', tint: 0.45, collide: true },
-      { position: [1.5, 0.225, -0.4], size: [0.45, 0.45, 0.45], texture: 'wall', tint: 0.45, collide: true },
-      { position: [1.5, 0.225, 0.8], size: [0.45, 0.45, 0.45], texture: 'wall', tint: 0.45, collide: true },
+      // Mesa de comedor con tres sillas por lado y la de la cabecera; una,
+      // apartada y torcida, como si alguien acabara de levantarse.
+      ...TABLE(0.0, 0.2, 2.2, 1.0, 0.755, { texture: 'wood', tint: 0.45 }),
+      ...CHAIR(-0.7, -0.5, 180),
+      ...CHAIR(0.0, -0.5, 180),
+      ...CHAIR(0.7, -0.5, 180),
+      ...CHAIR(-0.7, 0.9, 0),
+      ...CHAIR(0.05, 1.08, 18),
+      ...CHAIR(0.7, 0.9, 0),
+      ...CHAIR(-1.5, 0.2, 270),
       { position: [-2.0, 0.45, 2.4], size: [1.8, 0.9, 0.45], texture: 'wall', tint: 0.5, collide: true },
       { position: [2.4, 0.5, 2.4], size: [0.9, 1.0, 0.45], texture: 'wood', tint: 0.5, collide: true },
       { position: [0.0, 0.005, 0.2], size: [3.0, 0.01, 2.0], texture: 'stain', tint: 0.45, collide: false, decal: true },
@@ -362,7 +420,7 @@ const rooms = [
       { position: [2.6, 1.65, -1.13], size: [0.55, 0.7, 0.03], texture: 'door', tint: 0.3, collide: false, decal: true },
       { position: [4.9, 1.6, 1.13], size: [0.5, 0.7, 0.03], texture: 'door', tint: 0.3, collide: false, decal: true },
       { position: [-6.0, 0.25, -0.7], size: [0.5, 0.5, 0.5], texture: 'wall', tint: 0.45, collide: true },
-      { position: [3.9, 0.3, 0.8], size: [0.45, 0.6, 0.45], texture: 'wall', tint: 0.45, collide: true },
+      ...CHAIR(3.9, 0.85, 0),
       { position: [-2.5, 0.005, 0.0], size: [7.0, 0.01, 0.8], texture: 'stain', tint: 0.4, collide: false, decal: true },
     ],
   },
@@ -406,7 +464,7 @@ const rooms = [
       door: 'Metal/Horror_Metal_01-128x128.png',
       wood: 'Floor/Horror_Floor_03-128x128.png',
       metal: 'Metal/Horror_Metal_11-128x128.png',
-      stain: 'Stains/Horror_Stain_09-128x128.png',
+      stain: 'Stains/Horror_Stain_04-128x128.png',
     },
     audio: { reverb: 'small', floor_material: 'wood', ambience: 'house' },
     doors: [{ side: 'S', offset: 2.2, width: 1.1, to: 'room_pasillo' }],
@@ -416,13 +474,16 @@ const rooms = [
     models: [
       { file: 'living_room/bookcase.glb', position: [-2.5, 0.0, 0.4], yaw: 90, tint: 1.1, collide: true, size: [0.25, 1.8, 0.8] },
       { file: 'living_room/armchair.glb', position: [1.6, 0.0, -2.0], yaw: 0, collide: true, size: [1.05, 0.9, 0.9] },
-      { file: 'living_room/old_controller_tv.glb', position: [0.35, 0.76, -1.85], yaw: 15 },
+      { file: 'living_room/old_controller_tv.glb', position: [0.35, 0.74, -1.75], yaw: 15 },
     ],
     props: [
       { position: [0.0, 0.37, -1.9], size: [1.8, 0.74, 0.7], texture: 'wood', tint: 0.45, collide: true },
-      { position: [0.0, 0.3, -1.0], size: [0.45, 0.6, 0.45], texture: 'wall', tint: 0.45, collide: true },
-      { position: [0.0, 0.77, -1.9], size: [0.4, 0.25, 0.3], texture: 'metal', tint: 0.35, collide: false },
-      { position: [0.0, 1.05, -2.15], size: [0.2, 0.3, 0.2], texture: 'metal', tint: 0.4, collide: false },
+      ...CHAIR(0.0, -1.15, 0),
+      // Radio sobre el escritorio y flexo de pie redondo.
+      { position: [0.0, 0.865, -1.95], size: [0.4, 0.25, 0.3], texture: 'metal', tint: 0.35, collide: false },
+      { position: [-0.55, 0.755, -2.1], size: [0.16, 0.03, 0.16], texture: 'metal', tint: 0.45, collide: false, shape: 'cylinder' },
+      { position: [-0.55, 0.92, -2.1], size: [0.025, 0.3, 0.025], texture: 'metal', tint: 0.45, collide: false, shape: 'cylinder' },
+      { position: [-0.55, 1.1, -2.1], size: [0.26, 0.15, 0.26], texture: 'metal', tint: 0.55, collide: false, shape: 'cylinder' },
       { position: [2.55, 0.65, 0.8], size: [0.4, 1.3, 0.6], texture: 'metal', tint: 0.4, collide: true },
       { position: [-2.3, 0.3, -1.8], size: [0.6, 0.6, 0.6], texture: 'wall', tint: 0.5, collide: true },
       { position: [-1.7, 1.6, -2.22], size: [0.52, 0.65, 0.03], texture: 'portrait_3', tint: 0.95, collide: false, decal: true, fit: true },
@@ -524,7 +585,8 @@ const rooms = [
       { file: 'bedroom/room_furniture.glb', node: 'Abajur_*', position: [-3.3, 0.0, 2.3], yaw: 0, tint: 1.5, collide: true, size: [0.45, 1.6, 0.45] },
     ],
     props: [
-      { position: [1.2, 0.3, 0.9], size: [0.45, 0.6, 0.45], texture: 'wall', tint: 0.5, collide: true },
+      // Una silla sola en mitad del cuarto, vuelta hacia la cama.
+      ...CHAIR(1.2, 0.9, 75),
       { position: [-1.6, 1.5, -2.92], size: [0.6, 0.8, 0.03], texture: 'door', tint: 0.45, collide: false, decal: true },
       { position: [0.3, 0.005, 0.2], size: [2.4, 0.01, 2.0], texture: 'stain', tint: 0.45, collide: false, decal: true },
     ],
@@ -549,12 +611,13 @@ const rooms = [
     items: [{ id: 'poster_7', position: [2.905, 1.5, 1.0], yaw: -90 }],
     models: [
       { file: 'bedroom/room_furniture.glb', node: 'Escrivaninha_*', position: [-0.9, 0.0, -2.05], yaw: 90, tint: 1.45, collide: true, size: [1.3, 0.8, 0.6] },
-      { file: 'living_room/book_blue_1.glb', position: [-1.25, 0.75, -2.0], yaw: -15 },
+      { file: 'living_room/book_blue_1.glb', position: [-1.25, 0.73, -2.0], yaw: -15 },
     ],
     props: [
       { position: [-2.3, 0.25, -0.6], size: [1.0, 0.5, 2.0], texture: 'wall', tint: 0.55, collide: true },
       { position: [-2.9, 0.5, -0.6], size: [0.1, 1.0, 2.1], texture: 'wall', tint: 0.5, collide: false },
-      { position: [1.7, 0.3, 0.6], size: [0.45, 0.6, 0.45], texture: 'wall', tint: 0.5, collide: true },
+      // Sillita infantil de cara a la pared.
+      ...CHAIR(1.7, 0.6, 250, { scale: 0.8 }),
       { position: [-2.6, 0.9, 1.7], size: [0.5, 1.8, 1.0], texture: 'wall', tint: 0.5, collide: true },
       { position: [-1.5, 0.25, 1.7], size: [0.9, 0.5, 0.5], texture: 'wall', tint: 0.55, collide: true },
       { position: [0.0, 0.09, 0.4], size: [0.2, 0.18, 0.2], texture: 'wall', tint: 0.6, collide: false },
@@ -604,7 +667,9 @@ const rooms = [
       door: 'Metal/Horror_Metal_01-128x128.png',
       wood: 'Floor/Horror_Floor_03-128x128.png',
       metal: 'Metal/Horror_Metal_06-128x128.png',
-      stain: 'Stains/Horror_Stain_10-128x128.png',
+      // Mancha con bordes propios: va en la pared y en el suelo (el chorreo
+      // de Stain_10 sólo tiene sentido en vertical).
+      stain: 'Stains/Horror_Stain_05-128x128.png',
     },
     audio: { reverb: 'small', floor_material: 'wood', ambience: 'house' },
     doors: [{ side: 'S', offset: 2.7, width: 1.1, to: 'room_pasillo_alto' }],
@@ -617,7 +682,7 @@ const rooms = [
     ],
     props: [
       { position: [2.3, 0.36, 1.3], size: [0.55, 0.72, 1.1], texture: 'wood', tint: 0.5, collide: true },
-      { position: [1.7, 0.3, 1.3], size: [0.45, 0.6, 0.45], texture: 'wall', tint: 0.5, collide: true },
+      ...CHAIR(1.68, 1.3, 270),
       { position: [-1.2, 0.18, 2.1], size: [0.55, 0.35, 0.25], texture: 'metal', tint: 0.4, collide: true },
       { position: [-2.5, 0.25, 1.9], size: [0.5, 0.5, 0.5], texture: 'wall', tint: 0.5, collide: true },
       { position: [-2.7, 1.5, -0.5], size: [0.04, 0.7, 0.5], texture: 'door', tint: 0.45, collide: false, decal: true },
@@ -635,7 +700,8 @@ const rooms = [
       floor: 'Floor/Horror_Floor_07-128x128.png',
       ceiling: 'Misc/Horror_Misc_08-128x128.png',
       door: 'Metal/Horror_Metal_01-128x128.png',
-      stain: 'Stains/Horror_Stain_11-128x128.png',
+      // Humedades con bordes propios (el chorreo de Stain_11 quedaba como una franja).
+      stain: 'Stains/Horror_Stain_05-128x128.png',
     },
     audio: { reverb: 'small', floor_material: 'wood', ambience: 'house' },
     doors: [{ side: 'N', offset: 1.45, width: 1.0, to: 'room_pasillo_alto' }],
@@ -700,7 +766,7 @@ const rooms = [
       stain: 'Stains/Horror_Stain_13-128x128.png',
     },
     audio: { reverb: 'cave', floor_material: 'stone', ambience: 'basement' },
-    atmosphere: { fog_start: 2.5, fog_end: 12.0, ambient: 0.04, direct: 0.05 },
+    atmosphere: { fog_start: 2.5, fog_end: 12.0, ambient: 0.06, direct: 0.05 },
     doors: [
       { side: 'N', offset: 2.95, width: 1.1, to: 'room_sotano' },
       { side: 'S', offset: 2.95, width: 1.1, to: 'room_calderas' },
@@ -734,7 +800,7 @@ const rooms = [
       wood: 'Floor/Horror_Floor_03-128x128.png',
     },
     audio: { reverb: 'cave', floor_material: 'metal', ambience: 'basement' },
-    atmosphere: { fog_start: 2.0, fog_end: 10.0, ambient: 0.035, direct: 0.05 },
+    atmosphere: { fog_start: 2.0, fog_end: 10.0, ambient: 0.055, direct: 0.05 },
     doors: [
       { side: 'N', offset: 3.45, width: 1.1, to: 'room_lavanderia' },
       { side: 'E', offset: 2.7, width: 1.1, to: 'room_bodega' },
@@ -769,7 +835,7 @@ const rooms = [
       stain: 'Stains/Horror_Stain_14-128x128.png',
     },
     audio: { reverb: 'cave', floor_material: 'stone', ambience: 'basement' },
-    atmosphere: { fog_start: 2.0, fog_end: 10.0, ambient: 0.035, direct: 0.05 },
+    atmosphere: { fog_start: 2.0, fog_end: 10.0, ambient: 0.055, direct: 0.05 },
     doors: [
       { side: 'W', offset: 1.95, width: 1.1, to: 'room_calderas' },
       { side: 'N', offset: 2.45, width: 1.1, to: 'room_lavanderia' },
@@ -813,8 +879,8 @@ const rooms = [
     items: [{ id: 'poster_9', position: [1.7, 1.55, 3.155], yaw: 180 }, { id: 'chipa_3', position: [-0.2, 0.765, 0.75], yaw: 0 }],
     models: [
       { file: 'living_room/armchair.glb', position: [2.4, 0.0, 1.9], yaw: 200, collide: true, size: [0.95, 0.9, 0.95] },
-      { file: 'living_room/book_black_1.glb', position: [-0.4, 0.78, 0.5], yaw: 30 },
-      { file: 'living_room/book_blue_2.glb', position: [0.5, 0.78, 0.7], yaw: -50 },
+      { file: 'living_room/book_black_1.glb', position: [-0.4, 0.76, 0.5], yaw: 30 },
+      { file: 'living_room/book_blue_2.glb', position: [0.5, 0.76, 0.7], yaw: -50 },
     ],
     props: [
       // Estanterías de pared a pared (E y O)
@@ -831,9 +897,8 @@ const rooms = [
       { position: [-0.95, 0.35, 1.05], size: [0.1, 0.7, 0.1], texture: 'wood', tint: 0.7, collide: false },
       { position: [0.95, 0.35, 1.05], size: [0.1, 0.7, 0.1], texture: 'wood', tint: 0.7, collide: false },
       { position: [0.0, 0.37, 0.6], size: [2.2, 0.74, 1.1], texture: 'wood', tint: 0.0, collide: true, hidden: true },
-      { position: [-0.5, 0.24, -0.25], size: [0.45, 0.48, 0.45], texture: 'wood', tint: 0.75, collide: true },
-      { position: [-0.5, 0.75, -0.46], size: [0.45, 0.55, 0.05], texture: 'wood', tint: 0.7, collide: false },
-      { position: [0.6, 0.24, 1.5], size: [0.45, 0.48, 0.45], texture: 'wood', tint: 0.75, collide: true },
+      ...CHAIR(-0.5, -0.2, 180, { texture: 'wood', tint: 0.7 }),
+      ...CHAIR(0.6, 1.45, 20, { texture: 'wood', tint: 0.7 }),
       // Lámpara de mesa
       { position: [0.7, 0.83, 0.45], size: [0.12, 0.14, 0.12], texture: 'metal', tint: 0.8, collide: false, shape: 'cylinder' },
       { position: [0.7, 1.02, 0.45], size: [0.32, 0.22, 0.32], texture: 'carpet', tint: 0.9, collide: false, shape: 'cylinder' },
@@ -884,7 +949,7 @@ const rooms = [
       { position: [0.0, 3.35, -5.5], size: [14.0, 2.3, 0.15], texture: 'facade', tint: 0.85, collide: false },
       { position: [-4.4, 3.3, -5.414], size: [1.2, 1.0, 0.02], texture: 'window', tint: 0.9, collide: false, fit: true },
       { position: [4.4, 3.3, -5.414], size: [1.2, 1.0, 0.02], texture: 'window', tint: 0.9, collide: false, fit: true },
-      { position: [0.1, 2.24, -5.42], size: [14.0, 0.08, 0.05], texture: 'wood', tint: 0.6, collide: false },
+      { position: [0.1, 2.235, -5.42], size: [14.0, 0.08, 0.05], texture: 'wood', tint: 0.6, collide: false },
       // Camino de grava hasta la fuente y a las dos puertas
       { position: [0.0, 0.006, -2.8], size: [1.6, 0.01, 4.8], texture: 'gravel', tint: 0.85, collide: false, decal: true },
       { position: [0.0, 0.006, 0.05], size: [13.6, 0.01, 1.6], texture: 'gravel', tint: 0.85, collide: false, decal: true },
@@ -920,7 +985,8 @@ const rooms = [
       door: 'ps2/door_white.png',
       metal: 'ps2/metal_rust.png',
       car: 'ps2/metal_clean.png',
-      tarp: 'ps2/plaster_green.png',
+      tarp: 'ps2/canvas.png',
+      tire: 'ps2/concrete_oil.png',
       wood: 'ps2/wood_light.png',
       boards: 'ps2/boards.png',
       glass: 'ps2/window_bars.png',
@@ -938,21 +1004,31 @@ const rooms = [
     props: [
       // Portón enrollable (muro sur)
       { position: [0.3, 1.25, 3.42], size: [3.6, 2.5, 0.06], texture: 'metal', tint: 0.75, collide: false },
-      // Coche viejo bajo una lona polvorienta
+      // Coche viejo bajo una lona polvorienta: carrocería, capó y maletero con
+      // lunas inclinadas, ruedas de goma asomando y paragolpes cromados.
       { position: [0.3, 0.5, 0.6], size: [1.9, 0.62, 4.3], texture: 'tarp', tint: 0.6, collide: true },
       { position: [0.3, 1.08, 0.9], size: [1.7, 0.56, 2.3], texture: 'tarp', tint: 0.55, collide: false },
-      { position: [0.3, 0.83, -1.6], size: [1.95, 0.08, 0.1], texture: 'car', tint: 0.5, collide: false },
-      { position: [-0.62, 0.3, -0.9], size: [0.22, 0.6, 0.6], texture: 'metal', tint: 0.2, collide: false },
-      { position: [1.22, 0.3, -0.9], size: [0.22, 0.6, 0.6], texture: 'metal', tint: 0.2, collide: false },
-      { position: [-0.62, 0.3, 2.1], size: [0.22, 0.6, 0.6], texture: 'metal', tint: 0.2, collide: false },
-      { position: [1.22, 0.3, 2.1], size: [0.22, 0.6, 0.6], texture: 'metal', tint: 0.2, collide: false },
-      // Banco de trabajo y estantería con cajas de campaña
-      { position: [-2.6, 0.45, -3.1], size: [2.6, 0.9, 0.65], texture: 'wood', tint: 0.75, collide: true },
+      { position: [0.3, 1.085, -0.5], size: [1.68, 0.04, 0.74], texture: 'tarp', tint: 0.55, collide: false, rot: [-47.7, 0, 0] },
+      { position: [0.3, 1.085, 2.25], size: [1.68, 0.04, 0.68], texture: 'tarp', tint: 0.55, collide: false, rot: [54, 0, 0] },
+      { position: [0.3, 0.36, -1.62], size: [1.95, 0.09, 0.1], texture: 'car', tint: 0.5, collide: false },
+      { position: [0.3, 0.36, 2.82], size: [1.95, 0.09, 0.1], texture: 'car', tint: 0.45, collide: false },
+      ...[[-0.9, -0.54], [-0.9, 1.14], [2.1, -0.54], [2.1, 1.14]].map(([z, x]) => (
+        { position: [x, 0.3, z], size: [0.6, 0.2, 0.6], texture: 'tire', tint: 0.18, collide: false, shape: 'cylinder', rot: [0, 0, 90] }
+      )),
+      // Banco de trabajo y estantería abierta con cajas de campaña
+      ...TABLE(-2.6, -3.09, 2.6, 0.65, 0.9, { texture: 'wood', tint: 0.65 }),
       { position: [-2.6, 1.6, -3.38], size: [2.4, 1.0, 0.04], texture: 'boards', tint: 0.6, collide: false },
-      { position: [-4.15, 1.1, 2.2], size: [0.6, 2.2, 2.4], texture: 'boards', tint: 0.6, collide: true },
-      { position: [-4.1, 0.55, 1.6], size: [0.5, 0.4, 0.55], texture: 'wood', tint: 0.85, collide: false },
-      { position: [-4.1, 1.25, 2.6], size: [0.5, 0.4, 0.6], texture: 'wood', tint: 0.8, collide: false },
-      { position: [-4.1, 1.95, 1.9], size: [0.5, 0.35, 0.5], texture: 'wood', tint: 0.85, collide: false },
+      ...[[-4.4, 1.02], [-3.94, 1.02], [-4.4, 3.38], [-3.94, 3.38]].map(([x, z]) => (
+        { position: [x, 1.1, z], size: [0.05, 2.2, 0.05], texture: 'metal', tint: 0.5, collide: false }
+      )),
+      ...[0.12, 0.8, 1.45, 2.1].map((y) => (
+        { position: [-4.17, y, 2.2], size: [0.5, 0.03, 2.4], texture: 'wood', tint: 0.6, collide: false }
+      )),
+      { position: [-4.17, 1.1, 2.2], size: [0.5, 2.2, 2.4], texture: 'wood', tint: 0, collide: true, hidden: true },
+      { position: [-4.15, 0.335, 1.6], size: [0.42, 0.4, 0.55], texture: 'wood', tint: 0.85, collide: false },
+      { position: [-4.15, 0.235, 2.85], size: [0.2, 0.2, 0.2], texture: 'metal', tint: 0.55, collide: false, shape: 'cylinder' },
+      { position: [-4.15, 1.015, 2.6], size: [0.42, 0.4, 0.6], texture: 'wood', tint: 0.8, collide: false },
+      { position: [-4.15, 1.64, 1.9], size: [0.42, 0.35, 0.5], texture: 'wood', tint: 0.85, collide: false },
       // Bidones
       { position: [3.6, 0.45, -2.6], size: [0.6, 0.9, 0.6], texture: 'metal', tint: 0.7, collide: true, shape: 'cylinder' },
       { position: [3.0, 0.45, -2.9], size: [0.6, 0.9, 0.6], texture: 'metal', tint: 0.6, collide: true, shape: 'cylinder' },
@@ -974,7 +1050,8 @@ const rooms = [
       pot: 'ps2/tile_terracotta.png',
       hedge: 'ps2/hedge.png',
       metal: 'ps2/metal_rust.png',
-      stain: 'Stains/Horror_Stain_10-128x128.png',
+      // Barro y moho en el suelo (el chorreo de Stain_10 sólo encaja en paredes).
+      stain: 'Stains/Horror_Stain_04-128x128.png',
     },
     audio: { reverb: 'small', floor_material: 'tile', ambience: 'outdoor' },
     trim: false,
@@ -983,9 +1060,9 @@ const rooms = [
     items: [{ id: 'key_attic', position: [-2.4, 0.93, -1.6], yaw: 20 }, { id: 'chipa_5', position: [0.6, 0.91, -2.35], yaw: 0 }],
     props: [
       // Mesas de cultivo
-      { position: [-2.4, 0.45, -1.6], size: [1.6, 0.9, 0.8], texture: 'wood', tint: 0.7, collide: true },
-      { position: [-2.4, 0.45, 1.6], size: [1.6, 0.9, 0.8], texture: 'wood', tint: 0.7, collide: true },
-      { position: [0.4, 0.45, -2.4], size: [2.4, 0.9, 0.7], texture: 'wood', tint: 0.7, collide: true },
+      ...TABLE(-2.4, -1.6, 1.6, 0.8, 0.9, { texture: 'wood', tint: 0.6 }),
+      ...TABLE(-2.4, 1.6, 1.6, 0.8, 0.9, { texture: 'wood', tint: 0.6 }),
+      ...TABLE(0.4, -2.4, 2.4, 0.7, 0.9, { texture: 'wood', tint: 0.6 }),
       // Macetas con plantas muertas
       { position: [-2.9, 1.05, -1.5], size: [0.32, 0.3, 0.32], texture: 'pot', tint: 0.9, collide: false, shape: 'cylinder' },
       { position: [-2.9, 1.35, -1.5], size: [0.4, 0.35, 0.4], texture: 'hedge', tint: 0.5, collide: false },
@@ -1000,7 +1077,8 @@ const rooms = [
       { position: [0.2, 0.006, 0.4], size: [2.0, 0.01, 1.8], texture: 'stain', tint: 0.4, collide: false, decal: true },
       // Estructura metálica del techo
       { position: [0.0, 2.92, 0.0], size: [6.9, 0.08, 0.1], texture: 'metal', tint: 0.5, collide: false },
-      { position: [0.0, 2.92, 0.0], size: [0.1, 0.08, 5.9], texture: 'metal', tint: 0.5, collide: false },
+      // Algo más fina que la transversal: en el cruce sus caras no coinciden.
+      { position: [0.0, 2.92, 0.0], size: [0.1, 0.074, 5.9], texture: 'metal', tint: 0.5, collide: false },
     ],
   },
   {
@@ -1018,7 +1096,8 @@ const rooms = [
       cloth: 'ps2/plaster_white.png',
       metal: 'ps2/metal_rust.png',
       window: 'ps2/window_night.png',
-      stain: 'Stains/Horror_Stain_11-128x128.png',
+      // Polvo y podredumbre en el suelo (el chorreo de Stain_11 es de pared).
+      stain: 'Stains/Horror_Stain_13-128x128.png',
     },
     audio: { reverb: 'small', floor_material: 'wood', ambience: 'house' },
     trim: false,
@@ -1031,7 +1110,7 @@ const rooms = [
       ...[-4.5, -3.0, -1.5, 0.0, 1.5, 3.0, 4.5].map((x) => ({ position: [x, 2.28, 0.0], size: [0.2, 0.22, 5.85], texture: 'wood', tint: 0.6, collide: false })),
       { position: [0.0, 2.16, 0.0], size: [10.85, 0.18, 0.22], texture: 'wood', tint: 0.55, collide: false },
       // Mesa de campaña con pilas de afiches atados
-      { position: [2.4, 0.4, -1.9], size: [2.0, 0.8, 0.9], texture: 'light', tint: 0.75, collide: true },
+      ...TABLE(2.4, -1.9, 2.0, 0.9, 0.8, { texture: 'light', tint: 0.65 }),
       { position: [2.0, 0.92, -1.9], size: [0.6, 0.24, 0.85], texture: 'cloth', tint: 0.85, collide: false },
       { position: [2.8, 0.88, -1.8], size: [0.5, 0.16, 0.7], texture: 'cloth', tint: 0.8, collide: false },
       // Baúles y cajas
@@ -1106,7 +1185,7 @@ const SKINS = {
   room_despacho: {
     textures: { wall: 'ps2/wp_stripes_blue.png', floor: 'ps2/floor_walnut.png', ceiling: 'ps2/ceiling.png', door: 'ps2/door_wood.png', wood: 'ps2/wood_dark.png', metal: 'ps2/metal_clean.png', window: 'ps2/window_night.png', wainscot: 'ps2/wainscot.png' },
     wainscot: 'wainscot',
-    lights: [L(0, 2.1, 0, { range: 5, intensity: 0.6, color: DIM }), L(0.0, 1.25, -2.0, { fixture: 'none', range: 2.8, intensity: 0.9, color: [1.0, 0.85, 0.55] })],
+    lights: [L(0, 2.1, 0, { range: 5, intensity: 0.6, color: DIM }), L(-0.55, 1.05, -2.0, { fixture: 'none', range: 2.8, intensity: 0.9, color: [1.0, 0.85, 0.55] })],
   },
   room_escalera: {
     textures: { wall: 'ps2/wp_damask_green.png', floor: 'ps2/floor_pine.png', ceiling: 'ps2/ceiling.png', door: 'ps2/door_wood.png', stone: 'ps2/stone_wall.png', window: 'ps2/window_bars.png', wainscot: 'ps2/wainscot.png' },
@@ -1160,7 +1239,8 @@ const SKINS = {
   room_bodega: {
     textures: { wall: 'ps2/stone_wall.png', floor: 'ps2/concrete.png', ceiling: 'ps2/ceiling_dark.png', door: 'ps2/metal_rust.png', stone: 'ps2/stone_wall.png', wood: 'ps2/wood_dark.png', rust: 'ps2/metal_rust.png' },
     trim: false,
-    lights: [],
+    // Bombilla moribunda: sin ella la bodega era negro puro fuera del haz.
+    lights: [L(0.2, 2.2, 0.3, { fixture: 'bulb', range: 4.2, intensity: 0.5, color: [1.0, 0.78, 0.5], flicker: 0.45 })],
   },
   room_biblioteca: {
     wainscot: null,
@@ -1180,7 +1260,7 @@ const SKINS = {
     lights: [L(0, 2.6, 0, { fixture: 'bulb', range: 5, intensity: 0.5, color: [0.9, 1.0, 0.85], broken: true })],
   },
   room_atico: {
-    atmosphere: { ambient: 0.07, ambient_color: [0.75, 0.75, 0.85], direct: 0.15, fog_start: 2.0, fog_end: 13.0 },
+    atmosphere: { ambient: 0.085, ambient_color: [0.75, 0.75, 0.85], direct: 0.15, fog_start: 2.0, fog_end: 13.0 },
     lights: [L(2.4, 1.85, -1.4, { fixture: 'bulb', range: 5.5, intensity: 0.9, flicker: 0.25 }), L(-3.0, 1.85, 0.6, { fixture: 'bulb', range: 4.5, intensity: 0.6, broken: true })],
   },
 };

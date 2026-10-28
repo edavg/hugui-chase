@@ -20,9 +20,12 @@ async function boot(): Promise<void> {
   const game = new Game(config, psx, input, settings, gamepad);
   await game.start();
 
-  if (import.meta.env.DEV) {
-    (window as unknown as { __mondyi?: Game }).__mondyi = game;
+  // Atajos de depuración (G mata al jugador, T cambia el control, 1–6 tocan el
+  // render): sólo en desarrollo, nunca en la build publicada.
+  if (!import.meta.env.DEV) {
+    return;
   }
+  (window as unknown as { __mondyi?: Game }).__mondyi = game;
 
   window.addEventListener('keydown', (event) => {
     let label = '';
