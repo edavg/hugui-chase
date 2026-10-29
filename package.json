@@ -19,6 +19,7 @@
     "three": "^0.186.1"
   },
   "devDependencies": {
+    "@genex-ai/cli-demo": "^1.36.17",
     "@types/three": "^0.186.0",
     "fbx2gltf": "^0.9.7-p1",
     "typescript": "^7.0.2",

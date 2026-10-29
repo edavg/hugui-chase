@@ -105,6 +105,10 @@ export interface PsxConfig {
     run_clip_speed?: number;
     // true: conserva la cabeza original del modelo en vez del cubo con la cara.
     model_head?: boolean;
+    // GLB propio (por defecto el del stalker) y, si sus clips se llaman de otra
+    // forma, qué clip del GLB hace de cada clip del animador.
+    model?: string;
+    clips?: Record<string, string>;
     spawn_room: string;
     patrol_rooms: string[];
     forbidden_rooms: string[];

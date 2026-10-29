@@ -2,3 +2,7 @@ node_modules/
 dist/
 .wrangler/
 .DS_Store
+.genex/
+.env
+.env.*
+!.env.example

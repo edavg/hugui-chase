@@ -9,7 +9,7 @@
   "texture_scale": 2,
   "wall_thickness": 0.15,
   "textures": {
-    "wall": "ps2/wp_stripes.png",
+    "wall": "ps2/wp_stripes_decay.png",
     "floor": "ps2/floor_oak.png",
     "ceiling": "ps2/ceiling.png",
     "door": "ps2/door_wood.png",

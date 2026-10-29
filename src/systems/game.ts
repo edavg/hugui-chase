@@ -52,6 +52,8 @@ const AIM_FOV_FALLBACK = 32;
 const ENDING_ROOM_ID = 'room_vestibulo';
 // Criatura del sótano: piel de la carne de la maldición (la del ojo).
 const LURKER_SKIN: SkinOptions = { repeat: 1.5, shade: 0.62, spec: 0.12, gloss: 36 };
+// El ghoul (GLB propio): su textura ya es oscura; piel mate, casi sin brillo.
+const GHOUL_SKIN: SkinOptions = { repeat: 1, shade: 1, spec: 0.05, gloss: 10, srgb: true };
 // M13: escondites, aguante, rastros y sustos.
 const HIDE_DOOR_SECONDS = 0.35;
 const INSPECT_OPEN_SECONDS = 1.2;
@@ -362,7 +364,12 @@ export class Game {
         graph,
       );
       creature.object.name = 'lurker';
-      creature.reskin(curseFleshTexture(), LURKER_SKIN);
+      // Con un GLB propio (el ghoul) se queda su textura; si no, carne de la maldición.
+      if (lurker.enemy?.model) {
+        creature.reskin(null, GHOUL_SKIN);
+      } else {
+        creature.reskin(curseFleshTexture(), LURKER_SKIN);
+      }
       creature.confine(lurker.room, lurker.position[0], lurker.position[1], (lurker.yaw * Math.PI) / 180);
       this.lurker = creature;
       this.syncStalkerPresence();
@@ -517,6 +524,7 @@ export class Game {
       },
       onDetect: () => {
         this.audio.play('stinger');
+        this.audio.play('stalker_growl', 0.8);
         this.ui.toast(TEXTS[this.config.language].toastStalkerSeen);
       },
       onRoomChange: (from, room) => {
@@ -550,8 +558,27 @@ export class Game {
       },
     };
 
+    // La criatura del sótano tiene su propia voz.
+    const lurkerHooks: StalkerHooks = {
+      ...hooks,
+      onAttackStart: (x, z) => {
+        this.audio.playAt('lurker_attack', x, z, position.x, position.z, listenerYaw, 0.9);
+      },
+      onDetect: () => {
+        this.audio.play('stinger');
+        this.audio.play('lurker_wake', 0.9);
+        this.ui.toast(TEXTS[this.config.language].toastStalkerSeen);
+      },
+      onFootstep: (x, z, running) => {
+        this.audio.playAt('lurker_step', x, z, position.x, position.z, listenerYaw, running ? 1 : 0.8);
+      },
+      onBreath: (x, z) => {
+        this.audio.playAt('lurker_breath', x, z, position.x, position.z, listenerYaw, 0.7);
+      },
+    };
+
     for (const stalker of stalkers) {
-      stalker.update(dt, sense, hooks);
+      stalker.update(dt, sense, stalker === this.lurker ? lurkerHooks : hooks);
     }
     this.syncStalkerPresence();
 
@@ -1920,10 +1947,6 @@ export class Game {
     this.closeArrivalDoor(previousRoom, nextRoom);
 
     await this.wait(fadeDuration, (progress) => this.psx.setFade(1 - progress));
-    this.audio.play(
-      nextRoom.audio.ambience === 'basement' ? 'door_close_metal' : 'door_close_wood',
-      0.45,
-    );
     this.state = 'playing';
   }
 
@@ -1952,12 +1975,6 @@ export class Game {
     this.setDoorOpen(chosen, 1);
     void this.wait(ARRIVAL_DOOR_SECONDS, (progress) => {
       this.setDoorOpen(chosen, 1 - easeInOut(progress));
-    });
-    void this.wait(ARRIVAL_DOOR_SECONDS + 0.05, () => {
-      this.audio.play(
-        room.audio.ambience === 'basement' ? 'door_close_metal' : 'door_close_wood',
-        0.3,
-      );
     });
   }
 

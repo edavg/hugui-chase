@@ -901,7 +901,10 @@ async function boot(): Promise<void> {
   if (!canvas) {
     throw new Error('No se encontró el canvas #game');
   }
-  const config = await loadConfig();
+  const loaded = await loadConfig();
+  // ?lurker: prueba la criatura del sótano (su modelo, clips y medidas).
+  const lurker = new URLSearchParams(location.search).has('lurker') ? loaded.lurker?.enemy : undefined;
+  const config = lurker ? { ...loaded, enemy: { ...loaded.enemy, ...lurker } } : loaded;
   const lab = new StalkerLab(config, canvas);
   await lab.start();
   if (import.meta.env.DEV) {

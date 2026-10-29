@@ -857,7 +857,7 @@ const rooms = [
     size: [8.0, 3.2, 6.5],
     texScale: 2.0,
     textures: {
-      wall: 'ps2/wp_damask_red.png',
+      wall: 'ps2/wp_damask_decay.png',
       floor: 'ps2/floor_walnut.png',
       ceiling: 'ps2/ceiling.png',
       door: 'ps2/door_wood.png',
@@ -1153,12 +1153,12 @@ const SKINS = {
     lights: [L(0, 2.1, -0.4, { range: 7.5, intensity: 1.05, flicker: 0.08 }), L(3.3, 1.25, -2.85, { fixture: 'none', range: 2.6, intensity: 0.7, color: DIM })],
   },
   room_salon: {
-    textures: { wall: 'ps2/wp_damask_red.png', floor: 'ps2/floor_walnut.png', ceiling: 'ps2/ceiling.png', door: 'ps2/door_wood.png', wood: 'ps2/wood_dark.png', metal: 'ps2/metal_clean.png', window: 'ps2/window_night.png', wainscot: 'ps2/wainscot.png' },
+    textures: { wall: 'ps2/wp_damask_decay.png', floor: 'ps2/floor_walnut.png', ceiling: 'ps2/ceiling.png', door: 'ps2/door_wood.png', wood: 'ps2/wood_dark.png', metal: 'ps2/metal_clean.png', window: 'ps2/window_night.png', wainscot: 'ps2/wainscot.png' },
     wainscot: 'wainscot',
     lights: [L(-0.8, 2.1, 0.0, { range: 7, intensity: 0.95 }), L(2.4, 2.1, 0.4, { range: 6, intensity: 0.85, broken: true }), L(-2.7, 0.45, -2.75, { fixture: 'none', range: 4.0, intensity: 1.3, color: [1.0, 0.45, 0.15], flicker: 0.6 })],
   },
   room_comedor: {
-    textures: { wall: 'ps2/wp_stripes.png', floor: 'ps2/floor_oak.png', ceiling: 'ps2/ceiling.png', door: 'ps2/door_wood.png', wood: 'ps2/wood_dark.png', window: 'ps2/window_night.png', wainscot: 'ps2/wainscot.png' },
+    textures: { wall: 'ps2/wp_stripes_decay.png', floor: 'ps2/floor_oak.png', ceiling: 'ps2/ceiling.png', door: 'ps2/door_wood.png', wood: 'ps2/wood_dark.png', window: 'ps2/window_night.png', wainscot: 'ps2/wainscot.png' },
     wainscot: 'wainscot',
     lights: [L(0, 1.85, 0.2, { range: 6.5, intensity: 1.1, flicker: 0.05 })],
   },
@@ -1197,7 +1197,7 @@ const SKINS = {
     extraProps: [{ position: [0.2, 0.006, 0.0], size: [11.5, 0.01, 1.0], texture: 'carpet', tint: 0.8, collide: false, decal: true }],
   },
   room_dormitorio: {
-    textures: { wall: 'ps2/wp_stripes.png', floor: 'ps2/floor_walnut.png', ceiling: 'ps2/ceiling.png', door: 'ps2/door_wood.png', metal: 'ps2/metal_clean.png', window: 'ps2/window_night.png' },
+    textures: { wall: 'ps2/wp_stripes_decay.png', floor: 'ps2/floor_walnut.png', ceiling: 'ps2/ceiling.png', door: 'ps2/door_wood.png', metal: 'ps2/metal_clean.png', window: 'ps2/window_night.png' },
     lights: [L(0, 2.15, 0, { range: 6, intensity: 0.55, color: DIM }), L(-3.3, 1.45, 2.3, { fixture: 'none', range: 3.5, intensity: 1.0, color: [1.0, 0.75, 0.45] })],
   },
   room_cuarto: {

@@ -27,6 +27,57 @@ const STEP_RATE_MIN = 0.96;
 const STEP_RATE_MAX = 1.06;
 const REVERB_ORDER: ReverbType[] = ['small', 'hall', 'cave', 'corridor'];
 const REVERB_WET: Record<ReverbType, number> = { small: 0.18, hall: 0.35, cave: 0.5, corridor: 0.3 };
+
+// Sonidos que sólo existen grabados; sin el archivo suenan con la síntesis indicada.
+const SYNTH_FALLBACK = {
+  stalker_growl: 'attack_warn',
+  lurker_step: 'stalker_step',
+  lurker_breath: 'breath',
+  lurker_wake: 'stinger',
+  lurker_attack: 'attack_warn',
+} as const satisfies Record<string, OneShotId>;
+type SampleOnlyId = keyof typeof SYNTH_FALLBACK;
+export type SoundId = OneShotId | SampleOnlyId;
+
+// Grabaciones (Genex, ver docs/audio_manifest.md); cada archivo es una variante.
+const SAMPLE_DIR = 'assets/audio/sfx/';
+const SAMPLE_FILES: Partial<Record<SoundId, string[]>> = {
+  stalker_step: ['stalker_step_1.mp3', 'stalker_step_2.mp3'],
+  breath: ['breath_1.mp3', 'breath_2.mp3'],
+  stalker_growl: ['stalker_growl_1.mp3'],
+  attack_warn: ['attack_warn_1.mp3'],
+  lurker_step: ['lurker_step_1.mp3', 'lurker_step_2.mp3', 'lurker_step_3.mp3'],
+  lurker_breath: ['lurker_breath_1.mp3'],
+  lurker_wake: ['lurker_wake_1.mp3'],
+  lurker_attack: ['lurker_attack_1.mp3'],
+  stinger: ['stinger_1.mp3', 'stinger_2.mp3'],
+  ending_stinger: ['ending_stinger_1.mp3'],
+  heartbeat: ['heartbeat_1.mp3'],
+  door_open_wood: ['door_open_wood_1.mp3'],
+  door_open_metal: ['door_open_metal_1.mp3'],
+  door_locked: ['door_locked_1.mp3'],
+  door_slam: ['door_slam_1.mp3'],
+  padlock_unlock: ['padlock_unlock_1.mp3'],
+  latch: ['latch_1.mp3'],
+  pickup_note: ['pickup_note_1.mp3'],
+  pickup_key: ['pickup_key_1.mp3'],
+  paper_turn: ['paper_turn_1.mp3'],
+  flash_click: ['flash_click_1.mp3'],
+  cabinet: ['cabinet_1.mp3'],
+  burn: ['burn_1.mp3'],
+};
+
+// Capa de música grabada que sustituye a la sintetizada (3 = persecución).
+const MUSIC_DIR = 'assets/audio/music/';
+const MUSIC_FILES: Partial<Record<2 | 3, string>> = { 3: 'chase.mp3' };
+
+async function loadSample(ctx: AudioContext, file: string, dir = SAMPLE_DIR): Promise<AudioBuffer> {
+  const response = await fetch(`${import.meta.env.BASE_URL}${dir}${file}`);
+  if (!response.ok) {
+    throw new Error(`${file}: HTTP ${response.status}`);
+  }
+  return ctx.decodeAudioData(await response.arrayBuffer());
+}
 const MUSIC_TARGETS: Record<0 | 1 | 2, [number, number, number]> = {
   0: [1, 0, 0],
   1: [1, 0.7, 0],
@@ -91,7 +142,7 @@ export class AudioSystem {
   private musicLevel: 0 | 1 | 2 = 0;
   private footsteps = 0;
   private lastStepVariant = -1;
-  private readonly lastOneShotVariant = new Map<OneShotId, number>();
+  private readonly lastOneShotVariant = new Map<SoundId, number>();
   private readonly onGesture = (): void => {
     this.unlock();
   };
@@ -202,12 +253,12 @@ export class AudioSystem {
       });
   }
 
-  play(id: OneShotId, volume = 1): void {
+  play(id: SoundId, volume = 1): void {
     this.playBuffer(id, volume, null);
   }
 
   playAt(
-    id: OneShotId,
+    id: SoundId,
     x: number,
     z: number,
     listenerX: number,
@@ -453,7 +504,10 @@ export class AudioSystem {
     }
     let promise = this.musicBuffers.get(layer);
     if (!promise) {
-      promise = renderMusicLayer(ctx.sampleRate, layer).catch((error) => {
+      const file = MUSIC_FILES[layer];
+      const render = (): Promise<AudioBuffer> => renderMusicLayer(ctx.sampleRate, layer);
+      const source = file ? loadSample(ctx, file, MUSIC_DIR).catch(render) : render();
+      promise = source.catch((error) => {
         this.musicBuffers.delete(layer);
         throw error;
       });
@@ -490,7 +544,7 @@ export class AudioSystem {
     }
   }
 
-  private playBuffer(id: OneShotId, volume: number, pan: number | null): void {
+  private playBuffer(id: SoundId, volume: number, pan: number | null): void {
     const ctx = this.ctx;
     if (!ctx) {
       return;
@@ -499,8 +553,11 @@ export class AudioSystem {
     if (!bus) {
       return;
     }
-    // Varias tomas por efecto: se elige una distinta a la anterior.
-    const variants = ONE_SHOT_VARIANTS[id] ?? 1;
+    // Varias tomas por efecto: se elige una distinta a la anterior. Si hay
+    // grabaciones (SAMPLE_FILES) se usan ellas; la síntesis queda de respaldo.
+    const files = SAMPLE_FILES[id];
+    const synthId = id in SYNTH_FALLBACK ? SYNTH_FALLBACK[id as SampleOnlyId] : (id as OneShotId);
+    const variants = files?.length ?? ONE_SHOT_VARIANTS[synthId] ?? 1;
     let variant = Math.floor(Math.random() * variants);
     if (variants > 1 && variant === this.lastOneShotVariant.get(id)) {
       variant = (variant + 1) % variants;
@@ -509,7 +566,10 @@ export class AudioSystem {
     const key = `${id}#${variant}`;
     let promise = this.oneShotBuffers.get(key);
     if (!promise) {
-      promise = renderOneShot(ctx.sampleRate, id).catch((error) => {
+      const file = files?.[variant];
+      const render = (): Promise<AudioBuffer> => renderOneShot(ctx.sampleRate, synthId);
+      const source = file ? loadSample(ctx, file).catch(render) : render();
+      promise = source.catch((error) => {
         this.oneShotBuffers.delete(key);
         throw error;
       });

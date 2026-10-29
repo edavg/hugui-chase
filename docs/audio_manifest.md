@@ -1,6 +1,6 @@
 # Manifest de audio — Mondyi
 
-Todo el audio es 100% procedural y se genera en código (`src/systems/audioSynth.ts`) con la Web Audio API,
+Casi todo el audio es procedural y se genera en código (`src/systems/audioSynth.ts`) con la Web Audio API,
 renderizado offline a 22050 Hz mono. No hay assets binarios ni licencias externas. Los OGG externos son
 opcionales y sustituibles más adelante sin tocar el motor.
 
@@ -86,3 +86,33 @@ El reverb activo cambia con la sala mediante crossfade.
 | Cambia de sala | `door_open_wood` / `door_open_metal` | Volumen `0.6 / (1 + saltos)` según el grafo de salas |
 | Te atrapa | `stinger` + fundido a negro | `Game.runCaught` → menú de game over |
 | Música | nivel 0 / 1 / 2 | 1 con el stalker despierto o en tu sala, 2 en persecución |
+
+## Grabaciones (M16, Genex)
+
+`SAMPLE_FILES` en `src/systems/audio.ts` asigna a cada id uno o más MP3 de `public/assets/audio/sfx/`
+(`<id>_<n>.mp3`, uno por variante). Si un archivo falta o no se decodifica, suena la síntesis.
+
+| Id | Archivos | Uso |
+|---|---|---|
+| `stalker_step` | 2 | Zancada del stalker |
+| `breath` | 2 | Respiración del stalker |
+| `stalker_growl` | 1 | Gruñido al detectarte (junto al `stinger`) |
+| `attack_warn` | 1 | Aviso de ataque del stalker |
+| `lurker_step` | 3 | Pasos del ghoul (respaldo: `stalker_step`) |
+| `lurker_breath` | 1 | Respiración del ghoul (respaldo: `breath`) |
+| `lurker_wake` | 1 | Chillido al despertar (respaldo: `stinger`) |
+| `lurker_attack` | 1 | Siseo al lanzarse (respaldo: `attack_warn`) |
+| `stinger` | 2 | Detección y captura |
+| `ending_stinger` | 1 | Pantalla de final |
+| `heartbeat` | 1 | Latido en persecución |
+| `door_open_wood` | 1 | Puertas de madera |
+| `door_open_metal` | 1 | Puertas de metal (sótano) |
+
+Al cerrarse la puerta tras el jugador no suena nada (quitado en M16).
+| `door_locked`, `door_slam`, `latch`, `padlock_unlock` | 1 c/u | Puerta cerrada, portazo, cerrojo, candado |
+| `pickup_note`, `pickup_key`, `paper_turn` | 1 c/u | Notas y llaves |
+| `flash_click`, `cabinet` | 1 c/u | Linterna, armarios/taquillas |
+| `burn` | 1 | Quemar un afiche (papel que se prende y arde) |
+
+La capa 3 de la música (persecución) es `public/assets/audio/music/chase.mp3` (60 s en loop, `MUSIC_FILES`);
+las capas 1 y 2 siguen sintetizadas.

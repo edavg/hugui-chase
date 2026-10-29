@@ -1,5 +1,24 @@
 # Mondyi — Estado del proyecto
 
+## M16 — Ghoul del sótano y sonidos grabados (29 oct 2026)
+
+- **Ghoul**: la criatura de Calderas usa su propio modelo generado con Genex (`lurker/ghoul.glb`, 10k tris,
+  textura de color a 1024 px: el atlas de Meshy tiene islas diminutas y a menos se emborrona) en vez de
+  `monster.glb` con la carne de la maldición. Se sombrea con `GHOUL_SKIN` (`game.ts`): textura en sRGB
+  (decodificada como la del stalker sale lavada) y piel mate, casi sin especular. `enemy.model` elige el
+  GLB y `enemy.clips` traduce sus clips (Idle/Walk/Run/Attack/Hit) a los nombres del animador.
+- `tools/merge_rig_clips.mjs` arma el GLB a partir de lo que entrega Genex (`tools/genex/lurker/`: rig +
+  un GLB por clip) y deja sólo la textura de color reducida.
+- **Audio**: los one-shots cargan MP3 si los hay (ver `docs/audio_manifest.md`); la síntesis queda de
+  respaldo. El ghoul tiene voz propia (`lurker_*`) y el stalker gruñe al detectarte.
+- **Distancia al atacar**: al perseguirte en tu sala, stalker y ghoul se plantan a `0.85 × catch_radius`
+  (~1 m) mirándote y golpean desde ahí; antes iban a tu posición exacta y se metían en la cámara. El
+  `catch_radius` del stalker sube de 0.85 a 1.2 m para que el golpe llegue desde esa distancia.
+- **Casa**: sonidos grabados de puertas, cerrojos, notas, llaves, linterna y armarios; música de
+  persecución grabada (capa 3). Papel pintado decrépito generado (`ps2/wp_damask_decay`, Salón y
+  Biblioteca; `ps2/wp_stripes_decay`, Comedor y Dormitorio), a 256 px con el brillo de los originales.
+- Stalker lab: `stalker-lab.html?lurker` prueba el modelo y las medidas de la criatura.
+
 ## M15 — Criatura del sótano (28 oct 2026)
 
 - **Criatura encerrada** en Calderas (`lurker` en `psx_config.json`): existe desde el inicio, espera de

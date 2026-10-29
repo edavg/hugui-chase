@@ -39,7 +39,7 @@ export async function loadStalkerRig(
   atlas: HeadAtlas,
 ): Promise<StalkerRig> {
   const loader = new GLTFLoader();
-  const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}${STALKER_MODEL_URL}`);
+  const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}${config.enemy.model ?? STALKER_MODEL_URL}`);
   const root = gltf.scene as THREE.Group;
   const mesh = findSkinnedMesh(root);
   if (!mesh) {
@@ -104,6 +104,14 @@ export async function loadStalkerRig(
   for (const clip of gltf.animations) {
     const name = clip.name.split('|').pop() ?? clip.name;
     clips.set(name, clip);
+  }
+  for (const [name, source] of Object.entries(config.enemy.clips ?? {})) {
+    const clip = clips.get(source);
+    if (clip) {
+      clips.set(name, clip);
+    } else {
+      console.warn(`[stalker] El GLB no trae el clip "${source}" (para ${name})`);
+    }
   }
 
   const mixer = new THREE.AnimationMixer(root);

@@ -69,6 +69,8 @@ export interface SkinOptions {
   shade: number;
   spec: number;
   gloss: number;
+  // Decodificar la textura como sRGB (colores fieles en vez de aclarados).
+  srgb?: boolean;
 }
 
 interface LocalGoal {
@@ -82,6 +84,9 @@ const TEXTURES_BASE = `${import.meta.env.BASE_URL}assets/textures/horror_pack/`;
 const DOOR_THICKNESS = 0.07;
 const GOAL_RADIUS = 0.3;
 const CHASE_GOAL_RADIUS = 0.12;
+// Al alcanzarte se planta a esta fracción de catch_radius (golpea desde ahí)
+// en vez de meterse dentro de la cámara.
+const STANDOFF_RATIO = 0.85;
 const DETOUR_ANGLE = 1.05;
 const STUCK_SECONDS = 0.4;
 const WAYPOINT_RADIUS = 0.26;
@@ -392,14 +397,22 @@ export class Stalker {
   // Piel propia (criatura del sótano): cambia la textura del GLB por una
   // tileable repetida `skin.repeat` veces sobre sus UV, con sombreado y brillo
   // propios. Cada instancia carga su geometría: no afecta a los demás stalkers.
-  reskin(texture: THREE.Texture, skin: SkinOptions): void {
+  // Sin `texture` se queda la del modelo y sólo cambia el sombreado.
+  reskin(texture: THREE.Texture | null, skin: SkinOptions): void {
     const rig = this.rig;
     if (!rig) {
       return;
     }
     const { repeat, shade } = skin;
     const uniforms = rig.material.material.uniforms;
-    uniforms.u_tex.value = texture;
+    if (texture) {
+      uniforms.u_tex.value = texture;
+    }
+    if (skin.srgb) {
+      const current = uniforms.u_tex.value as THREE.Texture;
+      current.colorSpace = THREE.SRGBColorSpace;
+      current.needsUpdate = true;
+    }
     uniforms.u_spec.value = skin.spec;
     uniforms.u_gloss.value = skin.gloss;
     const geometry = rig.mesh.geometry;
@@ -1051,6 +1064,14 @@ export class Stalker {
       if (sense.playerRoom === this.roomId && !sense.hiddenIn) {
         this.route = [];
         this.transitDoorway = null;
+        if (this.distanceTo(sense.playerX, sense.playerZ) <= this.config.catch_radius * STANDOFF_RATIO) {
+          this.goal = null;
+          this.turnToward(Math.atan2(-(sense.playerX - this.position.x), -(sense.playerZ - this.position.z)), dt);
+          this.locomotionSpeed = 0;
+          this.moveBlend = Math.max(0, this.moveBlend - dt * 6);
+          this.clearPath();
+          return;
+        }
         this.goal = { x: sense.playerX, z: sense.playerZ };
       } else if (this.goal === null) {
         if (sense.hiddenIn && this.lastKnown?.room === this.roomId) {
