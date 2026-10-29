@@ -77,7 +77,9 @@ export async function loadStalkerRig(
   root.updateMatrixWorld(true);
 
   const head = measureHead(mesh, headBone, config.enemy.height);
-  const removedTriangles = stripHeadGeometry(mesh, headBone);
+  // model_head: se queda la cabeza del GLB y el cubo con la cara no se ve.
+  const modelHead = config.enemy.model_head === true;
+  const removedTriangles = modelHead ? 0 : stripHeadGeometry(mesh, headBone);
   const desired = new THREE.Matrix4().compose(
     head.center,
     new THREE.Quaternion(),
@@ -94,6 +96,7 @@ export async function loadStalkerRig(
   headCube.matrixAutoUpdate = false;
   headCube.matrix.copy(new THREE.Matrix4().copy(root.matrixWorld).invert().multiply(desired));
   headCube.matrix.decompose(headCube.position, headCube.quaternion, headCube.scale);
+  headCube.visible = !modelHead;
   root.add(headCube);
   root.updateMatrixWorld(true);
 

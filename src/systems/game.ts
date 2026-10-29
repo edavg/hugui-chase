@@ -31,7 +31,8 @@ import { setSceneLights, updateSceneLights } from './sceneLights';
 import { setHideOpen, type HideHandle } from './hides';
 import { ScareDirector, type ScareContext } from './roomEvents';
 import { Traces } from './traces';
-import { Stalker, type StalkerHooks, type StalkerSense } from '../entities/stalker';
+import { curseFleshTexture } from './demonicEye';
+import { Stalker, type SkinOptions, type StalkerHooks, type StalkerSense } from '../entities/stalker';
 import { Player } from '../entities/player';
 
 const PORTRAIT_FOV_FALLBACK = 95;
@@ -49,6 +50,8 @@ const AIM_FOV_FALLBACK = 32;
 // Sala donde termina la partida (puerta con `ending: true`): al quemar los 8
 // afiches aparece ahí un 2º stalker vigilando la salida.
 const ENDING_ROOM_ID = 'room_vestibulo';
+// Criatura del sótano: piel de la carne de la maldición (la del ojo).
+const LURKER_SKIN: SkinOptions = { repeat: 1.5, shade: 0.62, spec: 0.12, gloss: 36 };
 // M13: escondites, aguante, rastros y sustos.
 const HIDE_DOOR_SECONDS = 0.35;
 const INSPECT_OPEN_SECONDS = 1.2;
@@ -104,14 +107,15 @@ export class Game {
   private graphPromise: Promise<RoomGraph> | null = null;
   private stalker: Stalker | null = null;
   private stalkerLoading = false;
-  private stalkerRoom: string | null = null;
   // 2º stalker: aparece en la zona final al quemar los 8 afiches y vigila
   // ENDING_ROOM_ID. Tiene su propio enganche a escena y su propio flag de
   // carga para no interferir con el primero.
   private stalkerSecond: Stalker | null = null;
   private stalkerSecondLoading = false;
-  private stalkerSecondRoom: string | null = null;
   private secondStalkerSpawned = false;
+  // Criatura del sótano (config.lurker): encerrada en su sala desde el inicio.
+  private lurker: Stalker | null = null;
+  private lurkerLoading = false;
   private readonly flashlight: Flashlight;
   private musicLevel: 0 | 1 | 2 = 0;
   private lastPlayerX = 0;
@@ -211,8 +215,9 @@ export class Game {
     const portrait = height > width;
     this.room?.sync(this.config);
     this.traces.sync();
-    this.stalker?.syncConfig(this.config);
-    this.stalkerSecond?.syncConfig(this.config);
+    for (const stalker of this.stalkers()) {
+      stalker.syncConfig(this.config);
+    }
     if (this.player) {
       this.player.camera.aspect = width / height;
       this.player.camera.fov = this.fovFor(portrait);
@@ -246,6 +251,7 @@ export class Game {
     this.openMenu(null);
     this.flags.set('stalker_active');
     void this.activateStalker();
+    void this.activateLurker();
     const params = new URLSearchParams(window.location.search);
     const qaX = params.get('x');
     const qaZ = params.get('z');
@@ -331,9 +337,41 @@ export class Game {
       this.stalker.object.removeFromParent();
     }
     this.stalker = null;
-    this.stalkerRoom = null;
     this.deactivateSecondStalker();
+    this.lurker?.object.removeFromParent();
+    this.lurker = null;
     this.setMusicLevel(0);
+  }
+
+  // Criatura del sótano: no depende de las notas ni de los afiches; nace ya
+  // encerrada en su sala, delante del afiche.
+  private async activateLurker(): Promise<void> {
+    const lurker = this.config.lurker;
+    if (!lurker || this.lurker || this.lurkerLoading) {
+      return;
+    }
+    this.lurkerLoading = true;
+    try {
+      const graph = await this.ensureGraph();
+      if (!graph.hasRoom(lurker.room)) {
+        console.warn(`[M15] La sala de la criatura no existe: ${lurker.room}`);
+        return;
+      }
+      const creature = await Stalker.create(
+        { ...this.config, enemy: { ...this.config.enemy, ...lurker.enemy } },
+        graph,
+      );
+      creature.object.name = 'lurker';
+      creature.reskin(curseFleshTexture(), LURKER_SKIN);
+      creature.confine(lurker.room, lurker.position[0], lurker.position[1], (lurker.yaw * Math.PI) / 180);
+      this.lurker = creature;
+      this.syncStalkerPresence();
+      console.info(`[M15] Criatura encerrada en ${lurker.room}`);
+    } catch (error) {
+      console.error('[M15] No se pudo despertar a la criatura del sótano', error);
+    } finally {
+      this.lurkerLoading = false;
+    }
   }
 
   // 2º stalker del final: nace en ENDING_ROOM_ID al quemar los 8 afiches y
@@ -365,7 +403,7 @@ export class Game {
       }
       this.stalkerSecond = stalker;
       this.secondStalkerSpawned = true;
-      this.syncSecondStalkerPresence();
+      this.syncStalkerPresence();
       this.audio.play('stinger', 0.9);
       console.info(`[M5] 2º stalker en ${target} vigilando ${stalker.guardRoomId ?? target}`);
     } catch (error) {
@@ -422,54 +460,18 @@ export class Game {
       this.stalkerSecond.object.removeFromParent();
     }
     this.stalkerSecond = null;
-    this.stalkerSecondRoom = null;
   }
 
+  // Cada stalker activo se dibuja sólo en la escena de la sala donde está.
   private syncStalkerPresence(): void {
-    const stalker = this.stalker;
-    if (!stalker || !stalker.active) {
-      this.detachStalker();
-      return;
-    }
-    const here = stalker.roomId === this.room.id;
-    if (here && this.stalkerRoom !== this.room.id) {
-      this.detachStalker();
-      this.room.scene.add(stalker.object);
-      this.stalkerRoom = this.room.id;
-      stalker.syncAtmosphere(this.config, this.room.atmosphere);
-    } else if (!here) {
-      this.detachStalker();
-    }
-  }
-
-  private detachStalker(): void {
-    if (this.stalkerRoom !== null) {
-      this.stalker?.object.removeFromParent();
-      this.stalkerRoom = null;
-    }
-  }
-
-  private syncSecondStalkerPresence(): void {
-    const stalker = this.stalkerSecond;
-    if (!stalker || !stalker.active) {
-      this.detachSecondStalker();
-      return;
-    }
-    const here = stalker.roomId === this.room.id;
-    if (here && this.stalkerSecondRoom !== this.room.id) {
-      this.detachSecondStalker();
-      this.room.scene.add(stalker.object);
-      this.stalkerSecondRoom = this.room.id;
-      stalker.syncAtmosphere(this.config, this.room.atmosphere);
-    } else if (!here) {
-      this.detachSecondStalker();
-    }
-  }
-
-  private detachSecondStalker(): void {
-    if (this.stalkerSecondRoom !== null) {
-      this.stalkerSecond?.object.removeFromParent();
-      this.stalkerSecondRoom = null;
+    for (const stalker of this.stalkers()) {
+      const here = stalker.active && stalker.roomId === this.room.id;
+      if (here && stalker.object.parent !== this.room.scene) {
+        this.room.scene.add(stalker.object);
+        stalker.syncAtmosphere(this.config, this.room.atmosphere);
+      } else if (!here) {
+        stalker.object.removeFromParent();
+      }
     }
   }
 
@@ -482,9 +484,7 @@ export class Game {
   }
 
   private updateStalker(dt: number): void {
-    const stalkers = [this.stalker, this.stalkerSecond].filter(
-      (candidate): candidate is Stalker => !!candidate && candidate.active,
-    );
+    const stalkers = this.activeStalkers();
     if (stalkers.length === 0) {
       return;
     }
@@ -554,7 +554,6 @@ export class Game {
       stalker.update(dt, sense, hooks);
     }
     this.syncStalkerPresence();
-    this.syncSecondStalkerPresence();
 
     const anyChase = stalkers.some(
       (stalker) => stalker.state === 'chase' || (stalker.state === 'inspect' && stalker.roomId === this.room.id),
@@ -638,10 +637,14 @@ export class Game {
     this.showGameOver();
   }
 
-  private activeStalkers(): Stalker[] {
-    return [this.stalker, this.stalkerSecond].filter(
-      (candidate): candidate is Stalker => !!candidate && candidate.active,
+  private stalkers(): Stalker[] {
+    return [this.stalker, this.stalkerSecond, this.lurker].filter(
+      (candidate): candidate is Stalker => !!candidate,
     );
+  }
+
+  private activeStalkers(): Stalker[] {
+    return this.stalkers().filter((stalker) => stalker.active);
   }
 
   // --- M13: escondites ----------------------------------------------------
@@ -1228,9 +1231,10 @@ export class Game {
   syncConfig(): void {
     this.room.sync(this.config);
     this.traces.sync();
-    this.stalker?.syncConfig(this.config);
+    for (const stalker of this.stalkers()) {
+      stalker.syncConfig(this.config);
+    }
     this.stalker?.setBurnedPosters(this.burnedPosters());
-    this.stalkerSecond?.syncConfig(this.config);
     this.stalkerSecond?.setBurnedPosters(this.burnedPosters());
     this.psx.syncEffects(this.config);
     this.audio.setVolumes(this.config.audio);
@@ -1290,6 +1294,7 @@ export class Game {
     this.updatePosterHud();
     this.flags.set('stalker_active');
     void this.activateStalker();
+    void this.activateLurker();
     this.beginIntro();
   }
 
@@ -1912,7 +1917,6 @@ export class Game {
     this.lastPlayerZ = this.player.position.z;
     this.applyRoomState(nextRoom);
     this.syncStalkerPresence();
-    this.syncSecondStalkerPresence();
     this.closeArrivalDoor(previousRoom, nextRoom);
 
     await this.wait(fadeDuration, (progress) => this.psx.setFade(1 - progress));

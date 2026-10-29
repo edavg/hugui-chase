@@ -510,7 +510,6 @@ const rooms = [
     ],
     windows: [{ side: 'E', offset: 2.2, width: 1.4, height: 1.4, sill: 0.6 }],
     start: { position: [-1.7, 2.4], yaw: 180 },
-    items: [{ id: 'stair_plaque', position: [-2.38, 1.45, 0], yaw: 90 }],
     models: [
       { file: 'living_room/rack.glb', position: [2.05, 0, 1.6], yaw: 270, collide: true, size: [0.5, 0.7, 1.8] },
     ],

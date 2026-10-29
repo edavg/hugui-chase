@@ -1,5 +1,22 @@
 # Mondyi — Estado del proyecto
 
+## M15 — Criatura del sótano (28 oct 2026)
+
+- **Criatura encerrada** en Calderas (`lurker` en `psx_config.json`): existe desde el inicio, espera de
+  pie delante del afiche 8 mirándolo y nunca sale de la sala (`Stalker.confine`; `routeTo` no le da
+  puertas). Entrar no basta: sólo despierta cuando el jugador la mira a ella (y al afiche de detrás) a
+  ≤ 28° y sin la caldera en medio (`CONFINED_NOTICE_DEG`). Entonces se gira, grita y lo mira
+  `suspect_seconds` (1.2 s) y luego lo persigue a 3 m/s con un golpe rápido (0.3 s de carga, quita un
+  corazón). Si sales o te escondes sin que te vea, vuelve al afiche y espera a que la vuelvas a mirar;
+  si te ve entrar en la taquilla, la abre. No acelera con los afiches quemados.
+- Misma IA y modelo que el stalker, pero más baja (1.7 m), con la piel de carne de la maldición del ojo
+  (`reskin` con `demonic_eye_flesh.png`) y la cabeza original del GLB en vez del cubo con la cara de Hugui
+  (`enemy.model_head`). `lurker.enemy` sobrescribe cualquier valor de `enemy`.
+- Test: `npm run e2e:lurker -- <baseUrl>` (con `npm run dev` levantado; Chrome headless, 14 comprobaciones).
+- Corregido: el rig se escalaba dos veces (objeto + rig), así que cualquier `height` distinto de 2.05
+  salía en `height²/2.05`. Las velocidades de los clips de andar/correr se escalan con la altura.
+- `game.ts`: una sola `syncStalkerPresence()` para todos los stalkers (antes había una copia por stalker).
+
 ## M14 — Pulido de entorno, visibilidad y stalker (28 oct 2026)
 
 - **Muebles**: `CHAIR` y `TABLE` en `gen_rooms.mjs` (asiento, patas, respaldo/faldón y caja oculta de

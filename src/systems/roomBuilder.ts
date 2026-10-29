@@ -1095,6 +1095,10 @@ export async function buildRoom(
       const material = def.kind === 'poster' ? posterMaterial.material : materials.door.material;
       object = buildItemModel(def.kind, material);
     }
+    // Los afiches no se recogen (se queman): sin aura.
+    if (def.kind !== 'poster') {
+      addPickupAura(object);
+    }
     object.position.set(item.position[0], item.position[1], item.position[2]);
     object.rotation.y = THREE.MathUtils.degToRad(item.yaw ?? 0);
     object.name = `item_${item.id}`;
@@ -1613,6 +1617,47 @@ function buildChipaModel(chipaMaterial: THREE.Material, plateMaterial: THREE.Mat
   }
   group.scale.setScalar(1.35);
   return group;
+}
+
+// Aura verde tenue para distinguir lo recogible del entorno. Va en la capa 1
+// (FX): la cámara la dibuja, pero ni los raycasts de apuntado ni el pase de
+// sombra de la linterna la ven.
+let pickupAuraMaterial: THREE.SpriteMaterial | null = null;
+
+function addPickupAura(object: THREE.Object3D): void {
+  if (!pickupAuraMaterial) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      gradient.addColorStop(0, 'rgba(110, 255, 140, 0.4)');
+      gradient.addColorStop(0.6, 'rgba(60, 220, 90, 0.18)');
+      gradient.addColorStop(1, 'rgba(30, 180, 60, 0)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 64, 64);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.NoColorSpace;
+    texture.generateMipmaps = false;
+    texture.minFilter = THREE.LinearFilter;
+    pickupAuraMaterial = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      fog: false,
+    });
+  }
+  const bounds = new THREE.Box3().setFromObject(object);
+  const size = bounds.getSize(new THREE.Vector3());
+  const aura = new THREE.Sprite(pickupAuraMaterial);
+  bounds.getCenter(aura.position);
+  aura.scale.setScalar(Math.max(size.x, size.y, size.z) * 1.15 + 0.04);
+  aura.layers.set(1);
+  aura.renderOrder = 1;
+  object.add(aura);
 }
 
 function buildItemModel(kind: ItemKind, material: THREE.Material): THREE.Object3D {

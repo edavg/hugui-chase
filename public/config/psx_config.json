@@ -117,6 +117,24 @@
     "burn_noise_hops": 1,
     "trace_seconds": 150.0
   },
+  "lurker": {
+    "room": "room_calderas",
+    "position": [-3.05, 0],
+    "yaw": 90,
+    "enemy": {
+      "height": 1.7,
+      "body_radius": 0.26,
+      "model_head": true,
+      "chase_speed": 3.0,
+      "turn_speed": 280,
+      "suspect_seconds": 1.2,
+      "attack_range": 1.05,
+      "catch_radius": 1.2,
+      "attack_windup_seconds": 0.3,
+      "attack_recover_seconds": 0.55,
+      "attack_cooldown_seconds": 1.2
+    }
+  },
   "loading": {
     "authentic": true,
     "min_seconds": 1.0,

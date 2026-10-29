@@ -219,17 +219,6 @@
       ]
     }
   ],
-  "items": [
-    {
-      "id": "stair_plaque",
-      "position": [
-        -2.38,
-        1.45,
-        0
-      ],
-      "yaw": 90
-    }
-  ],
   "spawns": {
     "from_pasillo": {
       "position": [

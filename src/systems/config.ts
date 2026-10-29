@@ -100,8 +100,11 @@ export interface PsxConfig {
     height: number;
     // Velocidad natural (m/s) de los clips de andar/correr con timeScale 1.
     // El animador ajusta el timeScale para que los pies no patinen.
+    // Medidas a 2.05 m de altura: con otra altura se escalan solas.
     walk_clip_speed?: number;
     run_clip_speed?: number;
+    // true: conserva la cabeza original del modelo en vez del cubo con la cara.
+    model_head?: boolean;
     spawn_room: string;
     patrol_rooms: string[];
     forbidden_rooms: string[];
@@ -136,6 +139,16 @@ export interface PsxConfig {
     burn_noise_hops?: number;
     // Rastros (huellas y puertas entornadas): segundos que duran.
     trace_seconds?: number;
+  };
+  // Criatura del sótano: encerrada en `room` desde el inicio, espera en
+  // `position` mirando hacia `yaw` (grados, como los spawns). Al entrar el
+  // jugador lo mira `suspect_seconds` y lo persigue sin salir de la sala.
+  // `enemy` sobrescribe los valores del stalker (velocidad, golpe, altura).
+  lurker?: {
+    room: string;
+    position: [number, number];
+    yaw: number;
+    enemy?: Partial<PsxConfig['enemy']>;
   };
   loading: {
     authentic: boolean;

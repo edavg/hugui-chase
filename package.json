@@ -12,7 +12,8 @@
     "model:convert": "node_modules/fbx2gltf/bin/Darwin/FBX2glTF --binary --output public/assets/models/stalker/monster.glb",
     "rooms:gen": "node tools/gen_rooms.mjs",
     "rooms:validate": "node tools/validate_rooms.mjs",
-    "shot": "node tools/headless_shot.mjs"
+    "shot": "node tools/headless_shot.mjs",
+    "e2e:lurker": "node tools/e2e_lurker.mjs"
   },
   "dependencies": {
     "three": "^0.186.1"

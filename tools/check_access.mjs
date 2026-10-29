@@ -19,7 +19,6 @@ const config = JSON.parse(readFileSync(`${ROOT}/public/config/psx_config.json`, 
 const items = JSON.parse(readFileSync(`${ROOT}/public/config/items.json`, 'utf8')).items;
 const itemKind = new Map(items.map((item) => [item.id, item.kind]));
 itemKind.set('flashlight', 'tool');
-itemKind.set('stair_plaque', 'lore');
 
 const STALKER_R = config.enemy.body_radius;
 const PLAYER_R = config.player.radius;

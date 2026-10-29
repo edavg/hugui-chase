@@ -12,6 +12,7 @@ import {
   DEFAULT_CLIP_SPEEDS,
   IDLE_CLIP,
   RUN_CLIP,
+  SCREAM_CLIP,
   StalkerAnimator,
   WALK_CLIP,
 } from '../systems/stalkerAnimator';
@@ -63,6 +64,13 @@ export interface StalkerHooks {
   onHeartbeat: (x: number, z: number) => void;
 }
 
+export interface SkinOptions {
+  repeat: number;
+  shade: number;
+  spec: number;
+  gloss: number;
+}
+
 interface LocalGoal {
   x: number;
   z: number;
@@ -106,6 +114,9 @@ const RECHECK_SECONDS = 45;
 const ADAPTIVE_CHECK_CHANCE = 0.6;
 // Si no logra plantarse delante del escondite, abandona.
 const INSPECT_TIMEOUT = 12;
+// Criatura encerrada: sólo despierta si el jugador la mira (a ella y al afiche
+// que tiene detrás) dentro de este semiángulo y sin nada en medio.
+const CONFINED_NOTICE_DEG = 28;
 // Señuelos: sólo si el jugador está a 1–3 salas y no lo ha visto en un rato.
 const LURE_MAX_HOPS = 3;
 const LURE_QUIET_SECONDS = 30;
@@ -192,6 +203,9 @@ export class Stalker {
   // En persecución/búsqueda sospecha sí puede salir a por el jugador, y al
   // volver regresa a la sala vigilada.
   private guardRoom: string | null = null;
+  // Criatura encerrada (sótano): nunca cruza puertas, espera en su puesto
+  // mirando hacia `yaw` y sólo reacciona cuando el jugador está en su sala.
+  private post: (LocalGoal & { yaw: number }) | null = null;
 
   private constructor(
     config: PsxConfig,
@@ -222,12 +236,17 @@ export class Stalker {
     const stalker = new Stalker(config, graph, bodyTexture, headAtlas);
     try {
       stalker.rig = await loadStalkerRig(config, headAtlas);
+      // El rig ya viene escalado a enemy.height; la escala del objeto es sólo
+      // para las primitivas de reserva (si no, la altura se aplica dos veces).
+      stalker.object.scale.setScalar(1);
       stalker.object.add(stalker.rig.root);
       stalker.rig.mesh.visible = true;
       stalker.setBodyVisible(false);
+      // Un modelo más bajo da zancadas más cortas: el clip debe correr más.
+      const stride = config.enemy.height / MODEL_HEIGHT;
       stalker.animator = new StalkerAnimator(stalker.rig, {
-        [WALK_CLIP]: config.enemy.walk_clip_speed ?? DEFAULT_CLIP_SPEEDS[WALK_CLIP],
-        [RUN_CLIP]: config.enemy.run_clip_speed ?? DEFAULT_CLIP_SPEEDS[RUN_CLIP],
+        [WALK_CLIP]: (config.enemy.walk_clip_speed ?? DEFAULT_CLIP_SPEEDS[WALK_CLIP]) * stride,
+        [RUN_CLIP]: (config.enemy.run_clip_speed ?? DEFAULT_CLIP_SPEEDS[RUN_CLIP]) * stride,
       });
       stalker.animator.play(IDLE_CLIP, 0.2);
     } catch (error) {
@@ -359,6 +378,43 @@ export class Stalker {
     return this.guardRoom;
   }
 
+  /**
+   * Encierra al stalker en `room` (criatura del sótano): espera en (x, z)
+   * mirando hacia `yaw` y, cuando el jugador entra, lo mira
+   * `suspect_seconds` antes de lanzarse a por él. Nunca sale de la sala.
+   */
+  confine(room: string, x: number, z: number, yaw: number): void {
+    this.post = { x, z, yaw };
+    this.activeAt = this.time;
+    this.teleportTo(room, x, z, yaw);
+  }
+
+  // Piel propia (criatura del sótano): cambia la textura del GLB por una
+  // tileable repetida `skin.repeat` veces sobre sus UV, con sombreado y brillo
+  // propios. Cada instancia carga su geometría: no afecta a los demás stalkers.
+  reskin(texture: THREE.Texture, skin: SkinOptions): void {
+    const rig = this.rig;
+    if (!rig) {
+      return;
+    }
+    const { repeat, shade } = skin;
+    const uniforms = rig.material.material.uniforms;
+    uniforms.u_tex.value = texture;
+    uniforms.u_spec.value = skin.spec;
+    uniforms.u_gloss.value = skin.gloss;
+    const geometry = rig.mesh.geometry;
+    const uv = geometry.getAttribute('uv');
+    for (let i = 0; i < uv.count; i += 1) {
+      uv.setXY(i, uv.getX(i) * repeat, uv.getY(i) * repeat);
+    }
+    uv.needsUpdate = true;
+    const colors = geometry.getAttribute('a_color');
+    for (let i = 0; i < colors.count; i += 1) {
+      colors.setXYZ(i, shade, shade, shade);
+    }
+    colors.needsUpdate = true;
+  }
+
   // QA: el próximo pensamiento puede lanzar un señuelo.
   forceLure(): void {
     this.nextLureAt = this.time;
@@ -397,7 +453,7 @@ export class Stalker {
    * persigue a nadie, va a mirar qué pasa.
    */
   alertNoise(room: string, x: number, z: number, maxHops: number): boolean {
-    if (this.state === 'dormant' || this.state === 'chase' || this.state === 'attack' || this.state === 'inspect') {
+    if (this.post || this.state === 'dormant' || this.state === 'chase' || this.state === 'attack' || this.state === 'inspect') {
       return false;
     }
     if (this.graph.hops(this.roomId, room) > maxHops || this.isForbidden(room)) {
@@ -482,6 +538,10 @@ export class Stalker {
   }
 
   private think(sense: StalkerSense, hooks: StalkerHooks): void {
+    if (this.post) {
+      this.thinkConfined(sense, hooks);
+      return;
+    }
     const perception = this.perceive(sense);
     if (perception.sees) {
       this.remember(sense.playerRoom, sense.playerX, sense.playerZ);
@@ -553,6 +613,73 @@ export class Stalker {
       case 'dormant':
         break;
     }
+  }
+
+  // Encerrada: no ve ni oye; despierta cuando la miras (está delante del
+  // afiche), se gira, te mira (suspect) y te persigue. Si sales o te escondes
+  // sin que te vea, vuelve a su puesto. patrol = quieta en el puesto.
+  private thinkConfined(sense: StalkerSense, hooks: StalkerHooks): void {
+    const present = sense.playerRoom === this.roomId && !sense.hiddenIn;
+    if (present) {
+      this.lastSeenAt = this.time;
+    }
+    switch (this.state) {
+      case 'patrol':
+      case 'return':
+        if (present && this.playerLooksAtMe(sense)) {
+          this.setState('suspect');
+          this.goal = null;
+          this.clearPath();
+          this.animator?.playOnce(SCREAM_CLIP, 0.15);
+          hooks.onDetect();
+        }
+        break;
+      case 'suspect':
+        if (!present) {
+          this.returnToPost();
+        } else if (this.stateTime >= this.config.suspect_seconds) {
+          this.setState('chase');
+        }
+        break;
+      case 'chase':
+        if (!present) {
+          this.returnToPost();
+        }
+        break;
+      case 'inspect':
+        if (this.stateTime > INSPECT_TIMEOUT && !this.inspection?.arrived) {
+          this.returnToPost();
+        }
+        break;
+      case 'search':
+        this.returnToPost();
+        break;
+      case 'attack':
+      case 'dormant':
+        break;
+    }
+  }
+
+  private playerLooksAtMe(sense: StalkerSense): boolean {
+    const dx = this.position.x - sense.playerX;
+    const dz = this.position.z - sense.playerZ;
+    const distance = Math.hypot(dx, dz);
+    if (distance < 1e-3) {
+      return true;
+    }
+    // Mismo convenio de yaw que la cámara: adelante = (-sin, -cos).
+    const facing = (-Math.sin(sense.playerYaw) * dx - Math.cos(sense.playerYaw) * dz) / distance;
+    return (
+      facing >= Math.cos(THREE.MathUtils.degToRad(CONFINED_NOTICE_DEG)) &&
+      hasLineOfSight(sense.playerX, sense.playerZ, this.position.x, this.position.z, this.graph.colliders(this.roomId))
+    );
+  }
+
+  private returnToPost(): void {
+    this.setState('return');
+    this.inspection = null;
+    this.routeTo(null);
+    this.clearPath();
   }
 
   private detect(hooks: StalkerHooks): void {
@@ -785,6 +912,11 @@ export class Stalker {
   private routeTo(target: string | null): void {
     this.route = [];
     this.transitDoorway = null;
+    if (this.post) {
+      // Encerrada: único punto que podría sacarla de la sala.
+      this.goal = { x: this.post.x, z: this.post.z };
+      return;
+    }
     if (!target || target === this.roomId || this.graph.hops(this.roomId, target) === 0) {
       this.goal = this.randomPoint();
       return;
@@ -906,6 +1038,15 @@ export class Stalker {
       this.moveBlend = Math.max(0, this.moveBlend - dt * 6);
       return;
     }
+    if (this.post && this.state === 'suspect') {
+      // Encerrada: se gira hacia el jugador y se lo queda mirando.
+      if (sense.playerRoom === this.roomId) {
+        this.turnToward(Math.atan2(-(sense.playerX - this.position.x), -(sense.playerZ - this.position.z)), dt);
+      }
+      this.locomotionSpeed = 0;
+      this.moveBlend = Math.max(0, this.moveBlend - dt * 6);
+      return;
+    }
     if (this.state === 'chase') {
       if (sense.playerRoom === this.roomId && !sense.hiddenIn) {
         this.route = [];
@@ -922,6 +1063,9 @@ export class Stalker {
 
     const goal = this.goal;
     if (!goal) {
+      if (this.post && this.state === 'patrol') {
+        this.turnToward(this.post.yaw, dt);
+      }
       this.locomotionSpeed = 0;
       this.moveBlend = Math.max(0, this.moveBlend - dt * 4);
       this.clearPath();
@@ -1042,6 +1186,11 @@ export class Stalker {
     }
     this.goal = null;
     this.clearPath();
+    if (this.post && (this.state === 'patrol' || this.state === 'return')) {
+      // De vuelta en su puesto: steer() la encara al afiche.
+      this.setState('patrol');
+      return;
+    }
     if (this.lastKnown && this.lastKnown.room === this.roomId) {
       this.lastKnownReached = true;
     }
@@ -1092,6 +1241,12 @@ export class Stalker {
       case 'dormant':
         animator.play(IDLE_CLIP, 0.3);
         return;
+      case 'suspect':
+        if (this.post) {
+          // El grito de la criatura encerrada se lanza una vez al verte.
+          return;
+        }
+        break;
       default:
         break;
     }
@@ -1304,7 +1459,10 @@ export class Stalker {
     this.attackPhase = 'windup';
     this.attackTimer = this.attackWindup();
     if (this.animator?.action(ATTACK_CLIP)) {
-      this.animator.playOnce(ATTACK_CLIP, 0.08);
+      // El clip está afinado al windup por defecto: uno más corto lo acelera.
+      this.animator
+        .playOnce(ATTACK_CLIP, 0.08)
+        ?.setEffectiveTimeScale(DEFAULT_ATTACK_WINDUP / this.attackWindup());
     }
     hooks.onAttackStart(this.position.x, this.position.z);
   }
