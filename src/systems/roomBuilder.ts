@@ -1619,7 +1619,7 @@ function buildChipaModel(chipaMaterial: THREE.Material, plateMaterial: THREE.Mat
   return group;
 }
 
-// Aura verde tenue para distinguir lo recogible del entorno. Va en la capa 1
+// Aura azul claro tenue para distinguir lo recogible del entorno. Va en la capa 1
 // (FX): la cámara la dibuja, pero ni los raycasts de apuntado ni el pase de
 // sombra de la linterna la ven.
 let pickupAuraMaterial: THREE.SpriteMaterial | null = null;
@@ -1632,9 +1632,9 @@ function addPickupAura(object: THREE.Object3D): void {
     const ctx = canvas.getContext('2d');
     if (ctx) {
       const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-      gradient.addColorStop(0, 'rgba(110, 255, 140, 0.4)');
-      gradient.addColorStop(0.6, 'rgba(60, 220, 90, 0.18)');
-      gradient.addColorStop(1, 'rgba(30, 180, 60, 0)');
+      gradient.addColorStop(0, 'rgba(90, 190, 255, 0.45)');
+      gradient.addColorStop(0.6, 'rgba(50, 150, 255, 0.2)');
+      gradient.addColorStop(1, 'rgba(30, 110, 240, 0)');
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, 64, 64);
     }
