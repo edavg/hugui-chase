@@ -1483,7 +1483,7 @@ export class Stalker {
       // El clip está afinado al windup por defecto: uno más corto lo acelera.
       this.animator
         .playOnce(ATTACK_CLIP, 0.08)
-        ?.setEffectiveTimeScale(DEFAULT_ATTACK_WINDUP / this.attackWindup());
+        ?.setEffectiveTimeScale((this.rig?.attackImpactTime ?? DEFAULT_ATTACK_WINDUP) / this.attackWindup());
     }
     hooks.onAttackStart(this.position.x, this.position.z);
   }

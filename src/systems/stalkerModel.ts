@@ -6,6 +6,7 @@ import type { HeadAtlas } from './stalkerFace';
 import { buildHeadMesh, HEAD_UNITS } from './stalkerHead';
 import { addVertexColors } from './vertexColors';
 import { applyFiltering } from './textures';
+import { loadStalkerSmileRig, STALKER_SMILE_MODEL_URL } from './stalkerSmileModel';
 
 export const STALKER_MODEL_URL = 'assets/models/stalker/monster.glb';
 export const MODEL_HEAD_SIZE = 0.5;
@@ -29,6 +30,7 @@ export interface StalkerRig {
   headMaterial: PsxMaterialHandle;
   mixer: THREE.AnimationMixer;
   clips: Map<string, THREE.AnimationClip>;
+  attackImpactTime?: number;
   scale: number;
   meshHeight: number;
   removedTriangles: number;
@@ -38,6 +40,7 @@ export async function loadStalkerRig(
   config: PsxConfig,
   atlas: HeadAtlas,
 ): Promise<StalkerRig> {
+  if (config.enemy.model === STALKER_SMILE_MODEL_URL) return loadStalkerSmileRig(config);
   const loader = new GLTFLoader();
   const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}${config.enemy.model ?? STALKER_MODEL_URL}`);
   const root = gltf.scene as THREE.Group;

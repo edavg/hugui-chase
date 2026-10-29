@@ -17,6 +17,9 @@
 - **Casa**: sonidos grabados de puertas, cerrojos, notas, llaves, linterna y armarios; música de
   persecución grabada (capa 3). Papel pintado decrépito generado (`ps2/wp_damask_decay`, Salón y
   Biblioteca; `ps2/wp_stripes_decay`, Comedor y Dormitorio), a 256 px con el brillo de los originales.
+- **Baños**: azulejo con óxido y moho (`ps2/tile_bath_grime`, los dos baños), mosaico hexagonal sucio
+  (`ps2/tile_hex_grime`, suelo del Baño) y porcelana agrietada (`ps2/ceramic_stained`, sanitarios).
+  `tools/import_texture.mjs` las pasa al set: 256 px, brillo de la textura que sustituyen y normal map.
 - Stalker lab: `stalker-lab.html?lurker` prueba el modelo y las medidas de la criatura.
 
 ## M15 — Criatura del sótano (28 oct 2026)

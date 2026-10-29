@@ -1177,7 +1177,7 @@ const SKINS = {
     extraProps: [{ position: [0.5, 0.006, 0.0], size: [11.0, 0.01, 1.0], texture: 'carpet', tint: 0.8, collide: false, decal: true }],
   },
   room_bano: {
-    textures: { wall: 'ps2/tile_bath.png', floor: 'ps2/tile_mosaic.png', ceiling: 'ps2/ceiling.png', door: 'ps2/door_white.png', metal: 'ps2/metal_clean.png', ceramic: 'ps2/ceramic.png' },
+    textures: { wall: 'ps2/tile_bath_grime.png', floor: 'ps2/tile_hex_grime.png', ceiling: 'ps2/ceiling.png', door: 'ps2/door_white.png', metal: 'ps2/metal_clean.png', ceramic: 'ps2/ceramic_stained.png' },
     furniture: 'ceramic',
     lights: [L(0, 2.2, 0, { fixture: 'bulb', range: 4.5, intensity: 0.9, color: [0.92, 0.95, 1.0], flicker: 0.25 })],
   },
@@ -1205,7 +1205,7 @@ const SKINS = {
     lights: [L(0, 2.15, 0, { range: 6, intensity: 0.75, flicker: 0.12 })],
   },
   room_bano_alto: {
-    textures: { wall: 'ps2/tile_bath.png', floor: 'ps2/tile_checker.png', ceiling: 'ps2/ceiling.png', door: 'ps2/door_white.png', metal: 'ps2/metal_clean.png', ceramic: 'ps2/ceramic.png' },
+    textures: { wall: 'ps2/tile_bath_grime.png', floor: 'ps2/tile_checker.png', ceiling: 'ps2/ceiling.png', door: 'ps2/door_white.png', metal: 'ps2/metal_clean.png', ceramic: 'ps2/ceramic_stained.png' },
     furniture: 'ceramic',
     lights: [L(0, 2.2, 0, { fixture: 'bulb', range: 4.5, intensity: 0.85, color: [0.92, 0.95, 1.0], broken: true })],
   },

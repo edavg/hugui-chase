@@ -9,13 +9,13 @@
   "texture_scale": 2,
   "wall_thickness": 0.15,
   "textures": {
-    "wall": "ps2/tile_bath.png",
+    "wall": "ps2/tile_bath_grime.png",
     "floor": "ps2/tile_checker.png",
     "ceiling": "ps2/ceiling.png",
     "door": "ps2/door_white.png",
     "metal": "ps2/metal_clean.png",
     "stain": "Stains/Horror_Stain_05-128x128.png",
-    "ceramic": "ps2/ceramic.png",
+    "ceramic": "ps2/ceramic_stained.png",
     "painting": "ps2/painting.png",
     "painting_b": "ps2/painting_b.png"
   },

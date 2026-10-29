@@ -58,6 +58,8 @@
     "exhausted_speed": 0.85
   },
   "enemy": {
+    "model": "assets/models/stalker/genex-smile/stalker-smile.glb",
+    "model_head": true,
     "chase_speed": 2.4,
     "patrol_speed": 1.0,
     "search_speed": 1.6,
@@ -79,8 +81,8 @@
     "ai_hz": 5,
     "body_radius": 0.34,
     "height": 2.05,
-    "walk_clip_speed": 0.35,
-    "run_clip_speed": 2.0,
+    "walk_clip_speed": 0.83,
+    "run_clip_speed": 1.95,
     "poster_speed_step": 0.05,
     "poster_speed_max": 1.35,
     "spawn_room": "room_sotano",

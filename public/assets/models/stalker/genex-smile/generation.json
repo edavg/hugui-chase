@@ -1,0 +1,51 @@
+{
+  "conceptGeneration": "cmvtuo3pc0hoo2zqmwe1kezd3",
+  "sourceWorkspace": "/private/tmp/mondyi-stalker-xvcqc3ae",
+  "reference": "assets/textures/poster_hugui.jpeg",
+  "heightMeters": 2.05,
+  "polycountTarget": 10000,
+  "artDirection": "Fixed human smile; heavy asymmetric psychological horror body; white worn shirt and dark trousers",
+  "animationActions": {
+    "Idle_Watchful": 0,
+    "Walk_Nervous": 645,
+    "Run_Frantic": 657,
+    "Attack_Lunge": 193,
+    "WallSlam_Recover": 174,
+    "Scream.lol": 386
+  },
+  "bodyReferenceGeneration": "cmvtut8hf0hq02zqmkg4g3p5p",
+  "bodyGeneration": "cmvtuxarp0hqt2zqmwzjtru56",
+  "refundedGeneration": "cmvtuqbuo0hp32zqmm7hamc7a",
+  "quotedCredits": 96,
+  "accountBalanceAfterQueue": 104,
+  "animationNames": [
+    "Idle_Watchful",
+    "Walk_Nervous",
+    "Run_Frantic",
+    "Attack_Lunge",
+    "WallSlam_Recover",
+    "Scream.lol"
+  ],
+  "finalModel": "assets/models/stalker/genex-smile/stalker-smile.glb",
+  "finalBytes": 5418664,
+  "finalSha256": "bf0f5756d590997998e09e7005a7f0a816a02031342a37844a7146b358bf8127",
+  "neckAndClavicleCorrected": true,
+  "integratedAsMainStalker": true,
+  "measuredClipSpeedMetersPerSecond": {
+    "Walk_Nervous": 0.83,
+    "Run_Frantic": 1.95
+  },
+  "attackGeneration": "cmvtx4y900hvy3fo2iumzkrgv",
+  "attackWorkspace": "/private/tmp/mondyi-stalker-attack-u553k_nq",
+  "attackCredits": 6,
+  "accountBalanceAfterAttack": 98,
+  "attack": {
+    "name": "heavy_left_swipe",
+    "impactSeconds": 1.2,
+    "durationSeconds": 2.6,
+    "rootMotion": "in-place"
+  },
+  "clothingSkinBoundaryPolished": true,
+  "clothingTrianglesRestored": 87,
+  "neckSkinTriangles": 40
+}

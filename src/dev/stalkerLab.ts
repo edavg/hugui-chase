@@ -257,6 +257,7 @@ class StalkerLab {
     this.stalkerRoot.add(this.rig.root);
     this.animator = new StalkerAnimator(this.rig, this.clipSpeeds);
     this.animator.play(RUN_CLIP, 0);
+    this.ui.attackStatus.textContent = `Ataque: ${this.animator.clipDuration(ATTACK_CLIP).toFixed(2)} s · impacto: ${this.attackImpactTime.toFixed(2)} s.`;
     for (const name of ['footL', 'footR', 'toeL', 'toeR']) {
       const bone = this.rig.root.getObjectByName(name);
       if (bone) {
@@ -594,7 +595,7 @@ class StalkerLab {
     this.impactTimer = 0;
     this.ui.flash.classList.add('on');
     window.setTimeout(() => this.ui.flash.classList.remove('on'), 90);
-    this.ui.attackStatus.textContent = 'impacto: mano y cabeza al frente (≈0.63 s del clip)';
+    this.ui.attackStatus.textContent = `Impacto: ${this.attackImpactTime.toFixed(2)} s del clip.`;
   }
 
   private updateMovement(dt: number): void {
@@ -687,9 +688,13 @@ class StalkerLab {
     return false;
   }
 
+  private get attackImpactTime(): number {
+    return this.rig?.attackImpactTime ?? ATTACK_IMPACT_T;
+  }
+
   private updateAttack(dt: number): void {
     const action = this.attackAction;
-    if (action && !this.attackFlashed && action.time >= ATTACK_IMPACT_T) {
+    if (action && !this.attackFlashed && action.time >= this.attackImpactTime) {
       this.attackFlashed = true;
       this.flashImpact();
     }
